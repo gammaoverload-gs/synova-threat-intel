@@ -132,7 +132,42 @@ st.divider()
 st.divider()
 
 uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=['eml', 'msg'])
+# Agar koi file upload nahi hui hai, toh yeh Live Threat Intelligence Dashboard dikhega
+if not uploaded_file:
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # 1. LIVE TELEMETRY TILES
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.metric(label="SCAN ENGINE", value="IN-MEMORY", delta="Zero-Disk Drop")
+    with c2:
+        st.metric(label="ACTIVE THREAT RADAR", value="MONITORING", delta="Leaflet / IP-API")
+    with c3:
+        st.metric(label="AI COGNITIVE LAYER", value="GEMINI 2.5", delta="Sub-Second Latency")
+    with c4:
+        st.metric(label="AUTOMATED SOAR", value="ACTIVE", delta="IPTables / Sinkhole")
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 2. RETRO SOC FEED TERMINAL
+    st.markdown("""
+        <div style="
+            background: rgba(6, 11, 21, 0.9);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-left: 3px solid #00ffcc;
+            border-radius: 8px;
+            padding: 12px 18px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #94a3b8;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        ">
+            <span style="color: #00ffcc; font-weight: bold;">[LIVE RADAR FEED]</span> 
+            Awaiting forensic payload... <span style="color: #38bdf8;">Listening on raw byte buffer stream</span> | 
+            <span style="color: #eab308;">Ready for .eml / .msg triage</span>
+        </div>
+    """, unsafe_allow_html=True)
+    
 def build_pdf_buffer(results):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
