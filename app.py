@@ -13,50 +13,49 @@ from reportlab.lib import colors
 
 st.markdown("""
     <style>
-    /* Deep Space Radial & Dynamic Grid */
+    /* 1. Deep Space Cyber Grid */
     .stApp {
-        background-color: #06090e;
+        background-color: #06090e !important;
         background-image: 
-            radial-gradient(circle at 50% 0%, rgba(0, 255, 204, 0.12) 0%, transparent 60%),
-            radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.08) 0%, transparent 40%),
-            linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
-        background-size: 100% 100%, 100% 100%, 35px 35px, 35px 35px;
+            radial-gradient(circle at 50% 0%, rgba(0, 255, 204, 0.15) 0%, transparent 60%),
+            radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.1) 0%, transparent 40%),
+            linear-gradient(rgba(0, 255, 204, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 204, 0.04) 1px, transparent 1px) !important;
+        background-size: 100% 100%, 100% 100%, 35px 35px, 35px 35px !important;
     }
 
-    /* Laser Scanning Animation on Dropzone */
-    [data-testid="stFileUploadDropzone"] {
-        position: relative;
-        background: rgba(10, 15, 26, 0.75) !important;
+    /* 2. Cyber Dropzone with Glowing Neon Radar Pulse */
+    [data-testid="stFileUploadDropzone"], .stFileUploader section {
+        background: rgba(10, 15, 26, 0.85) !important;
         backdrop-filter: blur(16px) !important;
-        border: 1px solid rgba(0, 255, 204, 0.4) !important;
+        border: 2px dashed #00ffcc !important;
         border-radius: 16px !important;
-        overflow: hidden;
-        box-shadow: inset 0 0 25px rgba(0, 255, 204, 0.05);
-    }
-    [data-testid="stFileUploadDropzone"]::after {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; right: 0; height: 2px;
-        background: linear-gradient(90deg, transparent, #00ffcc, transparent);
-        box-shadow: 0 0 15px #00ffcc;
-        animation: scanline 3s linear infinite;
-    }
-    @keyframes scanline {
-        0% { top: 0%; opacity: 0; }
-        20% { opacity: 1; }
-        80% { opacity: 1; }
-        100% { top: 100%; opacity: 0; }
+        animation: cyberRadar 2.5s infinite ease-in-out !important;
     }
 
-    /* Cyber Metric Cards */
+    @keyframes cyberRadar {
+        0% {
+            border-color: rgba(0, 255, 204, 0.3);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.1), inset 0 0 10px rgba(0, 255, 204, 0.05);
+        }
+        50% {
+            border-color: rgba(0, 255, 204, 1);
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.4), inset 0 0 20px rgba(0, 255, 204, 0.2);
+        }
+        100% {
+            border-color: rgba(0, 255, 204, 0.3);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.1), inset 0 0 10px rgba(0, 255, 204, 0.05);
+        }
+    }
+
+    /* 3. Cyber Metric Cards */
     [data-testid="stMetric"] {
         background: rgba(13, 20, 36, 0.8) !important;
         backdrop-filter: blur(12px) !important;
         border: 1px solid rgba(0, 255, 204, 0.25) !important;
         border-radius: 12px !important;
         padding: 14px 20px !important;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(0, 255, 204, 0.03);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
     }
     [data-testid="stMetricValue"] {
         color: #00ffcc !important;
@@ -65,25 +64,25 @@ st.markdown("""
         text-shadow: 0 0 12px rgba(0, 255, 204, 0.5);
     }
 
-    /* Glowing Action Buttons */
+    /* 4. Glowing Action & Download Buttons */
     .stDownloadButton button, .stButton button {
-        background: linear-gradient(135deg, rgba(0, 255, 204, 0.15) 0%, rgba(14, 165, 233, 0.2) 100%) !important;
+        background: linear-gradient(135deg, rgba(0, 255, 204, 0.2) 0%, rgba(14, 165, 233, 0.25) 100%) !important;
         border: 1px solid #00ffcc !important;
         color: #00ffcc !important;
         font-weight: 600 !important;
         letter-spacing: 1px !important;
         border-radius: 8px !important;
-        box-shadow: 0 0 15px rgba(0, 255, 204, 0.2) !important;
+        box-shadow: 0 0 15px rgba(0, 255, 204, 0.25) !important;
         transition: all 0.3s ease !important;
     }
     .stDownloadButton button:hover, .stButton button:hover {
         background: #00ffcc !important;
         color: #06090e !important;
-        box-shadow: 0 0 25px rgba(0, 255, 204, 0.6) !important;
+        box-shadow: 0 0 30px rgba(0, 255, 204, 0.7) !important;
         transform: translateY(-2px);
     }
 
-    /* Live SOC Radar Pulse */
+    /* 5. Live SOC Beacon */
     .live-badge {
         display: inline-flex;
         align-items: center;
@@ -114,6 +113,7 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
 
 # Hardcoded API Key (Insert your Gemini API key here)
 # Read key from Streamlit Secrets securely
