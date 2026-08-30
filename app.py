@@ -136,16 +136,16 @@ uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", typ
 if not uploaded_file:
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # 1. LIVE TELEMETRY TILES
+    # 1. CLEAN TELEMETRY TILES (No truncation)
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric(label="SCAN ENGINE", value="IN-MEMORY", delta="Zero-Disk Drop")
+        st.metric(label="CORE ENGINE", value="ZERO-DISK", delta="RAM Buffer")
     with c2:
-        st.metric(label="ACTIVE THREAT RADAR", value="MONITORING", delta="Leaflet / IP-API")
+        st.metric(label="GEO RADAR", value="LIVE IP", delta="Hop Tracer")
     with c3:
-        st.metric(label="AI COGNITIVE LAYER", value="GEMINI 2.5", delta="Sub-Second Latency")
+        st.metric(label="AI BRAIN", value="GEMINI", delta="Heuristics")
     with c4:
-        st.metric(label="AUTOMATED SOAR", value="ACTIVE", delta="IPTables / Sinkhole")
+        st.metric(label="SOAR DEFENSE", value="READY", delta="Playbooks")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
