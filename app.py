@@ -13,6 +13,50 @@ from reportlab.lib import colors
 
 st.markdown("""
     <style>
+    /* Live SOC Radar Pulse */
+.live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 255, 204, 0.1);
+    border: 1px solid #00ffcc;
+    color: #00ffcc;
+    font-size: 11px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    box-shadow: 0 0 12px rgba(0, 255, 204, 0.3);
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #00ffcc;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ffcc;
+    display: inline-block;
+    animation: socPulse 1.2s infinite ease-in-out !important;
+}
+
+@keyframes socPulse {
+    0% {
+        transform: scale(0.85);
+        opacity: 0.3;
+        box-shadow: 0 0 2px #00ffcc;
+    }
+    50% {
+        transform: scale(1.35);
+        opacity: 1;
+        box-shadow: 0 0 14px #00ffcc;
+    }
+    100% {
+        transform: scale(0.85);
+        opacity: 0.3;
+        box-shadow: 0 0 2px #00ffcc;
+    }
+}
     /* 1. Base Grid & Viewport Ambience */
     .stApp {
         background-color: #06090e !important;
