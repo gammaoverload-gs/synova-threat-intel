@@ -15,11 +15,97 @@ st.set_page_config(page_title="SYNOVA | Threat Intel", page_icon="🕷️", layo
 
 st.markdown("""
     <style>
-    .stApp { background-color: #0E1117; }
-    .stFileUploader { border-radius: 15px; background-color: #1A1C23; padding: 20px; border: 1px solid #303641; }
-    [data-testid="stMetricValue"] { color: #00ffcc !important; font-size: 30px !important; }
-    [data-testid="stMetricLabel"] { color: #a3a8b8 !important; font-size: 16px !important; font-weight: bold; }
-    hr { border-color: #303641; }
+    /* 1. Cyber Grid + Deep Ambient Radial Background */
+    .stApp {
+        background-color: #080b10;
+        background-image: 
+            radial-gradient(circle at 50% 0%, rgba(0, 255, 204, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 90% 90%, rgba(31, 111, 235, 0.06) 0%, transparent 40%),
+            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+    }
+
+    /* 2. Frosted Glassmorphism File Uploader */
+    [data-testid="stFileUploadDropzone"] {
+        background: rgba(18, 22, 34, 0.65) !important;
+        backdrop-filter: blur(12px) !important;
+        border: 1px dashed rgba(0, 255, 204, 0.35) !important;
+        border-radius: 14px !important;
+        transition: all 0.3s ease;
+    }
+    [data-testid="stFileUploadDropzone"]:hover {
+        border-color: #00ffcc !important;
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+    }
+
+    /* 3. Metric Cards Styling & Neon Glow */
+    [data-testid="stMetric"] {
+        background: rgba(17, 24, 39, 0.7);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(56, 189, 248, 0.15);
+        border-radius: 12px;
+        padding: 12px 18px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    [data-testid="stMetricValue"] {
+        color: #00ffcc !important;
+        font-family: 'Courier New', monospace;
+        font-size: 28px !important;
+        text-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+    }
+    [data-testid="stMetricLabel"] {
+        color: #94a3b8 !important;
+        font-size: 13px !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* 4. Tab Navigation Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: transparent;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid #1e293b;
+        border-radius: 8px 8px 0px 0px;
+        color: #94a3b8;
+        padding: 8px 18px;
+    }
+    .stTabs [aria-selected="true"] {
+        background: rgba(0, 255, 204, 0.1) !important;
+        border-bottom: 2px solid #00ffcc !important;
+        color: #00ffcc !important;
+    }
+
+    /* 5. Live Radar Pulsing Beacon */
+    .live-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(0, 255, 204, 0.1);
+        border: 1px solid #00ffcc;
+        color: #00ffcc;
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+    }
+    .pulse-dot {
+        width: 7px;
+        height: 7px;
+        background-color: #00ffcc;
+        border-radius: 50%;
+        box-shadow: 0 0 8px #00ffcc;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(0.9); opacity: 1; }
+        50% { transform: scale(1.4); opacity: 0.4; }
+        100% { transform: scale(0.9); opacity: 1; }
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -27,10 +113,15 @@ st.markdown("""
 # Read key from Streamlit Secrets securely
 api_key = st.secrets.get("GEMINI_API_KEY", "")
 
-col1, col2 = col1, col2 = st.columns([4, 1])
+# --- NAYA UPGRADED HEADER WITH PULSING LIVE BEACON ---
+col1, col2 = st.columns([3.5, 1.5])
 with col1:
-    st.markdown("<h1 style='color: white;'>🛡️ SYNOVA <span style='color: #00ffcc;'>Zero-Code</span></h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #a3a8b8; font-size: 18px;'>AI-Powered Email Threat Detection & Automated Remediation Platform</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: #00ffcc;'>Zero-Code</span></h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8; font-size: 15px; margin-top: 4px;'>Autonomous AI Email Threat Detection & Forensic Intelligence Platform</p>", unsafe_allow_html=True)
+with col2:
+    st.markdown("<div style='text-align: right; margin-top: 15px;'><span class='live-badge'><span class='pulse-dot'></span>SOC ENGINE ACTIVE</span></div>", unsafe_allow_html=True)
+
+st.divider()
 
 st.divider()
 
