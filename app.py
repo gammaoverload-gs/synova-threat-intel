@@ -24,7 +24,8 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Hardcoded API Key (Insert your Gemini API key here)
-api_key = "AQ.Ab8RN6L7IE6b9GIC0tQG7OMpgdrT2zumxOsWAcVgbSZPvQEJ6Q"
+# Read key from Streamlit Secrets securely
+api_key = st.secrets.get("GEMINI_API_KEY", "")
 
 col1, col2 = col1, col2 = st.columns([4, 1])
 with col1:
