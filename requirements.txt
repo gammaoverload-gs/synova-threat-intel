@@ -1,0 +1,8 @@
+streamlit
+mail-parser
+extract-msg
+requests
+folium
+streamlit-folium
+google-genai
+reportlab
