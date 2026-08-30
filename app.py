@@ -13,7 +13,7 @@ from reportlab.lib import colors
 
 st.markdown("""
     <style>
-    /* 1. Deep Space Cyber Grid */
+    /* 1. Base Grid & Viewport Ambience */
     .stApp {
         background-color: #06090e !important;
         background-image: 
@@ -24,7 +24,7 @@ st.markdown("""
         background-size: 100% 100%, 100% 100%, 35px 35px, 35px 35px !important;
     }
 
-    /* 2. Cyber Dropzone with Glowing Neon Radar Pulse */
+    /* 2. Responsive Radar Dropzone */
     [data-testid="stFileUploadDropzone"], .stFileUploader section {
         background: rgba(10, 15, 26, 0.85) !important;
         backdrop-filter: blur(16px) !important;
@@ -32,88 +32,53 @@ st.markdown("""
         border-radius: 16px !important;
         animation: cyberRadar 2.5s infinite ease-in-out !important;
     }
-
     @keyframes cyberRadar {
-        0% {
-            border-color: rgba(0, 255, 204, 0.3);
-            box-shadow: 0 0 10px rgba(0, 255, 204, 0.1), inset 0 0 10px rgba(0, 255, 204, 0.05);
-        }
-        50% {
-            border-color: rgba(0, 255, 204, 1);
-            box-shadow: 0 0 25px rgba(0, 255, 204, 0.4), inset 0 0 20px rgba(0, 255, 204, 0.2);
-        }
-        100% {
-            border-color: rgba(0, 255, 204, 0.3);
-            box-shadow: 0 0 10px rgba(0, 255, 204, 0.1), inset 0 0 10px rgba(0, 255, 204, 0.05);
-        }
+        0%, 100% { border-color: rgba(0, 255, 204, 0.3); box-shadow: 0 0 10px rgba(0, 255, 204, 0.1); }
+        50% { border-color: rgba(0, 255, 204, 1); box-shadow: 0 0 25px rgba(0, 255, 204, 0.4); }
     }
 
-    /* 3. Cyber Metric Cards */
+    /* 3. Metric Containers (No Text Overflow) */
     [data-testid="stMetric"] {
         background: rgba(13, 20, 36, 0.8) !important;
         backdrop-filter: blur(12px) !important;
         border: 1px solid rgba(0, 255, 204, 0.25) !important;
         border-radius: 12px !important;
-        padding: 14px 20px !important;
+        padding: 10px 14px !important;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
     }
     [data-testid="stMetricValue"] {
         color: #00ffcc !important;
-        font-family: 'JetBrains Mono', 'Courier New', monospace;
-        font-size: 30px !important;
-        text-shadow: 0 0 12px rgba(0, 255, 204, 0.5);
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 22px !important;
+        text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 11px !important;
+        letter-spacing: 1px;
     }
 
-    /* 4. Glowing Action & Download Buttons */
-    .stDownloadButton button, .stButton button {
-        background: linear-gradient(135deg, rgba(0, 255, 204, 0.2) 0%, rgba(14, 165, 233, 0.25) 100%) !important;
-        border: 1px solid #00ffcc !important;
-        color: #00ffcc !important;
-        font-weight: 600 !important;
-        letter-spacing: 1px !important;
-        border-radius: 8px !important;
-        box-shadow: 0 0 15px rgba(0, 255, 204, 0.25) !important;
-        transition: all 0.3s ease !important;
-    }
-    .stDownloadButton button:hover, .stButton button:hover {
-        background: #00ffcc !important;
-        color: #06090e !important;
-        box-shadow: 0 0 30px rgba(0, 255, 204, 0.7) !important;
-        transform: translateY(-2px);
+    /* 4. Glassmorphism IOC Table & Terminal Wrapper */
+    div[data-testid="stExpander"], div.stDataFrame {
+        border: 1px solid rgba(0, 255, 204, 0.2) !important;
+        border-radius: 10px !important;
+        background: rgba(10, 15, 26, 0.6) !important;
+        backdrop-filter: blur(10px) !important;
     }
 
-    /* 5. Live SOC Beacon */
-    .live-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(0, 255, 204, 0.1);
-        border: 1px solid #00ffcc;
-        color: #00ffcc;
-        font-size: 11px;
-        padding: 5px 14px;
-        border-radius: 20px;
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-        letter-spacing: 1.5px;
-        box-shadow: 0 0 12px rgba(0, 255, 204, 0.3);
-    }
-    .pulse-dot {
-        width: 8px;
-        height: 8px;
-        background-color: #00ffcc;
-        border-radius: 50%;
-        box-shadow: 0 0 10px #00ffcc;
-        animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-        0% { transform: scale(0.9); opacity: 1; }
-        50% { transform: scale(1.5); opacity: 0.3; }
-        100% { transform: scale(0.9); opacity: 1; }
+    /* 5. Custom Quick-Action Demo Badges */
+    .demo-chip {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        border-radius: 6px;
+        color: #38bdf8;
+        font-size: 12px;
+        font-family: monospace;
+        margin-right: 6px;
     }
     </style>
 """, unsafe_allow_html=True)
-
 
 # Hardcoded API Key (Insert your Gemini API key here)
 # Read key from Streamlit Secrets securely
@@ -136,7 +101,7 @@ uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", typ
 if not uploaded_file:
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # 1. CLEAN TELEMETRY TILES (No truncation)
+    # 1. CLEAN AUTO-FITTING TELEMETRY CARDS
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.metric(label="CORE ENGINE", value="ZERO-DISK", delta="RAM Buffer")
@@ -145,26 +110,28 @@ if not uploaded_file:
     with c3:
         st.metric(label="AI BRAIN", value="GEMINI", delta="Heuristics")
     with c4:
-        st.metric(label="SOAR DEFENSE", value="READY", delta="Playbooks")
+        st.metric(label="SOAR DEFENSE", value="ACTIVE", delta="IPTables/DNS")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 2. RETRO SOC FEED TERMINAL
+    # 2. QUICK TEST HINT / LIVE TERMINAL STATUS
     st.markdown("""
         <div style="
             background: rgba(6, 11, 21, 0.9);
             border: 1px solid rgba(0, 255, 204, 0.2);
-            border-left: 3px solid #00ffcc;
+            border-left: 4px solid #00ffcc;
             border-radius: 8px;
-            padding: 12px 18px;
+            padding: 14px 20px;
             font-family: 'Courier New', monospace;
             font-size: 13px;
             color: #94a3b8;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         ">
-            <span style="color: #00ffcc; font-weight: bold;">[LIVE RADAR FEED]</span> 
-            Awaiting forensic payload... <span style="color: #38bdf8;">Listening on raw byte buffer stream</span> | 
-            <span style="color: #eab308;">Ready for .eml / .msg triage</span>
+            <span style="color: #00ffcc; font-weight: bold;">[SOC RADAR LIVE]</span> 
+            Awaiting forensic byte stream... | 
+            <span class="demo-chip">DRAG & DROP .EML</span>
+            <span class="demo-chip">DEEP RELAY PARSE</span>
+            <span class="demo-chip">PDF READY</span>
         </div>
     """, unsafe_allow_html=True)
     
