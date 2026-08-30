@@ -11,103 +11,109 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
-st.set_page_config(page_title="SYNOVA | Threat Intel", page_icon="🕷️", layout="wide")
-
 st.markdown("""
     <style>
-    /* 1. Cyber Grid + Deep Ambient Radial Background */
+    /* Deep Space Radial & Dynamic Grid */
     .stApp {
-        background-color: #080b10;
+        background-color: #06090e;
         background-image: 
-            radial-gradient(circle at 50% 0%, rgba(0, 255, 204, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 90% 90%, rgba(31, 111, 235, 0.06) 0%, transparent 40%),
-            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-        background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+            radial-gradient(circle at 50% 0%, rgba(0, 255, 204, 0.12) 0%, transparent 60%),
+            radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.08) 0%, transparent 40%),
+            linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 35px 35px, 35px 35px;
     }
 
-    /* 2. Frosted Glassmorphism File Uploader */
+    /* Laser Scanning Animation on Dropzone */
     [data-testid="stFileUploadDropzone"] {
-        background: rgba(18, 22, 34, 0.65) !important;
-        backdrop-filter: blur(12px) !important;
-        border: 1px dashed rgba(0, 255, 204, 0.35) !important;
-        border-radius: 14px !important;
-        transition: all 0.3s ease;
+        position: relative;
+        background: rgba(10, 15, 26, 0.75) !important;
+        backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(0, 255, 204, 0.4) !important;
+        border-radius: 16px !important;
+        overflow: hidden;
+        box-shadow: inset 0 0 25px rgba(0, 255, 204, 0.05);
     }
-    [data-testid="stFileUploadDropzone"]:hover {
-        border-color: #00ffcc !important;
-        box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+    [data-testid="stFileUploadDropzone"]::after {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, transparent, #00ffcc, transparent);
+        box-shadow: 0 0 15px #00ffcc;
+        animation: scanline 3s linear infinite;
+    }
+    @keyframes scanline {
+        0% { top: 0%; opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { top: 100%; opacity: 0; }
     }
 
-    /* 3. Metric Cards Styling & Neon Glow */
+    /* Cyber Metric Cards */
     [data-testid="stMetric"] {
-        background: rgba(17, 24, 39, 0.7);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(56, 189, 248, 0.15);
-        border-radius: 12px;
-        padding: 12px 18px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        background: rgba(13, 20, 36, 0.8) !important;
+        backdrop-filter: blur(12px) !important;
+        border: 1px solid rgba(0, 255, 204, 0.25) !important;
+        border-radius: 12px !important;
+        padding: 14px 20px !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(0, 255, 204, 0.03);
     }
     [data-testid="stMetricValue"] {
         color: #00ffcc !important;
-        font-family: 'Courier New', monospace;
-        font-size: 28px !important;
-        text-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
-    }
-    [data-testid="stMetricLabel"] {
-        color: #94a3b8 !important;
-        font-size: 13px !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 30px !important;
+        text-shadow: 0 0 12px rgba(0, 255, 204, 0.5);
     }
 
-    /* 4. Tab Navigation Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: transparent;
-    }
-    .stTabs [data-baseweb="tab"] {
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid #1e293b;
-        border-radius: 8px 8px 0px 0px;
-        color: #94a3b8;
-        padding: 8px 18px;
-    }
-    .stTabs [aria-selected="true"] {
-        background: rgba(0, 255, 204, 0.1) !important;
-        border-bottom: 2px solid #00ffcc !important;
+    /* Glowing Action Buttons */
+    .stDownloadButton button, .stButton button {
+        background: linear-gradient(135deg, rgba(0, 255, 204, 0.15) 0%, rgba(14, 165, 233, 0.2) 100%) !important;
+        border: 1px solid #00ffcc !important;
         color: #00ffcc !important;
+        font-weight: 600 !important;
+        letter-spacing: 1px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 0 15px rgba(0, 255, 204, 0.2) !important;
+        transition: all 0.3s ease !important;
+    }
+    .stDownloadButton button:hover, .stButton button:hover {
+        background: #00ffcc !important;
+        color: #06090e !important;
+        box-shadow: 0 0 25px rgba(0, 255, 204, 0.6) !important;
+        transform: translateY(-2px);
     }
 
-    /* 5. Live Radar Pulsing Beacon */
+    /* Live SOC Radar Pulse */
     .live-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         background: rgba(0, 255, 204, 0.1);
         border: 1px solid #00ffcc;
         color: #00ffcc;
         font-size: 11px;
-        padding: 4px 10px;
+        padding: 5px 14px;
         border-radius: 20px;
+        font-family: 'Courier New', monospace;
         font-weight: bold;
-        letter-spacing: 0.5px;
+        letter-spacing: 1.5px;
+        box-shadow: 0 0 12px rgba(0, 255, 204, 0.3);
     }
     .pulse-dot {
-        width: 7px;
-        height: 7px;
+        width: 8px;
+        height: 8px;
         background-color: #00ffcc;
         border-radius: 50%;
-        box-shadow: 0 0 8px #00ffcc;
+        box-shadow: 0 0 10px #00ffcc;
         animation: pulse 1.5s infinite;
     }
     @keyframes pulse {
         0% { transform: scale(0.9); opacity: 1; }
-        50% { transform: scale(1.4); opacity: 0.4; }
+        50% { transform: scale(1.5); opacity: 0.3; }
         100% { transform: scale(0.9); opacity: 1; }
     }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # Hardcoded API Key (Insert your Gemini API key here)
 # Read key from Streamlit Secrets securely
