@@ -71,7 +71,7 @@ Email Body:
                 )
             except Exception:
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash",
+                    model="gemini-2.5-pro",
                     contents=prompt,
                 )
 
@@ -111,8 +111,10 @@ Email Body:
         ):
             ip = "8.8.8.8"
         try:
-            response = requests.get(f"http://ip-api.com/json/{ip}").json()
-            if response["status"] == "success":
+            response = requests.get(
+                f"http://ip-api.com/json/{ip}", timeout=5
+            ).json()
+            if response.get("status") == "success":
                 return {
                     "country": response.get("country", "Unknown"),
                     "city": response.get("city", "Unknown"),
@@ -120,7 +122,7 @@ Email Body:
                     "lon": response.get("lon", 0.0),
                     "isp": response.get("isp", "Unknown"),
                 }
-        except:
+        except Exception:
             pass
         return {
             "country": "Unknown",
@@ -167,7 +169,7 @@ Email Body:
         return hops
 
     def _extract_body_artifacts(self):
-        body = self.parsed_mail.body
+        body = self.parsed_mail.body or ""
         url_pattern = re.compile(
             r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
         )
