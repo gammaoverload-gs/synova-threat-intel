@@ -23,7 +23,9 @@ badge_text = "SOC RADAR ACTIVE"
 score_num = 0
 results = None
 audio_type = "none"
-voice_briefing = ""
+
+# Default voice message on empty landing screen
+voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System online. Awaiting forensic byte stream."
 
 if uploaded_file is not None:
     with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
@@ -137,12 +139,12 @@ voice_and_particles_js = f"""
         try {{
             window.speechSynthesis.cancel();
             const utter = new SpeechSynthesisUtterance("{voice_briefing}");
-            utter.rate = 1.05;
-            utter.pitch = 0.9;
+            utter.rate = 1.02;
+            utter.pitch = 0.92;
             const voices = window.speechSynthesis.getVoices();
             const sciFiVoice = voices.find(v => v.lang.includes('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('David') || v.name.includes('Zira')));
             if (sciFiVoice) utter.voice = sciFiVoice;
-            setTimeout(() => window.speechSynthesis.speak(utter), 400);
+            setTimeout(() => window.speechSynthesis.speak(utter), 500);
         }} catch(e) {{}}
     }}
 }})();
