@@ -24,7 +24,6 @@ score_num = 0
 results = None
 audio_type = "none"
 
-# Humanized conversational default briefing
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
 if uploaded_file is not None:
@@ -67,14 +66,14 @@ if uploaded_file is not None:
 
 particle_color = primary_color
 
-# High-Tier Human Voice Dispatcher Engine
+# Injected DOM with Canvas + Hardware-accelerated Laser Beam
 voice_and_particles_js = f"""
-<div id="canvas-container" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:0;">
-    <canvas id="cyberMatrixCanvas"></canvas>
+<div id="canvas-container" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:99999;">
+    <canvas id="cyberMatrixCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;"></canvas>
+    <div class="cyber-laser-beam"></div>
 </div>
 <script>
 (function() {{
-    // 1. Interactive Matrix Particles
     const canvas = document.getElementById('cyberMatrixCanvas');
     if (canvas) {{
         const ctx = canvas.getContext('2d');
@@ -137,14 +136,11 @@ voice_and_particles_js = f"""
         draw();
     }}
 
-    // 2. Humanized Natural Neural Voice Engine
     let voiceTriggered = false;
-
     function getNeuralHumanVoice() {{
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return null;
 
-        // Neural & Natural voices ranking priority
         const priorityMatchers = [
             v => v.name.includes("Natural") || v.name.includes("Online (Natural)"),
             v => v.name.includes("Google US English") || v.name.includes("Google UK English Female"),
@@ -170,8 +166,6 @@ voice_and_particles_js = f"""
 
         const text = "{voice_briefing}";
         const utter = new SpeechSynthesisUtterance(text);
-        
-        // Conversational human cadence settings
         utter.rate = 0.96;
         utter.pitch = 1.02;
         utter.volume = 0.95;
@@ -183,14 +177,12 @@ voice_and_particles_js = f"""
         window.speechSynthesis.speak(utter);
     }}
 
-    // Listen for voice loading event in Chrome
     if (window.speechSynthesis.onvoiceschanged !== undefined) {{
         window.speechSynthesis.onvoiceschanged = executeSpeechDispatch;
     }}
 
     setTimeout(executeSpeechDispatch, 400);
 
-    // Browser interaction unlock hook
     ['click', 'dragover', 'drop', 'keydown', 'touchstart'].forEach(evt => {{
         window.parent.document.addEventListener(evt, executeSpeechDispatch, {{ once: true }});
         document.addEventListener(evt, executeSpeechDispatch, {{ once: true }});
@@ -203,6 +195,7 @@ st.components.v1.html(voice_and_particles_js, height=0)
 st.markdown(
     f"""
     <style>
+    /* 1. FAINT SCANLINE GRID */
     .stApp::before {{
         content: " ";
         display: block;
@@ -210,10 +203,55 @@ st.markdown(
         top: 0; left: 0; bottom: 0; right: 0;
         background: linear-gradient(rgba(18, 16, 16, 0) 50%, {glow_rgba} 50%), 
                     linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.01));
-        z-index: 99999;
+        z-index: 99998;
         background-size: 100% 3px, 3px 100%;
         pointer-events: none;
         opacity: 0.65;
+    }}
+
+    /* 2. BRIGHT HIGH-INTENSITY LASER SCANNER BEAM */
+    .cyber-laser-beam {{
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 3px;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            {primary_color} 20%, 
+            #ffffff 50%, 
+            {primary_color} 80%, 
+            transparent 100%
+        );
+        box-shadow: 
+            0 0 15px {primary_color}, 
+            0 0 30px {primary_color}, 
+            0 0 50px {primary_color},
+            0 2px 10px rgba(255, 255, 255, 0.8);
+        z-index: 999999;
+        pointer-events: none;
+        animation: tacticalLaserScan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+    }}
+
+    @keyframes tacticalLaserScan {{
+        0% {{
+            top: 0vh;
+            opacity: 0.2;
+            transform: scaleX(0.95);
+        }}
+        15% {{
+            opacity: 0.95;
+            transform: scaleX(1);
+        }}
+        85% {{
+            opacity: 0.95;
+            transform: scaleX(1);
+        }}
+        100% {{
+            top: 98vh;
+            opacity: 0.2;
+            transform: scaleX(0.95);
+        }}
     }}
 
     .stApp {{
@@ -341,6 +379,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Header Section
 col1, col2 = st.columns([3.5, 1.5])
 with col1:
     st.markdown(
