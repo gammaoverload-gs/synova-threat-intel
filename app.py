@@ -12,18 +12,64 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 import streamlit as st
 from streamlit_folium import st_folium
 
+# Read key securely
+api_key = st.secrets.get("GEMINI_API_KEY", "")
+
+# 1. State Management & Theme Selection
+uploaded_file = st.file_uploader(
+    "Drop a suspicious .eml or .msg file here", type=["eml", "msg"]
+)
+
+primary_color = "#00ffcc"
+glow_rgba = "rgba(0, 255, 204, 0.15)"
+bg_glow = "rgba(0, 255, 204, 0.18)"
+badge_text = "SOC RADAR ACTIVE"
+score_num = 0
+results = None
+
+if uploaded_file is not None:
+    with st.spinner("Analyzing email payloads and generating mitigation playbooks..."):
+        raw_bytes = uploaded_file.getvalue()
+        engine = EmailIngestionEngine(raw_bytes, api_key=api_key)
+        results = engine.parse_email()
+
+    # Extract score integer safely
+    raw_score = str(results.get("ai_analysis", {}).get("score", "0"))
+    try:
+        score_num = int("".join([c for c in raw_score.split("/")[0] if c.isdigit()]))
+    except Exception:
+        score_num = 0
+
+    # Color State Transition Logic
+    if score_num >= 70:
+        primary_color = "#ff3355"  # RED ALERT
+        glow_rgba = "rgba(255, 51, 85, 0.25)"
+        bg_glow = "rgba(255, 51, 85, 0.25)"
+        badge_text = "CRITICAL THREAT DETECTED"
+    elif score_num >= 40:
+        primary_color = "#ffaa00"  # AMBER WARNING
+        glow_rgba = "rgba(255, 170, 0, 0.25)"
+        bg_glow = "rgba(255, 170, 0, 0.22)"
+        badge_text = "SUSPICIOUS ACTIVITY LOGGED"
+    else:
+        primary_color = "#00ffcc"  # GREEN SECURE
+        glow_rgba = "rgba(0, 255, 204, 0.15)"
+        bg_glow = "rgba(0, 255, 204, 0.18)"
+        badge_text = "CLEAN ARTIFACT CONFIRMED"
+
+# 2. Dynamic Injectable CSS Layer
 st.markdown(
-    """
+    f"""
     <style>
-    /* 1. FAINT CYBER SCANLINE & HUD OVERLAY (Above all elements) */
-    .stApp::before {
+    /* FAINT CYBER SCANLINE OVERLAY */
+    .stApp::before {{
         content: " ";
         display: block;
         position: fixed;
         top: 0; left: 0; bottom: 0; right: 0;
         background: linear-gradient(
             rgba(18, 16, 16, 0) 50%, 
-            rgba(0, 255, 204, 0.025) 50%
+            {glow_rgba} 50%
         ), linear-gradient(
             90deg,
             rgba(255, 0, 0, 0.01),
@@ -34,192 +80,137 @@ st.markdown(
         background-size: 100% 3px, 3px 100%;
         pointer-events: none;
         opacity: 0.65;
-    }
+    }}
 
-    /* Faint Moving Radar Laser Beam */
-    .stApp::after {
+    /* Radar Laser Sweep */
+    .stApp::after {{
         content: "";
         position: fixed;
         top: 0; left: 0; right: 0; height: 100vh;
-        background: linear-gradient(180deg, transparent 0%, rgba(0, 255, 204, 0.04) 50%, transparent 100%);
-        animation: radarSweep 6s ease-in-out infinite;
+        background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, transparent 100%);
+        animation: radarSweep 5s ease-in-out infinite;
         pointer-events: none;
         z-index: 99998;
-    }
+    }}
 
-    @keyframes radarSweep {
-        0% { transform: translateY(-100%); }
-        100% { transform: translateY(100%); }
-    }
+    @keyframes radarSweep {{
+        0% {{ transform: translateY(-100%); }}
+        100% {{ transform: translateY(100%); }}
+    }}
 
-    /* 2. Base Futuristic Dark Ambiance */
-    .stApp {
+    /* Futuristic Dark Ambiance */
+    .stApp {{
         background-color: #04070d !important;
         background-image: 
-            radial-gradient(circle at 50% 0%, rgba(0, 255, 204, 0.18) 0%, transparent 70%),
-            radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
-            linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px) !important;
+            radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 70%),
+            radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+            linear-gradient({glow_rgba} 1px, transparent 1px),
+            linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
         background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
-    }
+    }}
 
-    /* 3. Live SOC Radar Badge */
-    .live-badge {
+    /* SOC Radar Badge */
+    .live-badge {{
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: rgba(0, 255, 204, 0.08);
-        border: 1px solid #00ffcc;
-        color: #00ffcc;
+        background: {glow_rgba};
+        border: 1px solid {primary_color};
+        color: {primary_color};
         font-size: 11px;
         padding: 6px 14px;
         border-radius: 20px;
         font-family: 'Courier New', monospace;
         font-weight: bold;
         letter-spacing: 1.5px;
-        box-shadow: 0 0 15px rgba(0, 255, 204, 0.25);
-    }
+        box-shadow: 0 0 15px {glow_rgba};
+    }}
 
-    .pulse-dot {
+    .pulse-dot {{
         width: 8px;
         height: 8px;
-        background-color: #00ffcc;
+        background-color: {primary_color};
         border-radius: 50%;
-        box-shadow: 0 0 10px #00ffcc;
+        box-shadow: 0 0 10px {primary_color};
         display: inline-block;
         animation: socPulse 1.2s infinite ease-in-out !important;
-    }
+    }}
 
-    @keyframes socPulse {
-        0%, 100% { transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px #00ffcc; }
-        50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px #00ffcc; }
-    }
+    @keyframes socPulse {{
+        0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
+        50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px {primary_color}; }}
+    }}
 
-    /* 4. Dropzone Radar Glow */
-    [data-testid="stFileUploadDropzone"], .stFileUploader section {
+    /* Dropzone Radar Glow */
+    [data-testid="stFileUploadDropzone"], .stFileUploader section {{
         background: rgba(8, 14, 26, 0.75) !important;
         backdrop-filter: blur(16px) !important;
-        border: 1.5px dashed #00ffcc !important;
+        border: 1.5px dashed {primary_color} !important;
         border-radius: 16px !important;
-        box-shadow: 0 0 20px rgba(0, 255, 204, 0.15) !important;
-    }
+        box-shadow: 0 0 20px {glow_rgba} !important;
+    }}
 
-    /* 5. Sleek Metric Containers */
-    [data-testid="stMetric"] {
+    /* Metric Containers */
+    [data-testid="stMetric"] {{
         background: rgba(10, 18, 32, 0.75) !important;
         backdrop-filter: blur(14px) !important;
-        border: 1px solid rgba(0, 255, 204, 0.25) !important;
+        border: 1px solid {primary_color} !important;
         border-radius: 12px !important;
         padding: 10px 14px !important;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
-    }
-    [data-testid="stMetricValue"] {
-        color: #00ffcc !important;
+    }}
+    [data-testid="stMetricValue"] {{
+        color: {primary_color} !important;
         font-family: 'JetBrains Mono', monospace !important;
         font-size: 22px !important;
-        text-shadow: 0 0 12px rgba(0, 255, 204, 0.6);
-    }
-    [data-testid="stMetricLabel"] {
-        font-size: 11px !important;
-        letter-spacing: 1px;
-    }
+        text-shadow: 0 0 12px {primary_color};
+    }}
 
-    /* 6. Tabs & Expanders Glassmorphism */
-    div[data-testid="stExpander"], div.stDataFrame {
-        border: 1px solid rgba(0, 255, 204, 0.2) !important;
+    /* Tabs & Expanders Glassmorphism */
+    div[data-testid="stExpander"], div.stDataFrame {{
+        border: 1px solid {glow_rgba} !important;
         border-radius: 10px !important;
         background: rgba(8, 14, 26, 0.65) !important;
         backdrop-filter: blur(12px) !important;
-    }
+    }}
 
-    .demo-chip {
+    .demo-chip {{
         display: inline-block;
         padding: 4px 12px;
-        background: rgba(56, 189, 248, 0.1);
-        border: 1px solid rgba(56, 189, 248, 0.3);
+        background: {glow_rgba};
+        border: 1px solid {primary_color};
         border-radius: 6px;
-        color: #38bdf8;
+        color: {primary_color};
         font-size: 12px;
         font-family: monospace;
         margin-right: 6px;
-    }
+    }}
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# Read key securely
-api_key = st.secrets.get("GEMINI_API_KEY", "")
-
-# --- HEADER WITH PULSING LIVE BEACON ---
+# Header Section
 col1, col2 = st.columns([3.5, 1.5])
 with col1:
     st.markdown(
-        "<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span"
-        " style='color: #00ffcc;'>Zero-Code</span></h1>",
+        f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Zero-Code</span></h1>",
         unsafe_allow_html=True,
     )
     st.markdown(
-        "<p style='color: #94a3b8; font-size: 15px; margin-top:"
-        " 4px;'>Autonomous AI Email Threat Detection & Forensic Intelligence"
-        " Platform</p>",
+        "<p style='color: #94a3b8; font-size: 15px; margin-top: 4px;'>Autonomous AI Email Threat Detection & Forensic Intelligence Platform</p>",
         unsafe_allow_html=True,
     )
 with col2:
     st.markdown(
-        "<div style='text-align: right; margin-top: 15px;'><span"
-        " class='live-badge'><span class='pulse-dot'></span>SOC ENGINE"
-        " ACTIVE</span></div>",
+        f"<div style='text-align: right; margin-top: 15px;'><span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span></div>",
         unsafe_allow_html=True,
     )
 
 st.divider()
 
-uploaded_file = st.file_uploader(
-    "Drop a suspicious .eml or .msg file here", type=["eml", "msg"]
-)
-
-# Empty state landing page
-if not uploaded_file:
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.metric(label="CORE ENGINE", value="ZERO-DISK", delta="RAM Buffer")
-    with c2:
-        st.metric(label="GEO RADAR", value="LIVE IP", delta="Hop Tracer")
-    with c3:
-        st.metric(label="AI BRAIN", value="GEMINI", delta="Heuristics")
-    with c4:
-        st.metric(label="SOAR DEFENSE", value="ACTIVE", delta="IPTables/DNS")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    st.markdown(
-        """
-        <div style="
-            background: rgba(6, 11, 21, 0.9);
-            border: 1px solid rgba(0, 255, 204, 0.2);
-            border-left: 4px solid #00ffcc;
-            border-radius: 8px;
-            padding: 14px 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #94a3b8;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        ">
-            <span style="color: #00ffcc; font-weight: bold;">[SOC RADAR LIVE]</span> 
-            Awaiting forensic byte stream... | 
-            <span class="demo-chip">DRAG & DROP .EML</span>
-            <span class="demo-chip">DEEP RELAY PARSE</span>
-            <span class="demo-chip">PDF READY</span>
-        </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-
-def build_pdf_buffer(results):
+# PDF Builder Definition
+def build_pdf_buffer(results_data):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -267,7 +258,7 @@ def build_pdf_buffer(results):
     story.append(Spacer(1, 10))
 
     story.append(Paragraph("Email Metadata", heading_style))
-    meta = results.get("metadata", {})
+    meta = results_data.get("metadata", {})
     meta_data = [
         [
             Paragraph("<b>Subject:</b>", body_style),
@@ -293,7 +284,7 @@ def build_pdf_buffer(results):
             Paragraph("<b>AI Threat Score:</b>", body_style),
             Paragraph(
                 html.escape(
-                    str(results.get("ai_analysis", {}).get("score", "N/A"))
+                    str(results_data.get("ai_analysis", {}).get("score", "N/A"))
                 ),
                 body_style,
             ),
@@ -313,7 +304,7 @@ def build_pdf_buffer(results):
 
     story.append(Paragraph("AI Forensic Breakdown", heading_style))
     ai_analysis_text = html.escape(
-        str(results.get("ai_analysis", {}).get("analysis", "None"))
+        str(results_data.get("ai_analysis", {}).get("analysis", "None"))
     )
     story.append(Paragraph(ai_analysis_text, body_style))
     story.append(Spacer(1, 10))
@@ -324,7 +315,7 @@ def build_pdf_buffer(results):
         )
     )
     mitigations_raw = str(
-        results.get("ai_analysis", {}).get(
+        results_data.get("ai_analysis", {}).get(
             "mitigations", "No immediate mitigation required."
         )
     )
@@ -335,7 +326,7 @@ def build_pdf_buffer(results):
     story.append(
         Paragraph("Extracted Indicators of Compromise (IOC URLs)", heading_style)
     )
-    urls = results.get("body_artifacts", {}).get("extracted_urls", [])
+    urls = results_data.get("body_artifacts", {}).get("extracted_urls", [])
     if urls:
         url_data = [
             [Paragraph(f"• {html.escape(str(u))}", body_style)]
@@ -357,41 +348,62 @@ def build_pdf_buffer(results):
     return buffer
 
 
-if uploaded_file is not None:
-    with st.spinner(
-        "Analyzing email payloads and generating mitigation playbooks..."
-    ):
-        raw_bytes = uploaded_file.getvalue()
-        engine = EmailIngestionEngine(raw_bytes, api_key=api_key)
-        results = engine.parse_email()
+# Viewport Rendering Logic
+if not uploaded_file:
+    st.markdown("<br>", unsafe_allow_html=True)
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.metric(label="CORE ENGINE", value="ZERO-DISK", delta="RAM Buffer")
+    with c2:
+        st.metric(label="GEO RADAR", value="LIVE IP", delta="Hop Tracer")
+    with c3:
+        st.metric(label="AI BRAIN", value="GEMINI", delta="Heuristics")
+    with c4:
+        st.metric(label="SOAR DEFENSE", value="ACTIVE", delta="IPTables/DNS")
 
-    st.success("Target acquired. Forensic breakdown complete.")
-    st.divider()
-
+    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
-        "<h3 style='color: white;'>Threat Intelligence Overview</h3>",
+        f"""
+        <div style="
+            background: rgba(6, 11, 21, 0.9);
+            border: 1px solid {glow_rgba};
+            border-left: 4px solid {primary_color};
+            border-radius: 8px;
+            padding: 14px 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #94a3b8;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        ">
+            <span style="color: {primary_color}; font-weight: bold;">[SOC RADAR LIVE]</span> 
+            Awaiting forensic byte stream... | 
+            <span class="demo-chip">DRAG & DROP .EML</span>
+            <span class="demo-chip">DEEP RELAY PARSE</span>
+            <span class="demo-chip">PDF READY</span>
+        </div>
+    """,
         unsafe_allow_html=True,
     )
+else:
+    if score_num >= 70:
+        st.error(f"🚨 CRITICAL THREAT ACQUIRED — High Confidence Threat Artifact ({score_num}/100)")
+    elif score_num >= 40:
+        st.warning(f"⚠️ SUSPICIOUS PATTERNS IDENTIFIED — Moderate Risk Profile ({score_num}/100)")
+    else:
+        st.success(f"✅ TARGET ACQUIRED — Clean / Low Risk Artifact ({score_num}/100)")
+
+    st.divider()
+    st.markdown("<h3 style='color: white;'>Threat Intelligence Overview</h3>", unsafe_allow_html=True)
 
     ai_score = results.get("ai_analysis", {}).get("score", "N/A")
-    ai_reason = results.get("ai_analysis", {}).get(
-        "analysis", "No AI analysis performed."
-    )
-    ai_mitigations = results.get("ai_analysis", {}).get(
-        "mitigations", "No mitigations available."
-    )
+    ai_reason = results.get("ai_analysis", {}).get("analysis", "No AI analysis performed.")
+    ai_mitigations = results.get("ai_analysis", {}).get("mitigations", "No mitigations available.")
 
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("🧠 AI Threat Score", ai_score)
     m2.metric("Sender IP", results["metadata"]["sender_ip"] or "Hidden")
-    m3.metric(
-        "SPF Check",
-        "Pass" if results["authentication"]["spf_pass"] else "Fail/None",
-    )
-    m4.metric(
-        "Extracted URLs",
-        f"{len(results['body_artifacts']['extracted_urls'])} Detected",
-    )
+    m3.metric("SPF Check", "Pass" if results["authentication"]["spf_pass"] else "Fail/None")
+    m4.metric("Extracted URLs", f"{len(results['body_artifacts']['extracted_urls'])} Detected")
 
     st.info(f"**AI Forensic Analysis:** {ai_reason}")
     st.divider()
@@ -422,9 +434,7 @@ if uploaded_file is not None:
         st.subheader("Quick Defensive Actions")
         col_act1, col_act2 = st.columns(2)
         with col_act1:
-            st.button(
-                "🚫 Export Blocklist for Firewall (iptables / Suricata)"
-            )
+            st.button("🚫 Export Blocklist for Firewall (iptables / Suricata)")
         with col_act2:
             st.button("✉️ Draft Automated Takedown Request")
 
@@ -472,9 +482,9 @@ if uploaded_file is not None:
                 folium.CircleMarker(
                     location=[lat, lon],
                     radius=10,
-                    color="#00ffcc",
+                    color=primary_color,
                     fill=True,
-                    fill_color="#ff3366",
+                    fill_color=primary_color,
                     fill_opacity=0.85,
                     popup=f"<b>Origin:</b> {city}, {country}<br><b>ISP:</b> {isp}",
                     tooltip=f"Threat Origin: {city}, {country}",
