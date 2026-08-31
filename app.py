@@ -24,6 +24,7 @@ score_num = 0
 results = None
 audio_type = "none"
 
+# Default voice message on empty landing screen
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
 if uploaded_file is not None:
@@ -66,12 +67,71 @@ if uploaded_file is not None:
 
 particle_color = primary_color
 
-# Injected DOM with Canvas + Hardware-accelerated Laser Beam
+# Injected Fullscreen Canvas Container: Matrix Particles + Live Laser Scan Beam + Rotating Radar Sweep
 voice_and_particles_js = f"""
-<div id="canvas-container" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:99999;">
-    <canvas id="cyberMatrixCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;"></canvas>
-    <div class="cyber-laser-beam"></div>
+<div id="canvas-container" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:99999; overflow:hidden;">
+    <canvas id="cyberMatrixCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:1;"></canvas>
+    
+    <!-- Neon Laser Scan Beam Line -->
+    <div id="laserBeam" style="
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 3px;
+        background: linear-gradient(90deg, transparent 0%, {primary_color} 25%, #ffffff 50%, {primary_color} 75%, transparent 100%);
+        box-shadow: 0 0 15px {primary_color}, 0 0 35px {primary_color}, 0 0 60px {primary_color}, 0 1px 8px #ffffff;
+        z-index: 3;
+        animation: laserScanAnim 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+    "></div>
+
+    <!-- Live Rotating Radar Sweep -->
+    <div id="radarSweepCircle" style="
+        position: fixed;
+        right: -80px;
+        bottom: -80px;
+        width: 450px;
+        height: 450px;
+        border-radius: 50%;
+        border: 1px dashed {primary_color};
+        box-shadow: inset 0 0 40px {glow_rgba}, 0 0 20px {glow_rgba};
+        z-index: 2;
+        opacity: 0.55;
+    ">
+        <div style="
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, {primary_color} 0deg, {glow_rgba} 45deg, transparent 90deg, transparent 360deg);
+            animation: radarRotate 6s linear infinite;
+        "></div>
+    </div>
 </div>
+
+<style>
+@keyframes laserScanAnim {{
+    0% {{
+        top: 0vh;
+        opacity: 0.2;
+    }}
+    15% {{
+        opacity: 1;
+    }}
+    85% {{
+        opacity: 1;
+    }}
+    100% {{
+        top: 98vh;
+        opacity: 0.2;
+    }}
+}}
+
+@keyframes radarRotate {{
+    from {{ transform: rotate(0deg); }}
+    to {{ transform: rotate(360deg); }}
+}}
+</style>
+
 <script>
 (function() {{
     const canvas = document.getElementById('cyberMatrixCanvas');
@@ -192,66 +252,21 @@ voice_and_particles_js = f"""
 """
 st.components.v1.html(voice_and_particles_js, height=0)
 
+# Cyber HUD Styling
 st.markdown(
     f"""
     <style>
-    /* 1. FAINT SCANLINE GRID */
     .stApp::before {{
         content: " ";
         display: block;
         position: fixed;
         top: 0; left: 0; bottom: 0; right: 0;
         background: linear-gradient(rgba(18, 16, 16, 0) 50%, {glow_rgba} 50%), 
-                    linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.01));
+                    linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.01), rgba(0, 255, 0, 0.01));
         z-index: 99998;
         background-size: 100% 3px, 3px 100%;
         pointer-events: none;
         opacity: 0.65;
-    }}
-
-    /* 2. BRIGHT HIGH-INTENSITY LASER SCANNER BEAM */
-    .cyber-laser-beam {{
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 100vw;
-        height: 3px;
-        background: linear-gradient(90deg, 
-            transparent 0%, 
-            {primary_color} 20%, 
-            #ffffff 50%, 
-            {primary_color} 80%, 
-            transparent 100%
-        );
-        box-shadow: 
-            0 0 15px {primary_color}, 
-            0 0 30px {primary_color}, 
-            0 0 50px {primary_color},
-            0 2px 10px rgba(255, 255, 255, 0.8);
-        z-index: 999999;
-        pointer-events: none;
-        animation: tacticalLaserScan 4s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
-    }}
-
-    @keyframes tacticalLaserScan {{
-        0% {{
-            top: 0vh;
-            opacity: 0.2;
-            transform: scaleX(0.95);
-        }}
-        15% {{
-            opacity: 0.95;
-            transform: scaleX(1);
-        }}
-        85% {{
-            opacity: 0.95;
-            transform: scaleX(1);
-        }}
-        100% {{
-            top: 98vh;
-            opacity: 0.2;
-            transform: scaleX(0.95);
-        }}
     }}
 
     .stApp {{
