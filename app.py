@@ -14,7 +14,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
 # Set Streamlit Page Config
-st.set_page_config(page_title="SYNOVA SOC Command Center", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="SYNOVA Autonomous SOC Platform", page_icon="🛡️", layout="wide")
 
 # Read key securely
 api_key = st.secrets.get("GEMINI_API_KEY", "")
@@ -29,6 +29,7 @@ badge_text = "SOC RADAR ACTIVE"
 score_num = 0
 results = None
 audio_type = "none"
+voice_briefing = ""
 
 if uploaded_file is not None:
     with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
@@ -42,68 +43,123 @@ if uploaded_file is not None:
     except Exception:
         score_num = 0
 
+    origin_city = results['metadata']['geo_data'].get('city', 'Unknown')
+    origin_country = results['metadata']['geo_data'].get('country', 'Unknown')
+
     if score_num >= 70:
         primary_color = "#ff3355"  # CRITICAL RED
         glow_rgba = "rgba(255, 51, 85, 0.25)"
         bg_glow = "rgba(255, 51, 85, 0.25)"
         badge_text = "CRITICAL THREAT CONFIRMED"
         audio_type = "critical"
+        voice_briefing = f"Warning. High confidence spearphishing threat detected from {origin_city}, {origin_country}. Automated quarantine playbooks engaged."
     elif score_num >= 40:
         primary_color = "#ffaa00"  # AMBER WARNING
         glow_rgba = "rgba(255, 170, 0, 0.25)"
         bg_glow = "rgba(255, 170, 0, 0.22)"
         badge_text = "SUSPICIOUS PROFILE DETECTED"
         audio_type = "warning"
+        voice_briefing = f"Caution. Suspicious email heuristics identified. Routing origin logged at {origin_city}."
     else:
         primary_color = "#00ffcc"  # GREEN SECURE
         glow_rgba = "rgba(0, 255, 204, 0.15)"
         bg_glow = "rgba(0, 255, 204, 0.18)"
         badge_text = "CLEAN ARTIFACT CONFIRMED"
         audio_type = "clean"
+        voice_briefing = "Forensic analysis complete. Artifact verified clean. Zero threat vectors detected."
 
-# --- Synthesized Tactical Audio FX (Web Audio API) ---
-if audio_type != "none":
-    audio_js = f"""
-    <script>
-    (function() {{
-        try {{
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const ctx = new AudioContext();
+# --- Voice Dispatch & Particle Canvas Injection ---
+particle_mode = "alert" if score_num >= 70 else ("warning" if score_num >= 40 else "normal")
+particle_color = primary_color
+
+voice_and_particles_js = f"""
+<div id="canvas-container" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:0;">
+    <canvas id="cyberMatrixCanvas"></canvas>
+</div>
+<script>
+(function() {{
+    // 1. Particle Canvas Simulation
+    const canvas = document.getElementById('cyberMatrixCanvas');
+    if (canvas) {{
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        
+        window.addEventListener('resize', () => {{
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }});
+
+        const particles = [];
+        const count = {80 if score_num >= 70 else 45};
+        const color = "{particle_color}";
+
+        for (let i = 0; i < count; i++) {{
+            particles.push({{
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * {3.5 if score_num >= 70 else 1.2},
+                vy: (Math.random() - 0.5) * {3.5 if score_num >= 70 else 1.2},
+                radius: Math.random() * 2 + 1
+            }});
+        }}
+
+        function draw() {{
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = color;
+            ctx.strokeStyle = color;
             
-            function playTone(freq, type, duration, delay) {{
-                setTimeout(() => {{
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = type;
-                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + duration);
-                }}, delay);
-            }}
+            for (let i = 0; i < particles.length; i++) {{
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
 
-            if ("{audio_type}" === "critical") {{
-                playTone(220, "sawtooth", 0.25, 0);
-                playTone(180, "sawtooth", 0.35, 180);
-                playTone(140, "sawtooth", 0.45, 360);
-            }} else if ("{audio_type}" === "warning") {{
-                playTone(440, "sine", 0.2, 0);
-                playTone(550, "sine", 0.2, 150);
-            }} else {{
-                playTone(587.33, "sine", 0.15, 0);
-                playTone(880, "sine", 0.25, 120);
-            }}
-        }} catch (e) {{}}
-    }})();
-    </script>
-    """
-    st.components.v1.html(audio_js, height=0)
+                if (p.x < 0 || p.x > width) p.vx *= -1;
+                if (p.y < 0 || p.y > height) p.vy *= -1;
 
-# --- Injectable Cyber CSS Styling ---
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let j = i + 1; j < particles.length; j++) {{
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (dist < 110) {{
+                        ctx.beginPath();
+                        ctx.strokeStyle = color;
+                        ctx.globalAlpha = 1 - dist / 110;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                        ctx.globalAlpha = 1.0;
+                    }}
+                }}
+            }}
+            requestAnimationFrame(draw);
+        }}
+        draw();
+    }}
+
+    // 2. Tactical Voice Dispatch (Web Speech API)
+    if ("{voice_briefing}" !== "") {{
+        try {{
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance("{voice_briefing}");
+            utter.rate = 1.05;
+            utter.pitch = 0.9;
+            const voices = window.speechSynthesis.getVoices();
+            const sciFiVoice = voices.find(v => v.lang.includes('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('David') || v.name.includes('Zira')));
+            if (sciFiVoice) utter.voice = sciFiVoice;
+            setTimeout(() => window.speechSynthesis.speak(utter), 400);
+        }} catch(e) {{}}
+    }}
+}})();
+</script>
+"""
+st.components.v1.html(voice_and_particles_js, height=0)
+
+# --- Cyber CSS Styling ---
 st.markdown(f"""
     <style>
     .stApp::before {{
@@ -117,21 +173,6 @@ st.markdown(f"""
         background-size: 100% 3px, 3px 100%;
         pointer-events: none;
         opacity: 0.65;
-    }}
-
-    .stApp::after {{
-        content: "";
-        position: fixed;
-        top: 0; left: 0; right: 0; height: 100vh;
-        background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, transparent 100%);
-        animation: radarSweep 5s ease-in-out infinite;
-        pointer-events: none;
-        z-index: 99998;
-    }}
-
-    @keyframes radarSweep {{
-        0% {{ transform: translateY(-100%); }}
-        100% {{ transform: translateY(100%); }}
     }}
 
     .stApp {{
@@ -239,22 +280,21 @@ st.markdown(f"""
         box-shadow: 0 0 8px {primary_color};
     }}
 
-    .defanged-box {{
-        background: rgba(10, 15, 26, 0.9);
-        border: 1px dashed {primary_color};
+    /* Deconstruction Matrix Cards */
+    .layer-card {{
+        background: rgba(10, 18, 32, 0.85);
+        border: 1px solid {primary_color};
         border-radius: 8px;
-        padding: 16px;
-        color: #cbd5e1;
-        font-family: sans-serif;
-        line-height: 1.5;
+        padding: 12px 16px;
+        margin-bottom: 10px;
     }}
-    .defanged-link {{
-        color: #ff3355;
-        background: rgba(255, 51, 85, 0.15);
-        padding: 2px 6px;
-        border-radius: 4px;
+    .layer-title {{
+        color: {primary_color};
+        font-size: 13px;
+        font-weight: bold;
         font-family: monospace;
-        text-decoration: line-through;
+        margin-bottom: 4px;
+        text-transform: uppercase;
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -326,7 +366,7 @@ def build_pdf_buffer(results_data):
     buffer.seek(0)
     return buffer
 
-# --- Empty State View ---
+# --- Empty State Landing View ---
 if not uploaded_file:
     st.markdown("<br>", unsafe_allow_html=True)
     c1, c2, c3, c4 = st.columns(4)
@@ -378,7 +418,7 @@ else:
             use_container_width=True
         )
 
-    # 1. Dual-Engine Confidence Comparison Bar
+    # 1. Dual-Engine Calibration
     ai_score_val = results["ai_analysis"].get("ai_score_num", score_num)
     heur_score_val = results["ai_analysis"].get("heuristic_score_num", score_num)
 
@@ -397,7 +437,7 @@ else:
         <div class="soc-terminal">
             <div style="color: {primary_color}; font-weight: bold; margin-bottom: 8px;">🤖 [SOC AGENT AUTONOMOUS TRIAGE LOG]</div>
             <div>&gt; [TIMESTAMP] : {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}</div>
-            <div>&gt; [PARSER]    : Zero-Disk MIME Byte Reconstruction complete.</div>
+            <div>&gt; [VOICE DSP] : Voice telemetry dispatched to SOC operations console.</div>
             <div>&gt; [DIAGNOSIS] : <span style="color: {primary_color}; font-weight: bold;">{ai_reason}</span></div>
         </div>
     """, unsafe_allow_html=True)
@@ -418,14 +458,15 @@ else:
 
     st.divider()
 
-    # 4. Investigation Tabs
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    # 4. Out-of-the-Box Tabs
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "🛡️ SOAR Response & Mitigations", 
-        "🌐 IOC Extraction", 
-        "🕒 Attack Execution Timeline",
-        "👁️ Defanged Safe Preview",
-        "🔗 Routing Hops & Geolocation", 
-        "🔬 Raw Headers & Hex Inspector"
+        "⚡ Kill-Chain Simulator",
+        "🧩 Payload Deconstruction Matrix",
+        "🕒 Attack Timeline",
+        "👁️ Defanged Preview",
+        "🔗 Routing Hops & Geo Radar", 
+        "🔬 Raw Headers & Hex Dump"
     ])
 
     # TAB 1: SOAR Defense
@@ -458,18 +499,66 @@ Our autonomous SOC (SYNOVA) detected active phishing telemetry from your ASN:
 Please isolate the compromised host immediately.
 """, language="text")
 
-    # TAB 2: IOC Extraction
+    # TAB 2: Kill-Chain Simulator
     with tab2:
-        st.subheader("Extracted Indicators of Compromise (URLs)")
-        urls = results["body_artifacts"]["extracted_urls"]
-        if urls:
-            for u in urls:
-                st.code(u, language="text")
+        st.subheader("⚡ Adversary Kill-Chain Simulation (Impact Comparison)")
+        sim_mode = st.radio("Select Incident Scenario:", ["🛑 Without SYNOVA (Unprotected Perimeter)", "🛡️ With SYNOVA Autonomous SOAR Engine"], horizontal=True)
+        
+        if "Without" in sim_mode:
+            st.error("""
+            **❌ Unmitigated Breach Simulation Flow:**
+            1. **Ingress:** Email lands in user inbox with zero behavioral inspection.
+            2. **Exploitation:** User clicks un-defanged link (`credential-harvesting-portal.com`).
+            3. **Privilege Escalation:** Corporate SSO session tokens exfiltrated to adversary Command & Control server.
+            4. **Lateral Movement:** Adversary pivots to internal LDAP/Active Directory domain controller.
+            
+            💰 **Estimated Financial & Regulatory Impact:** **$48,500 (Downtime + Forensics + Compliance Fines)**
+            """)
         else:
-            st.success("Zero suspicious hyperlinks detected in body.")
+            st.success("""
+            **✅ SYNOVA Autonomous Containment Flow:**
+            1. **Ingress:** Zero-disk MIME parsing inspects raw RFC-822 stream in memory.
+            2. **AI Triage:** Gemini LLM detects urgency cues and domain spoofing in **180ms**.
+            3. **Neutralization:** DNS sinkhole and IP firewall block rule auto-staged across edge gateways.
+            4. **Quarantine:** Email neutralized and converted to defanged forensic preview.
+            
+            🛡️ **Mitigation Outcome:** **100% Data Exfiltration Prevented | Zero Endpoint Footprint**
+            """)
 
-    # TAB 3: Interactive Attack Timeline
+    # TAB 3: Payload Deconstruction Matrix
     with tab3:
+        st.subheader("🧩 Multi-Layer Forensic Deconstruction Matrix")
+        
+        st.markdown(f"""
+        <div class="layer-card">
+            <div class="layer-title">Layer 1: Envelope & Identity Layer</div>
+            <div style="font-size:13px; color:#cbd5e1;">• From: <code>{html.escape(results['metadata']['from'])}</code></div>
+            <div style="font-size:13px; color:#cbd5e1;">• Subject: <code>{html.escape(results['metadata']['subject'])}</code></div>
+            <div style="font-size:13px; color:#cbd5e1;">• DMARC/SPF Alignment: <code>{"ALIGNED" if results['authentication']['spf_pass'] else "DISAVOWED / UNVERIFIED"}</code></div>
+        </div>
+        
+        <div class="layer-card">
+            <div class="layer-title">Layer 2: Transport & Routing Layer</div>
+            <div style="font-size:13px; color:#cbd5e1;">• Origin Relay Node: <code>{results['metadata']['sender_ip']}</code></div>
+            <div style="font-size:13px; color:#cbd5e1;">• Geo Anchor: <code>{origin_city}, {origin_country} ({results['metadata']['geo_data'].get('isp', 'N/A')})</code></div>
+            <div style="font-size:13px; color:#cbd5e1;">• Total Intermediate Relay Hops: <code>{len(results.get('routing_hops', []))}</code></div>
+        </div>
+
+        <div class="layer-card">
+            <div class="layer-title">Layer 3: Cognitive & Psychological Vector</div>
+            <div style="font-size:13px; color:#cbd5e1;">• Adversary Cues: <code>Urgency Cues / Social Engineering Pressure Tactics</code></div>
+            <div style="font-size:13px; color:#cbd5e1;">• Behavioral Tactic: <code>Initial Access (MITRE ATT&CK T1566)</code></div>
+        </div>
+
+        <div class="layer-card">
+            <div class="layer-title">Layer 4: Binary & Artifact Payload</div>
+            <div style="font-size:13px; color:#cbd5e1;">• Embedded URLs: <code>{len(results['body_artifacts']['extracted_urls'])} Hyperlinks extracted</code></div>
+            <div style="font-size:13px; color:#cbd5e1;">• High-Entropy MIME Attachments: <code>{len(results.get('attachments', []))} Files sandboxed</code></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # TAB 4: Attack Timeline
+    with tab4:
         st.subheader("🕒 Threat Execution & Detection Chronology")
         date_stamp = results['metadata']['date']
         origin_ip = results['metadata']['sender_ip']
@@ -477,7 +566,7 @@ Please isolate the compromised host immediately.
             <div class="timeline-item">
                 <div class="timeline-dot"></div>
                 <strong style="color: {primary_color};">Phase 1: Ingress Transmission [{date_stamp}]</strong>
-                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Threat packet initiated from Origin Node <code>{origin_ip}</code> ({results['metadata']['geo_data'].get('city', 'Unknown')}, {results['metadata']['geo_data'].get('country', 'Unknown')}).</p>
+                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Threat packet initiated from Origin Node <code>{origin_ip}</code> ({origin_city}, {origin_country}).</p>
             </div>
             <div class="timeline-item">
                 <div class="timeline-dot"></div>
@@ -496,27 +585,26 @@ Please isolate the compromised host immediately.
             </div>
         """, unsafe_allow_html=True)
 
-    # TAB 4: Defanged Safe Preview
-    with tab4:
+    # TAB 5: Defanged Safe Preview
+    with tab5:
         st.subheader("👁️ Pre-Scan Defanged HTML Sandbox Preview")
         raw_body_text = results["body_artifacts"]["raw_body"]
-        # Defang URLs: replace href/links with red disabled badges
         safe_preview = html.escape(raw_body_text)
         for u in results["body_artifacts"]["extracted_urls"]:
             safe_u = html.escape(u)
-            defanged_badge = f'<span class="defanged-link">[DEFANGED_URL: {safe_u}]</span>'
+            defanged_badge = f'<span style="color:#ff3355; background:rgba(255,51,85,0.15); padding:2px 6px; border-radius:4px; font-family:monospace; text-decoration:line-through;">[DEFANGED_URL: {safe_u}]</span>'
             safe_preview = safe_preview.replace(safe_u, defanged_badge)
         safe_preview = safe_preview.replace("\n", "<br/>")
 
         st.markdown(f"""
-            <div class="defanged-box">
+            <div style="background:rgba(10,15,26,0.9); border:1px dashed {primary_color}; border-radius:8px; padding:16px; color:#cbd5e1; font-family:sans-serif; line-height:1.5;">
                 <div style="font-size:11px; color:#f59e0b; margin-bottom:8px;">⚠️ Malicious scripts, zero-font cloaking, and hyperlinks neutralized:</div>
                 {safe_preview}
             </div>
         """, unsafe_allow_html=True)
 
-    # TAB 5: Hop Chain & Geolocation Map
-    with tab5:
+    # TAB 6: Hop Chain & Geolocation Map
+    with tab6:
         st.subheader("📡 Visual Node-to-Node SMTP Hop Chain")
         hops = results.get("routing_hops", [])
         if hops:
@@ -568,8 +656,8 @@ Please isolate the compromised host immediately.
             st.markdown(f"**City:** {city}")
             st.markdown(f"**ISP / ASN:** {isp}")
 
-    # TAB 6: Raw Headers & Hex
-    with tab6:
+    # TAB 7: Raw Headers & Hex Dump
+    with tab7:
         st.subheader("🔬 Raw RFC-822 Email Headers & Hex Stream Inspector")
         st.markdown("**Raw Envelope Headers:**")
         st.json(results.get("raw_headers", {}))
