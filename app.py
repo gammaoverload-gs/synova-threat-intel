@@ -15,21 +15,69 @@ from streamlit_folium import st_folium
 st.markdown(
     """
     <style>
-    /* Live SOC Radar Pulse */
+    /* 1. FAINT CYBER SCANLINE & HUD OVERLAY (Above all elements) */
+    .stApp::before {
+        content: " ";
+        display: block;
+        position: fixed;
+        top: 0; left: 0; bottom: 0; right: 0;
+        background: linear-gradient(
+            rgba(18, 16, 16, 0) 50%, 
+            rgba(0, 255, 204, 0.025) 50%
+        ), linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 0.01),
+            rgba(0, 255, 0, 0.01),
+            rgba(0, 0, 255, 0.01)
+        );
+        z-index: 99999;
+        background-size: 100% 3px, 3px 100%;
+        pointer-events: none;
+        opacity: 0.65;
+    }
+
+    /* Faint Moving Radar Laser Beam */
+    .stApp::after {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; height: 100vh;
+        background: linear-gradient(180deg, transparent 0%, rgba(0, 255, 204, 0.04) 50%, transparent 100%);
+        animation: radarSweep 6s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 99998;
+    }
+
+    @keyframes radarSweep {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+    }
+
+    /* 2. Base Futuristic Dark Ambiance */
+    .stApp {
+        background-color: #04070d !important;
+        background-image: 
+            radial-gradient(circle at 50% 0%, rgba(0, 255, 204, 0.18) 0%, transparent 70%),
+            radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
+            linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px) !important;
+        background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+    }
+
+    /* 3. Live SOC Radar Badge */
     .live-badge {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: rgba(0, 255, 204, 0.1);
+        background: rgba(0, 255, 204, 0.08);
         border: 1px solid #00ffcc;
         color: #00ffcc;
         font-size: 11px;
-        padding: 5px 14px;
+        padding: 6px 14px;
         border-radius: 20px;
         font-family: 'Courier New', monospace;
         font-weight: bold;
         letter-spacing: 1.5px;
-        box-shadow: 0 0 12px rgba(0, 255, 204, 0.3);
+        box-shadow: 0 0 15px rgba(0, 255, 204, 0.25);
     }
 
     .pulse-dot {
@@ -43,76 +91,47 @@ st.markdown(
     }
 
     @keyframes socPulse {
-        0% {
-            transform: scale(0.85);
-            opacity: 0.3;
-            box-shadow: 0 0 2px #00ffcc;
-        }
-        50% {
-            transform: scale(1.35);
-            opacity: 1;
-            box-shadow: 0 0 14px #00ffcc;
-        }
-        100% {
-            transform: scale(0.85);
-            opacity: 0.3;
-            box-shadow: 0 0 2px #00ffcc;
-        }
+        0%, 100% { transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px #00ffcc; }
+        50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px #00ffcc; }
     }
 
-    /* 1. Base Grid & Viewport Ambience */
-    .stApp {
-        background-color: #06090e !important;
-        background-image: 
-            radial-gradient(circle at 50% 0%, rgba(0, 255, 204, 0.15) 0%, transparent 60%),
-            radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.1) 0%, transparent 40%),
-            linear-gradient(rgba(0, 255, 204, 0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 204, 0.04) 1px, transparent 1px) !important;
-        background-size: 100% 100%, 100% 100%, 35px 35px, 35px 35px !important;
-    }
-
-    /* 2. Responsive Radar Dropzone */
+    /* 4. Dropzone Radar Glow */
     [data-testid="stFileUploadDropzone"], .stFileUploader section {
-        background: rgba(10, 15, 26, 0.85) !important;
+        background: rgba(8, 14, 26, 0.75) !important;
         backdrop-filter: blur(16px) !important;
-        border: 2px dashed #00ffcc !important;
+        border: 1.5px dashed #00ffcc !important;
         border-radius: 16px !important;
-        animation: cyberRadar 2.5s infinite ease-in-out !important;
-    }
-    @keyframes cyberRadar {
-        0%, 100% { border-color: rgba(0, 255, 204, 0.3); box-shadow: 0 0 10px rgba(0, 255, 204, 0.1); }
-        50% { border-color: rgba(0, 255, 204, 1); box-shadow: 0 0 25px rgba(0, 255, 204, 0.4); }
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.15) !important;
     }
 
-    /* 3. Metric Containers */
+    /* 5. Sleek Metric Containers */
     [data-testid="stMetric"] {
-        background: rgba(13, 20, 36, 0.8) !important;
-        backdrop-filter: blur(12px) !important;
+        background: rgba(10, 18, 32, 0.75) !important;
+        backdrop-filter: blur(14px) !important;
         border: 1px solid rgba(0, 255, 204, 0.25) !important;
         border-radius: 12px !important;
         padding: 10px 14px !important;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
     }
     [data-testid="stMetricValue"] {
         color: #00ffcc !important;
         font-family: 'JetBrains Mono', monospace !important;
         font-size: 22px !important;
-        text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        text-shadow: 0 0 12px rgba(0, 255, 204, 0.6);
     }
     [data-testid="stMetricLabel"] {
         font-size: 11px !important;
         letter-spacing: 1px;
     }
 
-    /* 4. Glassmorphism IOC Table & Terminal Wrapper */
+    /* 6. Tabs & Expanders Glassmorphism */
     div[data-testid="stExpander"], div.stDataFrame {
         border: 1px solid rgba(0, 255, 204, 0.2) !important;
         border-radius: 10px !important;
-        background: rgba(10, 15, 26, 0.6) !important;
-        backdrop-filter: blur(10px) !important;
+        background: rgba(8, 14, 26, 0.65) !important;
+        backdrop-filter: blur(12px) !important;
     }
 
-    /* 5. Custom Quick-Action Demo Badges */
     .demo-chip {
         display: inline-block;
         padding: 4px 12px;
