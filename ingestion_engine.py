@@ -25,7 +25,7 @@ class EmailIngestionEngine:
             "raw_hex_preview": self._generate_hex_preview(self.raw_bytes[:512])
         }
 
-        # Analyze threat and assign MITRE ATT&CK techniques
+        # AI & Heuristics Dual Engine
         self.forensic_data["ai_analysis"] = self._analyze_threat_with_ai(raw_body_str)
         self.forensic_data["mitre_ttps"] = self._map_mitre_ttps(
             raw_body_str, 
@@ -48,7 +48,6 @@ class EmailIngestionEngine:
         text_lower = text.lower()
         ttps = []
         
-        # Phishing Link TTP
         if "http://" in text_lower or "https://" in text_lower:
             ttps.append({
                 "id": "T1566.002",
@@ -57,7 +56,6 @@ class EmailIngestionEngine:
                 "desc": "Adversary delivered hyperlink to harvest credentials or deploy payload."
             })
             
-        # Social Engineering Urgency
         if any(w in text_lower for w in ["urgent", "immediately", "suspended", "password", "verify", "action required"]):
             ttps.append({
                 "id": "T1204.001",
@@ -66,7 +64,6 @@ class EmailIngestionEngine:
                 "desc": "Relies on social engineering panic cues to prompt end-user action."
             })
             
-        # Spoofing / Failed Auth
         if not auth.get("spf_pass", False) or not auth.get("dmarc_pass", False):
             ttps.append({
                 "id": "T1589.002",
@@ -75,7 +72,6 @@ class EmailIngestionEngine:
                 "desc": "Failed domain authentication indicates unauthorized envelope origin."
             })
             
-        # Malicious Attachment
         if attachments and any("Suspicious" in att.get("sandbox_status", "") for att in attachments):
             ttps.append({
                 "id": "T1566.001",
@@ -95,9 +91,23 @@ class EmailIngestionEngine:
         return ttps
 
     def _analyze_threat_with_ai(self, text):
+        # Calculate Heuristic score independently for Dual-Engine Consensus
+        text_lower = text.lower()
+        suspicious_keywords = ["urgent", "password", "verify", "suspended", "bank", "login", "invoice", "immediately", "action required", "account", "security", "click", "update"]
+        matches = [kw for kw in suspicious_keywords if kw in text_lower]
+        
+        if len(matches) >= 3:
+            heuristic_score = min(96, 65 + len(matches) * 5)
+        elif len(matches) >= 1:
+            heuristic_score = 35 + len(matches) * 10
+        else:
+            heuristic_score = 12
+
         if not text or len(text.strip()) == 0:
             return {
                 "score": "0/100",
+                "ai_score_num": 0,
+                "heuristic_score_num": 0,
                 "analysis": "No body text found to analyze.",
                 "mitigations": "- Log event in SIEM.\n- No triage required."
             }
@@ -122,13 +132,16 @@ Email Body:
 """
                 response = model.generate_content(prompt)
                 result_text = response.text.strip()
-                score = "75/100"
+                score_val = 75
                 analysis = result_text
                 mitigations = "- Isolate endpoints.\n- Add suspicious domains to blocklist."
 
                 if "Score:" in result_text and "Analysis:" in result_text:
                     parts = result_text.split("Analysis:")
-                    score = parts[0].replace("Score:", "").strip()
+                    raw_s = parts[0].replace("Score:", "").strip()
+                    digits = "".join([c for c in raw_s.split("/")[0] if c.isdigit()])
+                    if digits:
+                        score_val = int(digits)
                     if "Mitigations:" in parts[1]:
                         sub_parts = parts[1].split("Mitigations:")
                         analysis = sub_parts[0].strip()
@@ -137,35 +150,21 @@ Email Body:
                         analysis = parts[1].strip()
 
                 return {
-                    "score": score,
+                    "score": f"{score_val}/100",
+                    "ai_score_num": score_val,
+                    "heuristic_score_num": heuristic_score,
                     "analysis": analysis,
                     "mitigations": mitigations
                 }
             except Exception:
                 pass
 
-        # Dynamic Rule Engine Fallback
-        text_lower = text.lower()
-        suspicious_keywords = ["urgent", "password", "verify", "suspended", "bank", "login", "invoice", "immediately", "action required", "account", "security", "click", "update"]
-        matches = [kw for kw in suspicious_keywords if kw in text_lower]
-
-        if len(matches) >= 3:
-            dyn_score = f"{min(96, 65 + len(matches) * 5)}/100"
-            dyn_analysis = f"High-confidence Social Engineering detected. Body triggers aggressive behavioral heuristics on: {', '.join(matches[:4])}. Direct credential harvesting posture."
-            dyn_mitigations = "- Deploy Egress Firewall block on embedded endpoints.\n- Revoke user session tokens and trigger forced credential reset.\n- Apply domain quarantine at SEG."
-        elif len(matches) >= 1:
-            dyn_score = f"{35 + len(matches) * 10}/100"
-            dyn_analysis = f"Low-to-moderate heuristic triggers identified ({', '.join(matches)}). Body contains standard administrative or operational phrasing."
-            dyn_mitigations = "- Log event telemetry in SIEM.\n- Enforce sandbox inspection on embedded links."
-        else:
-            dyn_score = "12/100"
-            dyn_analysis = "Standard informational correspondence. Zero high-threat urgency keywords or malicious payload vectors identified."
-            dyn_mitigations = "- Routine logging in SIEM.\n- No active containment required."
-
         return {
-            "score": dyn_score,
-            "analysis": dyn_analysis,
-            "mitigations": dyn_mitigations
+            "score": f"{heuristic_score}/100",
+            "ai_score_num": heuristic_score,
+            "heuristic_score_num": heuristic_score,
+            "analysis": f"Static Heuristic engine identified {len(matches)} suspicious threat cues ({', '.join(matches[:4]) if matches else 'None'}).",
+            "mitigations": "- Deploy Egress Firewall block on embedded endpoints.\n- Revoke user session tokens.\n- Quarantine at SEG." if heuristic_score >= 60 else "- Routine logging in SIEM."
         }
 
     def _get_geolocation(self, ip):
