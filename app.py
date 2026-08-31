@@ -64,7 +64,7 @@ if uploaded_file is not None:
         audio_type = "clean"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-# Voice JS (Isolated Script attached to top window)
+# Voice JS Engine
 voice_js = f"""
 <script>
 (function() {{
@@ -124,72 +124,48 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- 100% RELIABLE VIEWPORT-LEVEL CSS LASER & RADAR ENGINE ---
+# --- CLASSIC SUBTLE SCANLINE & SMOOTH RADAR SWEEP ---
 st.markdown(
     f"""
     <style>
-    /* 1. FAINT CRT HUD SCANLINES */
+    /* 1. FAINT CRT SCANLINE OVERLAY */
     .stApp::before {{
-        content: "";
+        content: " ";
+        display: block;
         position: fixed;
-        top: 0; left: 0; width: 100vw; height: 100vh;
+        top: 0; left: 0; bottom: 0; right: 0;
         background: linear-gradient(rgba(18, 16, 16, 0) 50%, {glow_rgba} 50%), 
                     linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.01));
-        z-index: 99998;
+        z-index: 99999;
         background-size: 100% 3px, 3px 100%;
         pointer-events: none;
         opacity: 0.55;
     }}
 
-    /* 2. DYNAMIC FULLSCREEN NEON LASER BEAM (Guaranteed Visible) */
+    /* 2. SUBTLE SOFT VERTICAL RADAR SWEEP */
     .stApp::after {{
         content: "";
         position: fixed;
-        left: 0;
-        top: 0;
-        width: 100vw;
-        height: 3px;
-        background: linear-gradient(90deg, transparent 0%, {primary_color} 20%, #ffffff 50%, {primary_color} 80%, transparent 100%);
-        box-shadow: 
-            0 0 15px {primary_color}, 
-            0 0 35px {primary_color}, 
-            0 0 65px {primary_color},
-            0 2px 10px #ffffff;
-        z-index: 99999;
+        top: 0; left: 0; right: 0; height: 100vh;
+        background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, transparent 100%);
+        animation: subtleRadarSweep 6s ease-in-out infinite;
         pointer-events: none;
-        animation: liveTacticalLaser 4s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+        z-index: 99998;
     }}
 
-    @keyframes liveTacticalLaser {{
-        0% {{
-            top: 0vh;
-            opacity: 0.2;
-            transform: scaleX(0.96);
-        }}
-        15% {{
-            opacity: 1;
-            transform: scaleX(1);
-        }}
-        85% {{
-            opacity: 1;
-            transform: scaleX(1);
-        }}
-        100% {{
-            top: 98vh;
-            opacity: 0.2;
-            transform: scaleX(0.96);
-        }}
+    @keyframes subtleRadarSweep {{
+        0% {{ transform: translateY(-100%); }}
+        100% {{ transform: translateY(100%); }}
     }}
 
-    /* 3. RADAR BACKGROUND WITH ROTATING CONIC SWEEP */
     .stApp {{
         background-color: #04070d !important;
         background-image: 
-            radial-gradient(circle at 90% 90%, {bg_glow} 0%, transparent 40%),
             radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 70%),
+            radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
             linear-gradient({glow_rgba} 1px, transparent 1px),
             linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
-        background-size: 100% 100%, 100% 100%, 35px 35px, 35px 35px !important;
+        background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
     }}
 
     .live-badge {{
