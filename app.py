@@ -784,4 +784,4 @@ Please isolate the compromised host immediately.
         st.markdown("**Raw Envelope Headers:**")
         st.json(results.get("raw_headers", {}))
         st.markdown("**First 512-Bytes Hex Dump Preview:**")
-        st.code(results.get("raw_hex_preview", ""), language="text
+        st.code(results.get("raw_hex_preview", ""), language="text")
