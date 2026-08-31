@@ -14,7 +14,6 @@ st.set_page_config(page_title="SYNOVA Autonomous SOC Platform", page_icon="🛡�
 
 api_key = st.secrets.get("GEMINI_API_KEY", "")
 
-# --- State Management & Ingestion ---
 uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
 
 primary_color = "#00ffcc"
@@ -40,30 +39,30 @@ if uploaded_file is not None:
 
     origin_city = str(results["metadata"]["geo_data"].get("city", "Unknown"))
     origin_country = str(results["metadata"]["geo_data"].get("country", "Unknown"))
+    ip_type = str(results["metadata"]["geo_data"].get("ip_type", "Residential ISP"))
 
     if score_num >= 70:
-        primary_color = "#ff3355"  # CRITICAL RED
+        primary_color = "#ff3355"
         glow_rgba = "rgba(255, 51, 85, 0.25)"
         bg_glow = "rgba(255, 51, 85, 0.25)"
         badge_text = "CRITICAL THREAT CONFIRMED"
         audio_type = "critical"
-        voice_briefing = f"Warning. High confidence spearphishing threat detected from {origin_city}, {origin_country}. Automated quarantine playbooks engaged."
+        voice_briefing = f"Warning. High confidence spearphishing threat detected via {ip_type} in {origin_city}, {origin_country}. Automated quarantine engaged."
     elif score_num >= 40:
-        primary_color = "#ffaa00"  # AMBER WARNING
+        primary_color = "#ffaa00"
         glow_rgba = "rgba(255, 170, 0, 0.25)"
         bg_glow = "rgba(255, 170, 0, 0.22)"
         badge_text = "SUSPICIOUS PROFILE DETECTED"
         audio_type = "warning"
-        voice_briefing = f"Caution. Suspicious email heuristics identified. Routing origin logged at {origin_city}."
+        voice_briefing = f"Caution. Suspicious email heuristics identified. Routing origin flagged as {ip_type}."
     else:
-        primary_color = "#00ffcc"  # GREEN SECURE
+        primary_color = "#00ffcc"
         glow_rgba = "rgba(0, 255, 204, 0.15)"
         bg_glow = "rgba(0, 255, 204, 0.18)"
         badge_text = "CLEAN ARTIFACT CONFIRMED"
         audio_type = "clean"
         voice_briefing = "Forensic analysis complete. Artifact verified clean. Zero threat vectors detected."
 
-# --- Voice Dispatch & Particle Canvas Injection ---
 particle_color = primary_color
 
 voice_and_particles_js = f"""
@@ -151,7 +150,6 @@ voice_and_particles_js = f"""
 """
 st.components.v1.html(voice_and_particles_js, height=0)
 
-# --- Cyber CSS Styling ---
 st.markdown(
     f"""
     <style>
@@ -293,7 +291,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- Header Section ---
 col1, col2 = st.columns([3.5, 1.5])
 with col1:
     st.markdown(
@@ -312,7 +309,6 @@ with col2:
 
 st.divider()
 
-# --- PDF Builder ---
 def build_pdf_buffer(results_data):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -429,7 +425,6 @@ def build_pdf_buffer(results_data):
     buffer.seek(0)
     return buffer
 
-# --- Empty State Landing View ---
 if not uploaded_file:
     st.markdown("<br>", unsafe_allow_html=True)
     c1, c2, c3, c4 = st.columns(4)
@@ -451,8 +446,6 @@ if not uploaded_file:
     """,
         unsafe_allow_html=True,
     )
-
-# --- Active Investigation View ---
 else:
     dash_col1, dash_col2 = st.columns([1.2, 3])
 
@@ -491,7 +484,6 @@ else:
             use_container_width=True,
         )
 
-    # 1. Dual-Engine Calibration
     ai_score_val = results["ai_analysis"].get("ai_score_num", score_num)
     heur_score_val = results["ai_analysis"].get("heuristic_score_num", score_num)
 
@@ -504,21 +496,19 @@ else:
         st.caption(f"⚡ Static Rule & Heuristic Engine: **{heur_score_val}%** Confidence")
         st.progress(heur_score_val / 100.0)
 
-    # 2. Cyber Terminal Box
     ai_reason = results.get("ai_analysis", {}).get("analysis", "No forensic log generated.")
     st.markdown(
         f"""
         <div class="soc-terminal">
             <div style="color: {primary_color}; font-weight: bold; margin-bottom: 8px;">🤖 [SOC AGENT AUTONOMOUS TRIAGE LOG]</div>
             <div>&gt; [TIMESTAMP] : {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}</div>
-            <div>&gt; [VOICE DSP] : Voice telemetry dispatched to SOC operations console.</div>
+            <div>&gt; [IP PROFILER] : Infrastructure Classification: <span style="color: {primary_color}; font-weight: bold;">{ip_type}</span></div>
             <div>&gt; [DIAGNOSIS] : <span style="color: {primary_color}; font-weight: bold;">{html.escape(str(ai_reason))}</span></div>
         </div>
     """,
         unsafe_allow_html=True,
     )
 
-    # 3. MITRE ATT&CK Matrix Badges
     st.markdown("#### 🎯 MITRE ATT&CK® Mapped Adversary Techniques")
     ttps = results.get("mitre_ttps", [])
     ttp_html = ""
@@ -534,7 +524,6 @@ else:
 
     st.divider()
 
-    # 4. Out-of-the-Box Tabs
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
         "🛡️ SOAR Response & Mitigations",
         "⚡ Kill-Chain Simulator",
@@ -545,7 +534,6 @@ else:
         "🔬 Raw Headers & Hex Dump",
     ])
 
-    # TAB 1: SOAR Defense
     with tab1:
         st.subheader("⚡ Automated SOAR Playbook Execution")
         ai_mitigations = results.get("ai_analysis", {}).get("mitigations", "No mitigations available.")
@@ -581,7 +569,6 @@ Please isolate the compromised host immediately.
                     language="text",
                 )
 
-    # TAB 2: Kill-Chain Simulator
     with tab2:
         st.subheader("⚡ Adversary Kill-Chain Simulation (Impact Comparison)")
         sim_mode = st.radio(
@@ -611,10 +598,8 @@ Please isolate the compromised host immediately.
             🛡️ **Mitigation Outcome:** **100% Data Exfiltration Prevented | Zero Endpoint Footprint**
             """)
 
-    # TAB 3: Payload Deconstruction Matrix
     with tab3:
         st.subheader("🧩 Multi-Layer Forensic Deconstruction Matrix")
-
         from_str = html.escape(str(results["metadata"]["from"]))
         subj_str = html.escape(str(results["metadata"]["subject"]))
 
@@ -630,7 +615,7 @@ Please isolate the compromised host immediately.
         <div class="layer-card">
             <div class="layer-title">Layer 2: Transport & Routing Layer</div>
             <div style="font-size:13px; color:#cbd5e1;">• Origin Relay Node: <code>{html.escape(str(results['metadata']['sender_ip']))}</code></div>
-            <div style="font-size:13px; color:#cbd5e1;">• Geo Anchor: <code>{origin_city}, {origin_country} ({html.escape(str(results['metadata']['geo_data'].get('isp', 'N/A')))})</code></div>
+            <div style="font-size:13px; color:#cbd5e1;">• Geo Anchor & Type: <code>{origin_city}, {origin_country} [{ip_type}]</code></div>
             <div style="font-size:13px; color:#cbd5e1;">• Total Intermediate Relay Hops: <code>{len(results.get('routing_hops', []))}</code></div>
         </div>
 
@@ -649,7 +634,6 @@ Please isolate the compromised host immediately.
             unsafe_allow_html=True,
         )
 
-    # TAB 4: Attack Timeline
     with tab4:
         st.subheader("🕒 Threat Execution & Detection Chronology")
         date_stamp = html.escape(str(results["metadata"]["date"]))
@@ -659,7 +643,7 @@ Please isolate the compromised host immediately.
             <div class="timeline-item">
                 <div class="timeline-dot"></div>
                 <strong style="color: {primary_color};">Phase 1: Ingress Transmission [{date_stamp}]</strong>
-                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Threat packet initiated from Origin Node <code>{origin_ip}</code> ({origin_city}, {origin_country}).</p>
+                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Threat packet initiated from Origin Node <code>{origin_ip}</code> ({origin_city}, {origin_country}) classified as <code>{ip_type}</code>.</p>
             </div>
             <div class="timeline-item">
                 <div class="timeline-dot"></div>
@@ -680,7 +664,6 @@ Please isolate the compromised host immediately.
             unsafe_allow_html=True,
         )
 
-    # TAB 5: Defanged Safe Preview
     with tab5:
         st.subheader("👁️ Pre-Scan Defanged HTML Sandbox Preview")
         raw_body_text = str(results["body_artifacts"]["raw_body"] or "")
@@ -705,7 +688,6 @@ Please isolate the compromised host immediately.
             unsafe_allow_html=True,
         )
 
-    # TAB 6: Hop Chain & Geolocation Map
     with tab6:
         st.subheader("📡 Visual Node-to-Node SMTP Hop Chain")
         hops = results.get("routing_hops", [])
@@ -733,7 +715,7 @@ Please isolate the compromised host immediately.
         st.divider()
         map_col, data_col = st.columns([1.5, 1])
         with map_col:
-            st.subheader("📍 Attacker Geolocation Radar")
+            st.subheader("📍 Attacker Geolocation Radar & Infrastructure")
             geo = results["metadata"].get("geo_data", {})
             lat = geo.get("lat", 0.0)
             lon = geo.get("lon", 0.0)
@@ -755,7 +737,7 @@ Please isolate the compromised host immediately.
                     fill=True,
                     fill_color=primary_color,
                     fill_opacity=0.85,
-                    popup=f"<b>Origin:</b> {city}, {country}<br><b>ISP:</b> {isp}",
+                    popup=f"<b>Origin:</b> {city}, {country}<br><b>Type:</b> {ip_type}<br><b>ISP:</b> {isp}",
                     tooltip=f"Threat Origin: {city}, {country}",
                 ).add_to(m)
                 st_folium(m, width=600, height=350)
@@ -765,14 +747,14 @@ Please isolate the compromised host immediately.
         with data_col:
             st.subheader("Network Telemetry")
             st.markdown(f"**Origin IP:** `{results['metadata']['sender_ip']}`")
+            st.markdown(f"**Infrastructure Type:** `{ip_type}`")
             st.markdown(f"**Country:** {country}")
             st.markdown(f"**City:** {city}")
             st.markdown(f"**ISP / ASN:** {isp}")
 
-    # TAB 7: Raw Headers & Hex Dump
     with tab7:
         st.subheader("🔬 Raw RFC-822 Email Headers & Hex Stream Inspector")
-        st.markdown("**Raw Envelope Headers:**")
+        st.markdown("**RawEnvelope Headers:**")
         st.json(results.get("raw_headers", {}))
         st.markdown("**First 512-Bytes Hex Dump Preview:**")
         st.code(results.get("raw_hex_preview", ""), language="text")
