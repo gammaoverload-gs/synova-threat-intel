@@ -425,8 +425,50 @@ def build_pdf_buffer(results_data):
     buffer.seek(0)
     return buffer
 
+# --- EMPTY STATE / WELCOME SCREEN ---
 if not uploaded_file:
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div style="
+            background: linear-gradient(135deg, rgba(8, 14, 26, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            border-left: 5px solid #00ffcc;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 255, 204, 0.1);
+        ">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <h3 style="color: #ffffff; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 20px;">
+                    ⚡ WELCOME TO THE SYNOVA THREAT INTELLIGENCE MATRIX
+                </h3>
+                <span style="background: rgba(0, 255, 204, 0.15); color: #00ffcc; border: 1px solid #00ffcc; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-family: monospace;">
+                    ZERO-TRUST SOC
+                </span>
+            </div>
+            <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+                SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level email attack vectors. Upload any suspicious raw <code>.eml</code> or <code>.msg</code> byte payload to execute real-time AI cognitive triage, MITRE ATT&CK® adversary mapping, and automated SOAR firewall containment playbooks.
+            </p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
+                    1. DROP RAW MIME PAYLOAD
+                </span>
+                <span style="background: rgba(0, 255, 204, 0.1); border: 1px solid rgba(0, 255, 204, 0.3); color: #00ffcc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
+                    2. IN-MEMORY FORENSIC RECONSTRUCTION
+                </span>
+                <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
+                    3. DUAL-ENGINE AI TRIAGE & AUDIO DISPATCH
+                </span>
+                <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
+                    4. INSTANT SOAR BLOCKLIST & PDF
+                </span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.metric(label="CORE ENGINE", value="ZERO-DISK", delta="RAM Buffer")
@@ -437,15 +479,7 @@ if not uploaded_file:
     with c4:
         st.metric(label="SOAR DEFENSE", value="ACTIVE", delta="IPTables/DNS")
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown(
-        f"""
-        <div style="background: rgba(6, 11, 21, 0.9); border: 1px solid {glow_rgba}; border-left: 4px solid {primary_color}; border-radius: 8px; padding: 14px 20px; font-family: 'Courier New', monospace; font-size: 13px; color: #94a3b8; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-            <span style="color: {primary_color}; font-weight: bold;">[SOC RADAR READY]</span> Awaiting forensic byte stream... | Drop any raw .eml or .msg to trigger autonomous triage.
-        </div>
-    """,
-        unsafe_allow_html=True,
-    )
+# --- ACTIVE INVESTIGATION VIEW ---
 else:
     dash_col1, dash_col2 = st.columns([1.2, 3])
 
@@ -754,7 +788,7 @@ Please isolate the compromised host immediately.
 
     with tab7:
         st.subheader("🔬 Raw RFC-822 Email Headers & Hex Stream Inspector")
-        st.markdown("**RawEnvelope Headers:**")
+        st.markdown("**Raw Envelope Headers:**")
         st.json(results.get("raw_headers", {}))
         st.markdown("**First 512-Bytes Hex Dump Preview:**")
         st.code(results.get("raw_hex_preview", ""), language="text")
