@@ -24,8 +24,8 @@ score_num = 0
 results = None
 audio_type = "none"
 
-# Default voice message on empty landing screen
-voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System online. Awaiting forensic byte stream."
+# Humanized conversational default briefing
+voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
 if uploaded_file is not None:
     with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
@@ -49,30 +49,32 @@ if uploaded_file is not None:
         bg_glow = "rgba(255, 51, 85, 0.25)"
         badge_text = "CRITICAL THREAT CONFIRMED"
         audio_type = "critical"
-        voice_briefing = f"Warning. High confidence spearphishing threat detected via {ip_type} in {origin_city}, {origin_country}. Automated quarantine engaged."
+        voice_briefing = f"Alert. High-risk spearphishing vector detected from {origin_city}, {origin_country}. Infrastructure identified as {ip_type}. Automated quarantine playbooks are now active."
     elif score_num >= 40:
         primary_color = "#ffaa00"
         glow_rgba = "rgba(255, 170, 0, 0.25)"
         bg_glow = "rgba(255, 170, 0, 0.22)"
         badge_text = "SUSPICIOUS PROFILE DETECTED"
         audio_type = "warning"
-        voice_briefing = f"Caution. Suspicious email heuristics identified. Routing origin flagged as {ip_type}."
+        voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
     else:
         primary_color = "#00ffcc"
         glow_rgba = "rgba(0, 255, 204, 0.15)"
         bg_glow = "rgba(0, 255, 204, 0.18)"
         badge_text = "CLEAN ARTIFACT CONFIRMED"
         audio_type = "clean"
-        voice_briefing = "Forensic analysis complete. Artifact verified clean. Zero threat vectors detected."
+        voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
 particle_color = primary_color
 
+# High-Tier Human Voice Dispatcher Engine
 voice_and_particles_js = f"""
 <div id="canvas-container" style="position:fixed; top:0; left:0; width:100vw; height:100vh; pointer-events:none; z-index:0;">
     <canvas id="cyberMatrixCanvas"></canvas>
 </div>
 <script>
 (function() {{
+    // 1. Interactive Matrix Particles
     const canvas = document.getElementById('cyberMatrixCanvas');
     if (canvas) {{
         const ctx = canvas.getContext('2d');
@@ -135,18 +137,64 @@ voice_and_particles_js = f"""
         draw();
     }}
 
-    if ("{voice_briefing}" !== "") {{
-        try {{
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance("{voice_briefing}");
-            utter.rate = 1.02;
-            utter.pitch = 0.92;
-            const voices = window.speechSynthesis.getVoices();
-            const sciFiVoice = voices.find(v => v.lang.includes('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('David') || v.name.includes('Zira')));
-            if (sciFiVoice) utter.voice = sciFiVoice;
-            setTimeout(() => window.speechSynthesis.speak(utter), 500);
-        }} catch(e) {{}}
+    // 2. Humanized Natural Neural Voice Engine
+    let voiceTriggered = false;
+
+    function getNeuralHumanVoice() {{
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices || voices.length === 0) return null;
+
+        // Neural & Natural voices ranking priority
+        const priorityMatchers = [
+            v => v.name.includes("Natural") || v.name.includes("Online (Natural)"),
+            v => v.name.includes("Google US English") || v.name.includes("Google UK English Female"),
+            v => v.name.includes("Samantha") || v.name.includes("Karen") || v.name.includes("Victoria"),
+            v => v.name.includes("Microsoft Jenny") || v.name.includes("Microsoft Aria") || v.name.includes("Microsoft Guy"),
+            v => v.lang.startsWith("en-US") && !v.name.includes("David Desktop") && !v.name.includes("Zira Desktop"),
+            v => v.lang.startsWith("en")
+        ];
+
+        for (let matcher of priorityMatchers) {{
+            const match = voices.find(matcher);
+            if (match) return match;
+        }}
+        return voices[0];
     }}
+
+    function executeSpeechDispatch() {{
+        if (voiceTriggered) return;
+        if (!('speechSynthesis' in window)) return;
+
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.resume();
+
+        const text = "{voice_briefing}";
+        const utter = new SpeechSynthesisUtterance(text);
+        
+        // Conversational human cadence settings
+        utter.rate = 0.96;
+        utter.pitch = 1.02;
+        utter.volume = 0.95;
+
+        const humanVoice = getNeuralHumanVoice();
+        if (humanVoice) utter.voice = humanVoice;
+
+        utter.onstart = () => {{ voiceTriggered = true; }};
+        window.speechSynthesis.speak(utter);
+    }}
+
+    // Listen for voice loading event in Chrome
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {{
+        window.speechSynthesis.onvoiceschanged = executeSpeechDispatch;
+    }}
+
+    setTimeout(executeSpeechDispatch, 400);
+
+    // Browser interaction unlock hook
+    ['click', 'dragover', 'drop', 'keydown', 'touchstart'].forEach(evt => {{
+        window.parent.document.addEventListener(evt, executeSpeechDispatch, {{ once: true }});
+        document.addEventListener(evt, executeSpeechDispatch, {{ once: true }});
+    }});
 }})();
 </script>
 """
