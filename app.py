@@ -129,7 +129,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Read key from Streamlit Secrets securely
+# Read key securely
 api_key = st.secrets.get("GEMINI_API_KEY", "")
 
 # --- HEADER WITH PULSING LIVE BEACON ---
@@ -160,7 +160,7 @@ uploaded_file = st.file_uploader(
     "Drop a suspicious .eml or .msg file here", type=["eml", "msg"]
 )
 
-# Agar koi file upload nahi hui hai, toh Live Threat Intelligence Dashboard dikhega
+# Empty state landing page
 if not uploaded_file:
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -435,12 +435,13 @@ if uploaded_file is not None:
     with tab4:
         map_col, data_col = st.columns([1.5, 1])
         with map_col:
-            st.subheader("📍 Attacker Geolocation")
-            lat = results["metadata"]["geo_data"]["lat"]
-            lon = results["metadata"]["geo_data"]["lon"]
-            city = results["metadata"]["geo_data"]["city"]
-            country = results["metadata"]["geo_data"]["country"]
-            isp = results["metadata"]["geo_data"]["isp"]
+            st.subheader("📍 Attacker Geolocation Radar")
+            geo = results["metadata"].get("geo_data", {})
+            lat = geo.get("lat", 0.0)
+            lon = geo.get("lon", 0.0)
+            city = geo.get("city", "Unknown")
+            country = geo.get("country", "Unknown")
+            isp = geo.get("isp", "Unknown")
 
             if lat != 0.0 and lon != 0.0:
                 m = folium.Map(
@@ -449,20 +450,25 @@ if uploaded_file is not None:
                     tiles="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
                     attr="Esri",
                 )
-                folium.Marker(
-                    [lat, lon],
-                    popup=f"ISP: {isp}",
-                    tooltip=f"{city}, {country}",
-                    icon=folium.Icon(color="red", icon="info-sign"),
+                folium.CircleMarker(
+                    location=[lat, lon],
+                    radius=10,
+                    color="#00ffcc",
+                    fill=True,
+                    fill_color="#ff3366",
+                    fill_opacity=0.85,
+                    popup=f"<b>Origin:</b> {city}, {country}<br><b>ISP:</b> {isp}",
+                    tooltip=f"Threat Origin: {city}, {country}",
                 ).add_to(m)
                 st_folium(m, width=600, height=350)
             else:
                 st.warning("Could not trace IP location for map.")
 
         with data_col:
-            st.subheader("Network Details")
+            st.subheader("Network Telemetry")
+            st.markdown(f"**Origin IP:** `{results['metadata']['sender_ip']}`")
             st.markdown(f"**Country:** {country}")
             st.markdown(f"**City:** {city}")
-            st.markdown(f"**ISP:** {isp}")
+            st.markdown(f"**ISP / ASN:** {isp}")
             st.subheader("Routing Hops")
             st.json(results["routing_hops"])
