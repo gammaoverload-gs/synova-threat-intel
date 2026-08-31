@@ -2,6 +2,7 @@ import streamlit as st
 import time
 import io
 import html
+import re
 import folium
 from streamlit_folium import st_folium
 from ingestion_engine import EmailIngestionEngine
@@ -27,6 +28,7 @@ bg_glow = "rgba(0, 255, 204, 0.18)"
 badge_text = "SOC RADAR ACTIVE"
 score_num = 0
 results = None
+audio_type = "none"
 
 if uploaded_file is not None:
     with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
@@ -45,21 +47,65 @@ if uploaded_file is not None:
         glow_rgba = "rgba(255, 51, 85, 0.25)"
         bg_glow = "rgba(255, 51, 85, 0.25)"
         badge_text = "CRITICAL THREAT CONFIRMED"
+        audio_type = "critical"
     elif score_num >= 40:
         primary_color = "#ffaa00"  # AMBER WARNING
         glow_rgba = "rgba(255, 170, 0, 0.25)"
         bg_glow = "rgba(255, 170, 0, 0.22)"
         badge_text = "SUSPICIOUS PROFILE DETECTED"
+        audio_type = "warning"
     else:
         primary_color = "#00ffcc"  # GREEN SECURE
         glow_rgba = "rgba(0, 255, 204, 0.15)"
         bg_glow = "rgba(0, 255, 204, 0.18)"
         badge_text = "CLEAN ARTIFACT CONFIRMED"
+        audio_type = "clean"
+
+# --- Synthesized Tactical Audio FX (Web Audio API) ---
+if audio_type != "none":
+    audio_js = f"""
+    <script>
+    (function() {{
+        try {{
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            
+            function playTone(freq, type, duration, delay) {{
+                setTimeout(() => {{
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + duration);
+                }}, delay);
+            }}
+
+            if ("{audio_type}" === "critical") {{
+                playTone(220, "sawtooth", 0.25, 0);
+                playTone(180, "sawtooth", 0.35, 180);
+                playTone(140, "sawtooth", 0.45, 360);
+            }} else if ("{audio_type}" === "warning") {{
+                playTone(440, "sine", 0.2, 0);
+                playTone(550, "sine", 0.2, 150);
+            }} else {{
+                playTone(587.33, "sine", 0.15, 0);
+                playTone(880, "sine", 0.25, 120);
+            }}
+        }} catch (e) {{}}
+    }})();
+    </script>
+    """
+    st.components.v1.html(audio_js, height=0)
 
 # --- Injectable Cyber CSS Styling ---
 st.markdown(f"""
     <style>
-    /* 1. FAINT CYBER SCANLINE & HUD OVERLAY */
     .stApp::before {{
         content: " ";
         display: block;
@@ -152,7 +198,6 @@ st.markdown(f"""
         text-shadow: 0 0 12px {primary_color};
     }}
 
-    /* Cyber Terminal Box */
     .soc-terminal {{
         background: rgba(5, 8, 15, 0.95);
         border: 1px solid {primary_color};
@@ -167,16 +212,6 @@ st.markdown(f"""
         margin-bottom: 20px;
     }}
 
-    .terminal-header {{
-        color: {primary_color};
-        font-weight: bold;
-        font-size: 12px;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }}
-
-    /* MITRE TTP Badges */
     .ttp-card {{
         display: inline-block;
         background: rgba(15, 23, 42, 0.9);
@@ -186,40 +221,40 @@ st.markdown(f"""
         margin: 6px;
         min-width: 220px;
     }}
-    .ttp-id {{
-        color: {primary_color};
-        font-family: monospace;
-        font-weight: bold;
-        font-size: 13px;
+
+    .timeline-item {{
+        position: relative;
+        padding-left: 24px;
+        border-left: 2px solid {primary_color};
+        margin-bottom: 14px;
     }}
-    .ttp-name {{
-        color: #ffffff;
-        font-size: 13px;
-        font-weight: 600;
-        margin-top: 2px;
-    }}
-    .ttp-tactic {{
-        color: #94a3b8;
-        font-size: 11px;
-        text-transform: uppercase;
+    .timeline-dot {{
+        position: absolute;
+        left: -6px;
+        top: 2px;
+        width: 10px;
+        height: 10px;
+        background: {primary_color};
+        border-radius: 50%;
+        box-shadow: 0 0 8px {primary_color};
     }}
 
-    /* Hop Chain Visual */
-    .hop-node {{
-        background: rgba(10, 18, 32, 0.85);
-        border: 1px solid {primary_color};
-        padding: 10px 16px;
+    .defanged-box {{
+        background: rgba(10, 15, 26, 0.9);
+        border: 1px dashed {primary_color};
         border-radius: 8px;
-        text-align: center;
-        min-width: 140px;
+        padding: 16px;
+        color: #cbd5e1;
+        font-family: sans-serif;
+        line-height: 1.5;
     }}
-    .hop-arrow {{
-        color: {primary_color};
-        font-size: 22px;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .defanged-link {{
+        color: #ff3355;
+        background: rgba(255, 51, 85, 0.15);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+        text-decoration: line-through;
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -291,7 +326,7 @@ def build_pdf_buffer(results_data):
     buffer.seek(0)
     return buffer
 
-# --- Empty State Landing View ---
+# --- Empty State View ---
 if not uploaded_file:
     st.markdown("<br>", unsafe_allow_html=True)
     c1, c2, c3, c4 = st.columns(4)
@@ -307,14 +342,12 @@ if not uploaded_file:
         </div>
     """, unsafe_allow_html=True)
 
-# --- Active Threat Investigation View ---
+# --- Active Investigation View ---
 else:
-    # 1. Circular SVG Threat Gauge & Telemetry Metrics
     dash_col1, dash_col2 = st.columns([1.2, 3])
     
     with dash_col1:
-        # Animated SVG Radial Dial Calculation
-        circumference = 282.74  # 2 * pi * 45
+        circumference = 282.74
         stroke_dashoffset = circumference - (score_num / 100.0) * circumference
         st.markdown(f"""
             <div style="text-align: center; background: rgba(10, 18, 32, 0.75); border: 1px solid {primary_color}; border-radius: 12px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.6);">
@@ -336,7 +369,6 @@ else:
         m2.metric("SPF RECORD", "PASS" if results["authentication"]["spf_pass"] else "FAIL / NONE")
         m3.metric("EXTRACTED IOCs", f"{len(results['body_artifacts']['extracted_urls'])} URLs")
         
-        # Download Report Bar
         pdf_buffer = build_pdf_buffer(results)
         st.download_button(
             label="📥 Export Forensic Incident Report (PDF)",
@@ -346,87 +378,87 @@ else:
             use_container_width=True
         )
 
-    # 2. Cyber Terminal Box (Typewriter Simulation)
+    # 1. Dual-Engine Confidence Comparison Bar
+    ai_score_val = results["ai_analysis"].get("ai_score_num", score_num)
+    heur_score_val = results["ai_analysis"].get("heuristic_score_num", score_num)
+
+    st.markdown("#### ⚖️ Dual-Engine Consensus Calibration")
+    bar_col1, bar_col2 = st.columns(2)
+    with bar_col1:
+        st.caption(f"🧠 Gemini LLM Cognitive Reasoning: **{ai_score_val}%** Confidence")
+        st.progress(ai_score_val / 100.0)
+    with bar_col2:
+        st.caption(f"⚡ Static Rule & Heuristic Engine: **{heur_score_val}%** Confidence")
+        st.progress(heur_score_val / 100.0)
+
+    # 2. Cyber Terminal Box
     ai_reason = results.get("ai_analysis", {}).get("analysis", "No forensic log generated.")
     st.markdown(f"""
         <div class="soc-terminal">
-            <div class="terminal-header">🤖 [SOC AGENT AUTONOMOUS TRIAGE LOG]</div>
+            <div style="color: {primary_color}; font-weight: bold; margin-bottom: 8px;">🤖 [SOC AGENT AUTONOMOUS TRIAGE LOG]</div>
             <div>&gt; [TIMESTAMP] : {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}</div>
             <div>&gt; [PARSER]    : Zero-Disk MIME Byte Reconstruction complete.</div>
             <div>&gt; [DIAGNOSIS] : <span style="color: {primary_color}; font-weight: bold;">{ai_reason}</span></div>
         </div>
     """, unsafe_allow_html=True)
 
-    # 3. MITRE ATT&CK Matrix TTP Heatmap Badges
+    # 3. MITRE ATT&CK Matrix Badges
     st.markdown("#### 🎯 MITRE ATT&CK® Mapped Adversary Techniques")
     ttps = results.get("mitre_ttps", [])
     ttp_html = ""
     for ttp in ttps:
         ttp_html += f"""
             <div class="ttp-card">
-                <div class="ttp-tactic">{ttp['tactic']}</div>
-                <div class="ttp-id">{ttp['id']}</div>
-                <div class="ttp-name">{ttp['name']}</div>
+                <div style="color:#94a3b8; font-size:11px; text-transform:uppercase;">{ttp['tactic']}</div>
+                <div style="color:{primary_color}; font-family:monospace; font-weight:bold; font-size:13px;">{ttp['id']}</div>
+                <div style="color:#ffffff; font-size:13px; font-weight:600; margin-top:2px;">{ttp['name']}</div>
             </div>
         """
     st.markdown(f"<div style='margin-bottom: 20px;'>{ttp_html}</div>", unsafe_allow_html=True)
 
     st.divider()
 
-    # 4. Forensic Deep Dive Investigation Tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    # 4. Investigation Tabs
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "🛡️ SOAR Response & Mitigations", 
         "🌐 IOC Extraction", 
-        "🔗 Routing Hop Chain & Geolocation", 
-        "📦 Attachment Sandbox", 
-        "🔬 Raw RFC-822 & Hex Inspector"
+        "🕒 Attack Execution Timeline",
+        "👁️ Defanged Safe Preview",
+        "🔗 Routing Hops & Geolocation", 
+        "🔬 Raw Headers & Hex Inspector"
     ])
 
-    # TAB 1: SOAR Defense Playbooks
+    # TAB 1: SOAR Defense
     with tab1:
         st.subheader("⚡ Automated SOAR Playbook Execution")
         ai_mitigations = results.get("ai_analysis", {}).get("mitigations", "No mitigations available.")
         st.markdown(ai_mitigations)
         st.divider()
-        
-        st.subheader("Interactive Quick Defensive Responses")
         col_soar1, col_soar2 = st.columns(2)
-        
         with col_soar1:
             if st.button("🚫 Generate Egress Firewall Blocklist (iptables / Suricata)", use_container_width=True):
                 target_ip = results['metadata']['sender_ip']
                 st.code(f"""# --- AUTOMATED FIREWALL BLOCKLIST ---
-# Drop Inbound from Threat Actor IP
 iptables -A INPUT -s {target_ip} -j DROP
 iptables -A FORWARD -s {target_ip} -j DROP
-
-# Suricata Threat Rule
 alert ip {target_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Actor"; sid:9000001; rev:1;)
 """, language="bash")
-
         with col_soar2:
             if st.button("✉️ Draft Automated Abuse Takedown Notice", use_container_width=True):
                 target_ip = results['metadata']['sender_ip']
-                sender = results['metadata']['from']
                 st.code(f"""To: abuse-desk@{results['metadata']['geo_data'].get('isp', 'upstream-provider').replace(' ', '').lower()}.net
-Subject: [URGENT] Abuse Notice: Malicious Phishing Campaign originating from {target_ip}
+Subject: [URGENT] Abuse Notice: Malicious Campaign from {target_ip}
 
-Dear Abuse / Security Incident Response Team,
-
-Our autonomous SOC monitoring system (SYNOVA) has detected active phishing & credential harvesting telemetry originating from your autonomous network:
-
-- Offending Origin IP: {target_ip}
-- Associated ISP / ASN: {results['metadata']['geo_data'].get('isp', 'N/A')}
-- Originating Envelope Sender: {sender}
+Dear Abuse Team,
+Our autonomous SOC (SYNOVA) detected active phishing telemetry from your ASN:
+- Offending IP: {target_ip}
+- Envelope Sender: {results['metadata']['from']}
 - Attack TTP: Spearphishing Link / Social Engineering
 
-Please immediately isolate the compromised host and revoke outbound SMTP permissions.
-
-Regards,
-Security Operations Center (SOC) Automated Dispatch
+Please isolate the compromised host immediately.
 """, language="text")
 
-    # TAB 2: Extracted URLs (IOCs)
+    # TAB 2: IOC Extraction
     with tab2:
         st.subheader("Extracted Indicators of Compromise (URLs)")
         urls = results["body_artifacts"]["extracted_urls"]
@@ -436,8 +468,55 @@ Security Operations Center (SOC) Automated Dispatch
         else:
             st.success("Zero suspicious hyperlinks detected in body.")
 
-    # TAB 3: Visual Hop Chain & Geolocation Map
+    # TAB 3: Interactive Attack Timeline
     with tab3:
+        st.subheader("🕒 Threat Execution & Detection Chronology")
+        date_stamp = results['metadata']['date']
+        origin_ip = results['metadata']['sender_ip']
+        st.markdown(f"""
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <strong style="color: {primary_color};">Phase 1: Ingress Transmission [{date_stamp}]</strong>
+                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Threat packet initiated from Origin Node <code>{origin_ip}</code> ({results['metadata']['geo_data'].get('city', 'Unknown')}, {results['metadata']['geo_data'].get('country', 'Unknown')}).</p>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <strong style="color: {primary_color};">Phase 2: Gateway Relay & Auth Check</strong>
+                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">MIME stream processed by MX gateway. SPF Status: <code>{"PASS" if results['authentication']['spf_pass'] else "FAILED/UNVERIFIED"}</code>.</p>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <strong style="color: {primary_color};">Phase 3: Payload Extraction & Heuristic Parsing</strong>
+                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Extracted {len(results['body_artifacts']['extracted_urls'])} URLs and evaluated MIME attachments against SHA-256 entropy check.</p>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <strong style="color: {primary_color};">Phase 4: Autonomous SOAR Quarantine Action</strong>
+                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Calculated Threat Index <code>{score_num}/100</code>. Dynamic mitigation playbooks generated.</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # TAB 4: Defanged Safe Preview
+    with tab4:
+        st.subheader("👁️ Pre-Scan Defanged HTML Sandbox Preview")
+        raw_body_text = results["body_artifacts"]["raw_body"]
+        # Defang URLs: replace href/links with red disabled badges
+        safe_preview = html.escape(raw_body_text)
+        for u in results["body_artifacts"]["extracted_urls"]:
+            safe_u = html.escape(u)
+            defanged_badge = f'<span class="defanged-link">[DEFANGED_URL: {safe_u}]</span>'
+            safe_preview = safe_preview.replace(safe_u, defanged_badge)
+        safe_preview = safe_preview.replace("\n", "<br/>")
+
+        st.markdown(f"""
+            <div class="defanged-box">
+                <div style="font-size:11px; color:#f59e0b; margin-bottom:8px;">⚠️ Malicious scripts, zero-font cloaking, and hyperlinks neutralized:</div>
+                {safe_preview}
+            </div>
+        """, unsafe_allow_html=True)
+
+    # TAB 5: Hop Chain & Geolocation Map
+    with tab5:
         st.subheader("📡 Visual Node-to-Node SMTP Hop Chain")
         hops = results.get("routing_hops", [])
         if hops:
@@ -445,7 +524,7 @@ Security Operations Center (SOC) Automated Dispatch
             for i, hop in enumerate(hops):
                 with hop_cols[i * 2]:
                     st.markdown(f"""
-                        <div class="hop-node">
+                        <div style="background: rgba(10, 18, 32, 0.85); border: 1px solid {primary_color}; padding: 10px; border-radius: 8px; text-align: center;">
                             <div style="font-size:11px; color:#94a3b8;">HOP #{hop['hop_number']}</div>
                             <div style="font-size:12px; font-weight:bold; color:{primary_color};">{hop['hop_ip']}</div>
                             <div style="font-size:10px; color:#64748b;">{hop['by'][:18]}</div>
@@ -453,12 +532,9 @@ Security Operations Center (SOC) Automated Dispatch
                     """, unsafe_allow_html=True)
                 if i < len(hops) - 1:
                     with hop_cols[i * 2 + 1]:
-                        st.markdown(f"<div class='hop-arrow'>➔</div>", unsafe_allow_html=True)
-        else:
-            st.info("Single hop transmission.")
+                        st.markdown(f"<div style='color:{primary_color}; font-size:20px; text-align:center; padding-top:10px;'>➔</div>", unsafe_allow_html=True)
 
         st.divider()
-
         map_col, data_col = st.columns([1.5, 1])
         with map_col:
             st.subheader("📍 Attacker Geolocation Radar")
@@ -492,26 +568,10 @@ Security Operations Center (SOC) Automated Dispatch
             st.markdown(f"**City:** {city}")
             st.markdown(f"**ISP / ASN:** {isp}")
 
-    # TAB 4: Attachments
-    with tab4:
-        st.subheader("Attachment Heuristic Sandbox Check")
-        atts = results["attachments"]
-        if atts:
-            for att in atts:
-                st.write(f"**File Name:** {att['filename']}")
-                st.code(f"SHA-256: {att['sha256_hash']}", language="text")
-                if "Suspicious" in att['sandbox_status']:
-                    st.error(f"Status: {att['sandbox_status']}")
-                else:
-                    st.success(f"Status: {att['sandbox_status']}")
-        else:
-            st.info("No attachments present in this email container.")
-
-    # TAB 5: Raw RFC-822 & Hex Inspector
-    with tab5:
+    # TAB 6: Raw Headers & Hex
+    with tab6:
         st.subheader("🔬 Raw RFC-822 Email Headers & Hex Stream Inspector")
         st.markdown("**Raw Envelope Headers:**")
         st.json(results.get("raw_headers", {}))
-        
         st.markdown("**First 512-Bytes Hex Dump Preview:**")
         st.code(results.get("raw_hex_preview", ""), language="text")
