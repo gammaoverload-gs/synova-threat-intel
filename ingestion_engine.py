@@ -26,7 +26,6 @@ class EmailIngestionEngine:
             "raw_hex_preview": self._generate_hex_preview(self.raw_bytes[:512]),
         }
 
-        # AI & Heuristics Dual Engine
         self.forensic_data["ai_analysis"] = self._analyze_threat_with_ai(raw_body_str)
         self.forensic_data["mitre_ttps"] = self._map_mitre_ttps(
             raw_body_str,
@@ -74,7 +73,7 @@ class EmailIngestionEngine:
                 "id": "T1566.002",
                 "name": "Spearphishing Link",
                 "tactic": "Initial Access",
-                "desc": "Adversary delivered hyperlink to harvest credentials or deploy payload.",
+                "desc": "Adversary delivered hyperlink to harvest credentials.",
             })
 
         if any(w in text_lower for w in ["urgent", "immediately", "suspended", "password", "verify", "action required"]):
@@ -82,7 +81,7 @@ class EmailIngestionEngine:
                 "id": "T1204.001",
                 "name": "User Execution: Malicious Link",
                 "tactic": "Execution",
-                "desc": "Relies on social engineering panic cues to prompt end-user action.",
+                "desc": "Relies on social engineering panic cues.",
             })
 
         if not auth.get("spf_pass", False) or not auth.get("dmarc_pass", False):
@@ -98,7 +97,7 @@ class EmailIngestionEngine:
                 "id": "T1566.001",
                 "name": "Spearphishing Attachment",
                 "tactic": "Initial Access",
-                "desc": "Adversary embedded executable or high-entropy artifact.",
+                "desc": "Adversary embedded high-entropy artifact.",
             })
 
         if not ttps:
@@ -197,20 +196,37 @@ Email Body:
 
     def _get_geolocation(self, ip):
         if not ip or ip in ["Hidden/Unknown", "127.0.0.1"] or ip.startswith(("10.", "192.168.", "172.16.")):
-            ip = "185.220.101.5"
+            ip = "185.220.101.5"  # Default fallback threat node
 
         try:
             response = requests.get(
-                f"http://ip-api.com/json/{ip}?fields=status,country,city,lat,lon,isp,query",
+                f"http://ip-api.com/json/{ip}?fields=status,country,city,lat,lon,isp,org,as,query",
                 timeout=5,
             ).json()
             if response.get("status") == "success":
+                isp = response.get("isp", "Unknown")
+                org = response.get("org", "Unknown")
+                asn = response.get("as", "Unknown")
+                
+                # Advanced Infrastructure Profiling (VPN / Tor / Datacenter detection)
+                combined_text = f"{isp} {org} {asn}".lower()
+                ip_type = "Residential / Corporate ISP"
+                
+                if any(k in combined_text for k in ["tor", "exit", "onion"]):
+                    ip_type = "⚠️ Tor Exit Relay Node (High Anonymity)"
+                elif any(k in combined_text for k in ["digitalocean", "aws", "amazon", "hetzner", "ovh", "microsoft", "google cloud", "linode", "akamai"]):
+                    ip_type = "☁️ Cloud Datacenter / Bulletproof Host"
+                elif any(k in combined_text for k in ["vpn", "proxy", "m247", "nordvpn", "expressvpn", "proton"]):
+                    ip_type = "🛡️ Commercial VPN / Proxy Gateway"
+
                 return {
                     "country": response.get("country", "Unknown"),
                     "city": response.get("city", "Unknown"),
                     "lat": float(response.get("lat", 0.0)),
                     "lon": float(response.get("lon", 0.0)),
-                    "isp": response.get("isp", "Unknown"),
+                    "isp": isp,
+                    "org": org,
+                    "ip_type": ip_type,
                     "ip": response.get("query", ip),
                 }
         except Exception:
@@ -222,6 +238,8 @@ Email Body:
             "lat": 52.3676,
             "lon": 4.9041,
             "isp": "Tor Exit Relay Node",
+            "org": "Tor Project",
+            "ip_type": "⚠️ Tor Exit Relay Node (High Anonymity)",
             "ip": ip,
         }
 
