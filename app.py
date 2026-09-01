@@ -367,69 +367,33 @@ with header_col2:
 
 st.divider()
 
-# --- AUDIO ENGINE: ELEVENLABS WITH AUTOPLAY BYPASS & BROWSER FALLBACK ---
-audio_b64_payload = ""
-
-if eleven_client:
+# --- ULTRA-REALISTIC NATURAL HUMAN VOICE (ELEVENLABS API) ---
+def dispatch_real_human_voice(text_prompt: str):
+    if not eleven_client:
+        return
     try:
         audio_stream = eleven_client.text_to_speech.convert(
-            text=voice_briefing,
-            voice_id="aEO01A4wXmiMrgdqHjTZ",  # Aditi / Indian Natural Tone
-            model_id="eleven_multilingual_v2",
-            voice_settings={
-                "stability": 0.55,
-                "similarity_boost": 0.80,
-                "style": 0.20,
-                "use_speaker_boost": True
-            }
+            text=text_prompt,
+            voice_id="EXAVITQu4vr4xnSDxMaL",
+            model_id="eleven_multilingual_v2"
         )
         audio_bytes = b"".join(list(audio_stream))
-        audio_b64_payload = base64.b64encode(audio_bytes).decode("utf-8")
+        b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
+        st.markdown(
+            f"""
+            <audio autoplay style="display:none;">
+                <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
+            </audio>
+            """,
+            unsafe_allow_html=True
+        )
     except Exception:
-        audio_b64_payload = ""
+        pass
 
-audio_bridge_js = f"""
-<script>
-(function() {{
-    const b64Data = "{audio_b64_payload}";
-    const textMsg = "{voice_briefing}";
-
-    function playAudioStream() {{
-        if (b64Data && b64Data.length > 50) {{
-            const audio = new Audio("data:audio/mp3;base64," + b64Data);
-            audio.volume = 0.95;
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {{
-                playPromise.catch(() => {{
-                    // Fallback to trigger on first interaction if blocked by browser policy
-                    const unlock = () => {{
-                        audio.play();
-                        window.parent.document.removeEventListener('click', unlock);
-                        document.removeEventListener('click', unlock);
-                    }};
-                    window.parent.document.addEventListener('click', unlock, {{ once: true }});
-                    document.addEventListener('click', unlock, {{ once: true }});
-                }});
-            }}
-        }} else if ('speechSynthesis' in window) {{
-            // Neural Indian Browser Voice Fallback
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(textMsg);
-            utter.lang = "en-IN";
-            utter.rate = 0.94;
-            utter.pitch = 1.0;
-            const voices = window.speechSynthesis.getVoices();
-            const indVoice = voices.find(v => v.lang === "en-IN" || v.name.includes("India") || v.name.includes("Neerja"));
-            if (indVoice) utter.voice = indVoice;
-            window.speechSynthesis.speak(utter);
-        }}
-    }}
-
-    setTimeout(playAudioStream, 350);
-}})();
-</script>
-"""
-st.components.v1.html(audio_bridge_js, height=0)
+# Trigger real human voice dispatch
+if "last_dispatched_voice" not in st.session_state or st.session_state.last_dispatched_voice != voice_briefing:
+    st.session_state.last_dispatched_voice = voice_briefing
+    dispatch_real_human_voice(voice_briefing)
 
 def build_pdf_buffer(results_data):
     buffer = io.BytesIO()
