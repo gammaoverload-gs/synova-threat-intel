@@ -14,9 +14,10 @@ st.set_page_config(page_title="SYNOVA Autonomous SOC Platform", page_icon="🛡�
 
 api_key = st.secrets.get("GEMINI_API_KEY", "")
 
-primary_color = "#00ffcc"
-glow_rgba = "rgba(0, 255, 204, 0.15)"
-bg_glow = "rgba(0, 255, 204, 0.18)"
+# Default Home Theme: Electric Cyber Blue
+primary_color = "#00a8ff"
+glow_rgba = "rgba(0, 168, 255, 0.16)"
+bg_glow = "rgba(0, 168, 255, 0.20)"
 badge_text = "SOC RADAR ACTIVE"
 score_num = 0
 results = None
@@ -58,9 +59,10 @@ if uploaded_file is not None:
         audio_type = "warning"
         voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
     else:
-        primary_color = "#00ffcc"
-        glow_rgba = "rgba(0, 255, 204, 0.15)"
-        bg_glow = "rgba(0, 255, 204, 0.18)"
+        # Clean analysis maintains electric blue theme
+        primary_color = "#00a8ff"
+        glow_rgba = "rgba(0, 168, 255, 0.16)"
+        bg_glow = "rgba(0, 168, 255, 0.20)"
         badge_text = "CLEAN ARTIFACT CONFIRMED"
         audio_type = "clean"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
@@ -125,7 +127,7 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- CLEAN CSS & SUBTLE AMBIENT SHIELD BACKGROUND ---
+# --- REALISTIC VECTOR SHIELD + FAINT LASER SCANNER STYLES ---
 st.markdown(
     f"""
     <style>
@@ -133,31 +135,65 @@ st.markdown(
         background-color: #04070d !important;
         background-image: 
             radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 65%),
-            radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 90% 90%, rgba(0, 168, 255, 0.08) 0%, transparent 50%),
             linear-gradient({glow_rgba} 1px, transparent 1px),
             linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
         background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+        position: relative;
     }}
 
-    /* Safe Ambient Faint Shield (Non-blocking) */
-    .faint-shield-bg {{
+    /* Realistic Curved Faint Shield Container */
+    .ambient-shield-wrapper {{
         position: fixed;
-        top: 52%;
+        top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 520px;
-        height: 620px;
-        clip-path: polygon(50% 0%, 100% 20%, 100% 75%, 50% 100%, 0% 75%, 0% 20%);
-        background: radial-gradient(circle, {glow_rgba} 0%, rgba(4, 7, 13, 0) 75%);
-        border: 1.5px solid {glow_rgba};
+        width: 580px;
+        height: 640px;
         pointer-events: none;
         z-index: 0;
-        animation: faintShieldPulse 6s ease-in-out infinite alternate;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0.7;
+        animation: shieldPulseGlow 6s ease-in-out infinite alternate;
     }}
 
-    @keyframes faintShieldPulse {{
-        0% {{ transform: translate(-50%, -50%) scale(0.96); opacity: 0.35; }}
-        100% {{ transform: translate(-50%, -50%) scale(1.04); opacity: 0.8; box-shadow: inset 0 0 50px {glow_rgba}; }}
+    .realistic-shield-svg {{
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(0 0 25px {glow_rgba});
+    }}
+
+    /* Animated Faint Laser Sweep */
+    .laser-scanline {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 140px;
+        background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, rgba(0, 168, 255, 0.25) 85%, transparent 100%);
+        box-shadow: 0 0 20px {glow_rgba};
+        pointer-events: none;
+        z-index: 0;
+        animation: laserScanDown 5s ease-in-out infinite alternate;
+    }}
+
+    @keyframes laserScanDown {{
+        0% {{ transform: translateY(-30vh); opacity: 0.15; }}
+        50% {{ opacity: 0.65; }}
+        100% {{ transform: translateY(110vh); opacity: 0.15; }}
+    }}
+
+    @keyframes shieldPulseGlow {{
+        0% {{
+            transform: translate(-50%, -50%) scale(0.96);
+            opacity: 0.45;
+        }}
+        100% {{
+            transform: translate(-50%, -50%) scale(1.03);
+            opacity: 0.85;
+        }}
     }}
 
     .live-badge {{
@@ -272,7 +308,37 @@ st.markdown(
     }}
     </style>
 
-    <div class="faint-shield-bg"></div>
+    <!-- Faint Laser Radar Sweep -->
+    <div class="laser-scanline"></div>
+
+    <!-- Realistic Curved Shield SVG Background -->
+    <div class="ambient-shield-wrapper">
+        <svg class="realistic-shield-svg" viewBox="0 0 500 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer Shield Hull -->
+            <path d="M250 30 C370 30 450 65 450 160 C450 380 340 500 250 560 C160 500 50 380 50 160 C50 65 130 30 250 30 Z" 
+                  stroke="{primary_color}" stroke-width="3" stroke-opacity="0.35" fill="url(#shieldRadialGlow)"/>
+            
+            <!-- Inner Bevel Shield Crest -->
+            <path d="M250 70 C340 70 410 100 410 175 C410 350 320 460 250 510 C180 460 90 350 90 175 C90 100 160 70 250 70 Z" 
+                  stroke="{primary_color}" stroke-width="1.5" stroke-dasharray="8 6" stroke-opacity="0.3" fill="none"/>
+
+            <!-- Center Defense Core -->
+            <path d="M250 120 C305 120 355 145 355 200 C355 315 295 390 250 430 C205 390 145 315 145 200 C145 145 195 120 250 120 Z" 
+                  stroke="{primary_color}" stroke-width="2" stroke-opacity="0.4" fill="rgba(0, 168, 255, 0.03)"/>
+            
+            <!-- Shield Center Cyber Crosshair / Emblem -->
+            <line x1="250" y1="180" x2="250" y2="370" stroke="{primary_color}" stroke-width="1.5" stroke-opacity="0.25"/>
+            <line x1="180" y1="260" x2="320" y2="260" stroke="{primary_color}" stroke-width="1.5" stroke-opacity="0.25"/>
+
+            <defs>
+                <radialGradient id="shieldRadialGlow" cx="50%" cy="35%" r="65%">
+                    <stop offset="0%" stop-color="{primary_color}" stop-opacity="0.12"/>
+                    <stop offset="60%" stop-color="{primary_color}" stop-opacity="0.03"/>
+                    <stop offset="100%" stop-color="#04070d" stop-opacity="0"/>
+                </radialGradient>
+            </defs>
+        </svg>
+    </div>
     """,
     unsafe_allow_html=True,
 )
@@ -415,22 +481,22 @@ def build_pdf_buffer(results_data):
 # --- EMPTY STATE / WELCOME SCREEN ---
 if not uploaded_file:
     st.markdown(
-        """
+        f"""
         <div style="
             background: linear-gradient(135deg, rgba(8, 14, 26, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%);
-            border: 1px solid rgba(0, 255, 204, 0.3);
-            border-left: 5px solid #00ffcc;
+            border: 1px solid rgba(0, 168, 255, 0.3);
+            border-left: 5px solid {primary_color};
             border-radius: 12px;
             padding: 24px;
             margin-top: 10px;
             margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0, 255, 204, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 168, 255, 0.1);
         ">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                 <h3 style="color: #ffffff; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 20px;">
                     ⚡ WELCOME TO THE SYNOVA THREAT INTELLIGENCE MATRIX
                 </h3>
-                <span style="background: rgba(0, 255, 204, 0.15); color: #00ffcc; border: 1px solid #00ffcc; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-family: monospace;">
+                <span style="background: rgba(0, 168, 255, 0.15); color: {primary_color}; border: 1px solid {primary_color}; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-family: monospace;">
                     ZERO-TRUST SOC
                 </span>
             </div>
@@ -438,10 +504,10 @@ if not uploaded_file:
                 SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level email attack vectors. Upload any suspicious raw <code>.eml</code> or <code>.msg</code> byte payload to execute real-time AI cognitive triage, MITRE ATT&CK® adversary mapping, and automated SOAR firewall containment playbooks.
             </p>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
+                <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
                     1. DROP RAW MIME PAYLOAD
                 </span>
-                <span style="background: rgba(0, 255, 204, 0.1); border: 1px solid rgba(0, 255, 204, 0.3); color: #00ffcc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
+                <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
                     2. IN-MEMORY FORENSIC RECONSTRUCTION
                 </span>
                 <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
