@@ -12,9 +12,21 @@ from streamlit_folium import st_folium
 
 st.set_page_config(page_title="SYNOVA Autonomous SOC Platform", page_icon="🛡️", layout="wide")
 
+# --- ANIMATION STATE INITIALIZATION ---
+if "animation_played" not in st.session_state:
+    st.session_state.animation_played = False
+if "force_replay" not in st.session_state:
+    st.session_state.force_replay = False
+
 api_key = st.secrets.get("GEMINI_API_KEY", "")
 
-uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
+# Sidebar Controls for Replay
+with st.sidebar:
+    st.markdown("### ⚙️ System Controls")
+    if st.button("🔁 Replay Defense Animation", use_container_width=True):
+        st.session_state.animation_played = False
+        st.session_state.force_replay = True
+        st.rerun()
 
 primary_color = "#00ffcc"
 glow_rgba = "rgba(0, 255, 204, 0.15)"
@@ -23,6 +35,82 @@ badge_text = "SOC RADAR ACTIVE"
 score_num = 0
 results = None
 audio_type = "none"
+
+# --- INTRO PROTECTION SCAN SCREEN (5 SECONDS OR SKIPPABLE) ---
+if not st.session_state.animation_played:
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-color: #04070d !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }}
+        .scan-container {{
+            text-align: center;
+            margin-top: 5vh;
+        }}
+        .shield-svg {{
+            width: 130px;
+            height: 150px;
+            fill: none;
+            stroke: {primary_color};
+            stroke-width: 3.5;
+            stroke-dasharray: 450;
+            stroke-dashoffset: 450;
+            animation: drawShield 2.2s cubic-bezier(0.65, 0, 0.35, 1) forwards infinite alternate;
+            filter: drop-shadow(0 0 20px {primary_color});
+        }}
+        @keyframes drawShield {{
+            0% {{ stroke-dashoffset: 450; transform: scale(0.9); }}
+            100% {{ stroke-dashoffset: 0; transform: scale(1.05); }}
+        }}
+        .scan-title {{
+            color: {primary_color};
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 20px;
+            letter-spacing: 4px;
+            margin-top: 25px;
+            font-weight: bold;
+            text-shadow: 0 0 12px {primary_color};
+            animation: textFlicker 1.2s infinite;
+        }}
+        @keyframes textFlicker {{
+            0%, 100% {{ opacity: 0.7; }}
+            50% {{ opacity: 1; }}
+        }}
+        </style>
+        <div class="scan-container">
+            <svg class="shield-svg" viewBox="0 0 24 28">
+                <path d="M12 2L2 6v8c0 7.5 10 12 10 12s10-4.5 10-12V6l-10-4z" />
+            </svg>
+            <div class="scan-title">INITIALIZING DEFENSE MATRIX...</div>
+            <p style="color: #64748b; font-family: monospace; font-size: 13px; margin-top: 8px;">CALIBRATING NEURAL SOC HEURISTICS</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    col_space1, col_skip, col_space2 = st.columns([1.8, 1, 1.8])
+    with col_skip:
+        if st.button("⚡ Skip Intro", use_container_width=True):
+            st.session_state.animation_played = True
+            st.rerun()
+
+    prog_bar = st.progress(0)
+    for percent_complete in range(100):
+        time.sleep(0.045)  # Total 4.5 - 5 seconds
+        prog_bar.progress(percent_complete + 1)
+
+    st.session_state.animation_played = True
+    st.rerun()
+
+# ==========================================
+# MAIN DASHBOARD INTERFACE (POST-ANIMATION)
+# ==========================================
+
+uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
 
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
@@ -124,88 +212,11 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- 5-SECOND STARTUP SCAN ANIMATION & CONTINUOUS AMBIENT SHIELD ---
+# --- AMBIENT SHIELD BACKGROUND & UI STYLES ---
 st.markdown(
     f"""
     <style>
-    /* 1. STARTUP SPLASH & PROTECTION SCAN ANIMATION */
-    #synova-splash-overlay {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: #04070d;
-        z-index: 9999999;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        opacity: 1;
-        transition: opacity 0.8s ease-in-out;
-        pointer-events: all;
-    }}
-
-    .splash-shield-box {{
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 150px;
-        height: 170px;
-    }}
-
-    .splash-shield-svg {{
-        width: 110px;
-        height: 130px;
-        fill: none;
-        stroke: {primary_color};
-        stroke-width: 3.5;
-        stroke-dasharray: 450;
-        stroke-dashoffset: 450;
-        animation: drawShieldPath 2.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
-        filter: drop-shadow(0 0 18px {primary_color});
-    }}
-
-    .splash-scan-bar {{
-        width: 150px;
-        height: 3px;
-        background: linear-gradient(90deg, transparent, {primary_color}, transparent);
-        box-shadow: 0 0 15px {primary_color};
-        position: absolute;
-        animation: scanVerticalMove 1.8s ease-in-out infinite alternate;
-    }}
-
-    .splash-text {{
-        color: {primary_color};
-        font-family: 'JetBrains Mono', 'Courier New', monospace;
-        font-size: 13px;
-        letter-spacing: 3.5px;
-        margin-top: 24px;
-        font-weight: 700;
-        text-transform: uppercase;
-        animation: textFlicker 1s infinite;
-        text-shadow: 0 0 12px {primary_color};
-    }}
-
-    @keyframes drawShieldPath {{
-        0% {{ stroke-dashoffset: 450; transform: scale(0.85); opacity: 0.2; }}
-        70% {{ stroke-dashoffset: 0; transform: scale(1.05); opacity: 1; }}
-        100% {{ stroke-dashoffset: 0; transform: scale(1); opacity: 1; }}
-    }}
-
-    @keyframes scanVerticalMove {{
-        0% {{ transform: translateY(-55px); opacity: 0.2; }}
-        50% {{ opacity: 1; }}
-        100% {{ transform: translateY(55px); opacity: 0.2; }}
-    }}
-
-    @keyframes textFlicker {{
-        0%, 100% {{ opacity: 0.7; }}
-        50% {{ opacity: 1; }}
-    }}
-
-    /* 2. FAINT CRT SCANLINE OVERLAY */
+    /* 1. FAINT CRT SCANLINE OVERLAY */
     .stApp::before {{
         content: " ";
         display: block;
@@ -216,10 +227,10 @@ st.markdown(
         z-index: 99999;
         background-size: 100% 3px, 3px 100%;
         pointer-events: none;
-        opacity: 0.45;
+        opacity: 0.4;
     }}
 
-    /* 3. SUBTLE SOFT VERTICAL RADAR SWEEP */
+    /* 2. SUBTLE SOFT VERTICAL RADAR SWEEP */
     .stApp::after {{
         content: "";
         position: fixed;
@@ -235,7 +246,7 @@ st.markdown(
         100% {{ transform: translateY(100%); }}
     }}
 
-    /* 4. BACKGROUND GRID & AMBIENT PULSING FAINT SHIELD */
+    /* 3. BACKGROUND GRID & AMBIENT PULSING FAINT SHIELD */
     .stApp {{
         background-color: #04070d !important;
         background-image: 
@@ -252,26 +263,26 @@ st.markdown(
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 580px;
-        height: 680px;
+        width: 600px;
+        height: 700px;
         clip-path: polygon(50% 0%, 100% 20%, 100% 75%, 50% 100%, 0% 75%, 0% 20%);
         background: radial-gradient(circle, {glow_rgba} 0%, rgba(4, 7, 13, 0) 72%);
         border: 1.5px solid {glow_rgba};
         pointer-events: none;
         z-index: 0;
-        animation: ambientShieldGlow 7s ease-in-out infinite alternate;
+        animation: ambientShieldGlow 6s ease-in-out infinite alternate;
     }}
 
     @keyframes ambientShieldGlow {{
         0% {{
-            transform: translate(-50%, -50%) scale(0.95);
-            opacity: 0.35;
-            box-shadow: inset 0 0 35px {glow_rgba};
+            transform: translate(-50%, -50%) scale(0.96);
+            opacity: 0.3;
+            box-shadow: inset 0 0 30px {glow_rgba};
         }}
         100% {{
-            transform: translate(-50%, -50%) scale(1.06);
-            opacity: 0.85;
-            box-shadow: inset 0 0 70px {glow_rgba}, 0 0 45px {glow_rgba};
+            transform: translate(-50%, -50%) scale(1.04);
+            opacity: 0.8;
+            box-shadow: inset 0 0 65px {glow_rgba}, 0 0 40px {glow_rgba};
         }}
     }}
 
@@ -387,34 +398,8 @@ st.markdown(
     }}
     </style>
 
-    <!-- Startup Animation Splash Overlay -->
-    <div id="synova-splash-overlay">
-        <div class="splash-shield-box">
-            <svg class="splash-shield-svg" viewBox="0 0 24 28">
-                <path d="M12 2L2 6v8c0 7.5 10 12 10 12s10-4.5 10-12V6l-10-4z" />
-            </svg>
-            <div class="splash-scan-bar"></div>
-        </div>
-        <div class="splash-text">INITIALIZING DEFENSE MATRIX...</div>
-    </div>
-
-    <!-- Ambient Faint Shield in Background -->
+    <!-- Continuous Ambient Faint Shield in Background -->
     <div class="ambient-bg-shield"></div>
-
-    <script>
-    (function() {{
-        setTimeout(function() {{
-            const overlay = document.getElementById('synova-splash-overlay');
-            if (overlay) {{
-                overlay.style.opacity = '0';
-                overlay.style.pointerEvents = 'none';
-                setTimeout(function() {{
-                    overlay.remove();
-                }}, 800);
-            }}
-        }}, 5000);
-    }})();
-    </script>
     """,
     unsafe_allow_html=True,
 )
