@@ -124,11 +124,92 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- CLASSIC SUBTLE SCANLINE & SMOOTH RADAR SWEEP ---
+# --- STARTUP SCAN ANIMATION & AMBIENT SHIELD STYLING ---
 st.markdown(
     f"""
     <style>
-    /* 1. FAINT CRT SCANLINE OVERLAY */
+    /* 1. STARTUP SPLASH & PROTECTION SCAN ANIMATION */
+    #synova-splash-overlay {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #04070d;
+        z-index: 9999999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        animation: splashFadeOut 0.7s ease-in-out 2.0s forwards;
+        pointer-events: none;
+    }}
+
+    .splash-shield-box {{
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 140px;
+        height: 160px;
+    }}
+
+    .splash-shield-svg {{
+        width: 100px;
+        height: 120px;
+        fill: none;
+        stroke: {primary_color};
+        stroke-width: 3.5;
+        stroke-dasharray: 450;
+        stroke-dashoffset: 450;
+        animation: drawShieldPath 1.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+        filter: drop-shadow(0 0 16px {primary_color});
+    }}
+
+    .splash-scan-bar {{
+        width: 140px;
+        height: 2.5px;
+        background: linear-gradient(90deg, transparent, {primary_color}, transparent);
+        box-shadow: 0 0 15px {primary_color};
+        position: absolute;
+        animation: scanVerticalMove 1.6s ease-in-out infinite alternate;
+    }}
+
+    .splash-text {{
+        color: {primary_color};
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 13px;
+        letter-spacing: 3.5px;
+        margin-top: 24px;
+        font-weight: 700;
+        text-transform: uppercase;
+        animation: textFlicker 1.1s infinite;
+        text-shadow: 0 0 10px {primary_color};
+    }}
+
+    @keyframes drawShieldPath {{
+        0% {{ stroke-dashoffset: 450; transform: scale(0.85); opacity: 0.2; }}
+        70% {{ stroke-dashoffset: 0; transform: scale(1.05); opacity: 1; }}
+        100% {{ stroke-dashoffset: 0; transform: scale(1); opacity: 1; }}
+    }}
+
+    @keyframes scanVerticalMove {{
+        0% {{ transform: translateY(-55px); opacity: 0.2; }}
+        50% {{ opacity: 1; }}
+        100% {{ transform: translateY(55px); opacity: 0.2; }}
+    }}
+
+    @keyframes splashFadeOut {{
+        0% {{ opacity: 1; visibility: visible; }}
+        100% {{ opacity: 0; visibility: hidden; }}
+    }}
+
+    @keyframes textFlicker {{
+        0%, 100% {{ opacity: 0.7; }}
+        50% {{ opacity: 1; }}
+    }}
+
+    /* 2. FAINT CRT SCANLINE OVERLAY */
     .stApp::before {{
         content: " ";
         display: block;
@@ -139,10 +220,10 @@ st.markdown(
         z-index: 99999;
         background-size: 100% 3px, 3px 100%;
         pointer-events: none;
-        opacity: 0.55;
+        opacity: 0.45;
     }}
 
-    /* 2. SUBTLE SOFT VERTICAL RADAR SWEEP */
+    /* 3. SUBTLE SOFT VERTICAL RADAR SWEEP */
     .stApp::after {{
         content: "";
         position: fixed;
@@ -158,6 +239,7 @@ st.markdown(
         100% {{ transform: translateY(100%); }}
     }}
 
+    /* 4. BACKGROUND GRID & AMBIENT PULSING FAINT SHIELD */
     .stApp {{
         background-color: #04070d !important;
         background-image: 
@@ -166,6 +248,35 @@ st.markdown(
             linear-gradient({glow_rgba} 1px, transparent 1px),
             linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
         background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+        position: relative;
+    }}
+
+    .ambient-bg-shield {{
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 580px;
+        height: 680px;
+        clip-path: polygon(50% 0%, 100% 20%, 100% 75%, 50% 100%, 0% 75%, 0% 20%);
+        background: radial-gradient(circle, {glow_rgba} 0%, rgba(4, 7, 13, 0) 72%);
+        border: 1.5px solid {glow_rgba};
+        pointer-events: none;
+        z-index: 0;
+        animation: ambientShieldGlow 7s ease-in-out infinite alternate;
+    }}
+
+    @keyframes ambientShieldGlow {{
+        0% {{
+            transform: translate(-50%, -50%) scale(0.95);
+            opacity: 0.35;
+            box-shadow: inset 0 0 35px {glow_rgba};
+        }}
+        100% {{
+            transform: translate(-50%, -50%) scale(1.06);
+            opacity: 0.85;
+            box-shadow: inset 0 0 70px {glow_rgba}, 0 0 45px {glow_rgba};
+        }}
     }}
 
     .live-badge {{
@@ -279,7 +390,21 @@ st.markdown(
         text-transform: uppercase;
     }}
     </style>
-""",
+
+    <!-- Startup Animation Splash Overlay -->
+    <div id="synova-splash-overlay">
+        <div class="splash-shield-box">
+            <svg class="splash-shield-svg" viewBox="0 0 24 28">
+                <path d="M12 2L2 6v8c0 7.5 10 12 10 12s10-4.5 10-12V6l-10-4z" />
+            </svg>
+            <div class="splash-scan-bar"></div>
+        </div>
+        <div class="splash-text">INITIALIZING DEFENSE MATRIX...</div>
+    </div>
+
+    <!-- Ambient Faint Shield in Background -->
+    <div class="ambient-bg-shield"></div>
+    """,
     unsafe_allow_html=True,
 )
 
