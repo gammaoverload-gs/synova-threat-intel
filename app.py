@@ -371,34 +371,26 @@ if uploaded_file is not None:
         pulse_duration = "4.0s"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-# Voice JS Engine (Indian Male Voice: en-IN)
+# Voice JS Engine (Configured for Microsoft Indian Female Voices: Neerja / Heera / Swara)
 voice_js = f"""
 <script>
 (function() {{
     let voiceTriggered = false;
-    function getIndianMaleVoice() {{
+    function getMicrosoftIndianFemaleVoice() {{
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return null;
 
-        // Priority Indian Male Matchers
-        const maleMatchers = [
-            // 1. Explicit Indian Male Named Voices
-            v => (v.lang === "en-IN" || v.lang.startsWith("en-IN")) && (
-                v.name.toLowerCase().includes("prabhat") || 
-                v.name.toLowerCase().includes("ravi") || 
-                v.name.toLowerCase().includes("madhav") ||
-                v.name.toLowerCase().includes("hemant") ||
-                v.name.toLowerCase().includes("male")
-            ),
-            // 2. Google / Microsoft / Natural en-IN voices
-            v => v.lang === "en-IN" && (v.name.includes("Google") || v.name.includes("Natural")),
-            v => v.lang === "en-IN",
-            v => v.lang.startsWith("en-IN"),
-            // 3. Fallback General Male Voices
-            v => (v.name.includes("Guy") || v.name.includes("David") || v.name.includes("George")) && v.lang.startsWith("en")
+        // Priority matchers for Microsoft Indian Female Voices
+        const priorityMatchers = [
+            v => (v.name.includes("Neerja") || v.name.includes("Heera") || v.name.includes("Swara")) && (v.lang === "en-IN" || v.lang.startsWith("en-IN") || v.name.includes("Microsoft")),
+            v => v.name.includes("Microsoft") && v.name.includes("Online (Natural)") && (v.lang === "en-IN" || v.name.includes("India")),
+            v => v.name.includes("Microsoft") && (v.lang === "en-IN" || v.lang.startsWith("en-IN")),
+            v => (v.lang === "en-IN" || v.lang.startsWith("en-IN")) && (v.name.includes("Female") || v.name.includes("Google")),
+            v => v.lang === "en-IN" || v.lang.startsWith("en-IN"),
+            v => (v.name.includes("Jenny") || v.name.includes("Aria") || v.name.includes("Samantha")) && v.lang.startsWith("en")
         ];
 
-        for (let matcher of maleMatchers) {{
+        for (let matcher of priorityMatchers) {{
             const match = voices.find(matcher);
             if (match) return match;
         }}
@@ -415,12 +407,12 @@ voice_js = f"""
         const text = "{voice_briefing}";
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = "en-IN";
-        utter.rate = 0.93;
-        utter.pitch = 0.88; // Lowered pitch calibrated for deep male tone
+        utter.rate = 0.95;
+        utter.pitch = 1.02; // Calibrated for clear, natural female tone
         utter.volume = 0.95;
 
-        const maleVoice = getIndianMaleVoice();
-        if (maleVoice) utter.voice = maleVoice;
+        const femaleVoice = getMicrosoftIndianFemaleVoice();
+        if (femaleVoice) utter.voice = femaleVoice;
 
         utter.onstart = () => {{ voiceTriggered = true; }};
         window.speechSynthesis.speak(utter);
