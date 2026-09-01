@@ -14,7 +14,18 @@ st.set_page_config(page_title="SYNOVA Autonomous SOC Platform", page_icon="🛡�
 
 api_key = st.secrets.get("GEMINI_API_KEY", "")
 
-# --- DEFAULT HOME STATE: ELECTRIC CYBER BLUE ---
+# --- INTRO ANIMATION SESSION CONTROLLER ---
+if "intro_done" not in st.session_state:
+    st.session_state.intro_done = False
+
+# Sidebar Controls
+with st.sidebar:
+    st.markdown("### ⚙️ System Controls")
+    if st.button("🔁 Replay Defense Animation", use_container_width=True):
+        st.session_state.intro_done = False
+        st.rerun()
+
+# Default Home Theme: Electric Cyber Blue
 primary_color = "#00a8ff"
 glow_rgba = "rgba(0, 168, 255, 0.16)"
 bg_glow = "rgba(0, 168, 255, 0.20)"
@@ -25,10 +36,92 @@ audio_type = "none"
 pulse_duration = "5.0s"
 welcome_status_msg = "MATRIX ONLINE // STANDBY FOR INCOMING THREAT ARTIFACT"
 
-voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
+# --- STEP 1: INITIAL PROTECTION LOADING SCREEN ---
+if not st.session_state.intro_done:
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-color: #04070d !important;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(0, 168, 255, 0.15) 0%, transparent 65%),
+                linear-gradient(rgba(0, 168, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 168, 255, 0.08) 1px, transparent 1px) !important;
+            background-size: 100% 100%, 40px 40px, 40px 40px !important;
+        }}
+        .intro-container {{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-top: 15vh;
+            margin-bottom: 25px;
+        }}
+        .intro-shield-svg {{
+            width: 120px;
+            height: 140px;
+            fill: none;
+            stroke: #00a8ff;
+            stroke-width: 1.6;
+            stroke-dasharray: 450;
+            stroke-dashoffset: 450;
+            animation: drawIntroShield 2.2s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+            filter: drop-shadow(0 0 20px rgba(0, 168, 255, 0.6));
+        }}
+        @keyframes drawIntroShield {{
+            0% {{ stroke-dashoffset: 450; transform: scale(0.9); opacity: 0.3; }}
+            80% {{ stroke-dashoffset: 0; transform: scale(1.04); opacity: 1; }}
+            100% {{ stroke-dashoffset: 0; transform: scale(1); opacity: 1; }}
+        }}
+        .intro-title {{
+            color: #00a8ff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 3.5px;
+            margin-top: 22px;
+            text-shadow: 0 0 12px rgba(0, 168, 255, 0.6);
+        }}
+        .intro-sub {{
+            color: #94a3b8;
+            font-family: monospace;
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            margin-top: 8px;
+        }}
+        </style>
+        <div class="intro-container">
+            <svg class="intro-shield-svg" viewBox="0 0 24 28">
+                <path d="M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z" />
+                <path d="M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z" stroke-dasharray="2 2" stroke-width="0.8"/>
+            </svg>
+            <div class="intro-title">INITIALIZING DEFENSE MATRIX...</div>
+            <div class="intro-sub">CALIBRATING ZERO-DISK FORENSIC HEURISTICS</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-# File Uploader
+    col_l, col_btn, col_r = st.columns([1.5, 1, 1.5])
+    with col_btn:
+        if st.button("⚡ Skip Intro", use_container_width=True):
+            st.session_state.intro_done = True
+            st.rerun()
+
+    progress_bar = st.progress(0)
+    for percent in range(100):
+        time.sleep(0.04)  # ~4.0 to 4.5 seconds total
+        progress_bar.progress(percent + 1)
+
+    st.session_state.intro_done = True
+    st.rerun()
+
+# --- STEP 2 & 3: MAIN APP INTERFACE (POST-INTRO) ---
+
 uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
+
+voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
 if uploaded_file is not None:
     with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
