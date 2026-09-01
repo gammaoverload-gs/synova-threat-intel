@@ -124,7 +124,7 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- STARTUP SCAN ANIMATION & AMBIENT SHIELD STYLING ---
+# --- 5-SECOND STARTUP SCAN ANIMATION & CONTINUOUS AMBIENT SHIELD ---
 st.markdown(
     f"""
     <style>
@@ -141,8 +141,9 @@ st.markdown(
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        animation: splashFadeOut 0.7s ease-in-out 2.0s forwards;
-        pointer-events: none;
+        opacity: 1;
+        transition: opacity 0.8s ease-in-out;
+        pointer-events: all;
     }}
 
     .splash-shield-box {{
@@ -150,29 +151,29 @@ st.markdown(
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 140px;
-        height: 160px;
+        width: 150px;
+        height: 170px;
     }}
 
     .splash-shield-svg {{
-        width: 100px;
-        height: 120px;
+        width: 110px;
+        height: 130px;
         fill: none;
         stroke: {primary_color};
         stroke-width: 3.5;
         stroke-dasharray: 450;
         stroke-dashoffset: 450;
-        animation: drawShieldPath 1.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
-        filter: drop-shadow(0 0 16px {primary_color});
+        animation: drawShieldPath 2.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+        filter: drop-shadow(0 0 18px {primary_color});
     }}
 
     .splash-scan-bar {{
-        width: 140px;
-        height: 2.5px;
+        width: 150px;
+        height: 3px;
         background: linear-gradient(90deg, transparent, {primary_color}, transparent);
         box-shadow: 0 0 15px {primary_color};
         position: absolute;
-        animation: scanVerticalMove 1.6s ease-in-out infinite alternate;
+        animation: scanVerticalMove 1.8s ease-in-out infinite alternate;
     }}
 
     .splash-text {{
@@ -183,8 +184,8 @@ st.markdown(
         margin-top: 24px;
         font-weight: 700;
         text-transform: uppercase;
-        animation: textFlicker 1.1s infinite;
-        text-shadow: 0 0 10px {primary_color};
+        animation: textFlicker 1s infinite;
+        text-shadow: 0 0 12px {primary_color};
     }}
 
     @keyframes drawShieldPath {{
@@ -197,11 +198,6 @@ st.markdown(
         0% {{ transform: translateY(-55px); opacity: 0.2; }}
         50% {{ opacity: 1; }}
         100% {{ transform: translateY(55px); opacity: 0.2; }}
-    }}
-
-    @keyframes splashFadeOut {{
-        0% {{ opacity: 1; visibility: visible; }}
-        100% {{ opacity: 0; visibility: hidden; }}
     }}
 
     @keyframes textFlicker {{
@@ -404,6 +400,21 @@ st.markdown(
 
     <!-- Ambient Faint Shield in Background -->
     <div class="ambient-bg-shield"></div>
+
+    <script>
+    (function() {{
+        setTimeout(function() {{
+            const overlay = document.getElementById('synova-splash-overlay');
+            if (overlay) {{
+                overlay.style.opacity = '0';
+                overlay.style.pointerEvents = 'none';
+                setTimeout(function() {{
+                    overlay.remove();
+                }}, 800);
+            }}
+        }}, 5000);
+    }})();
+    </script>
     """,
     unsafe_allow_html=True,
 )
