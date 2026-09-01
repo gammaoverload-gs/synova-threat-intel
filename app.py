@@ -371,7 +371,7 @@ if uploaded_file is not None:
         pulse_duration = "4.0s"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-# Voice JS Engine
+# Voice JS Engine (Configured for Indian English Accent: en-IN)
 voice_js = f"""
 <script>
 (function() {{
@@ -380,12 +380,15 @@ voice_js = f"""
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return null;
 
+        // Indian English (en-IN) Priority Matchers
         const priorityMatchers = [
+            v => v.lang === "en-IN" && (v.name.includes("Neerja") || v.name.includes("Prabhat") || v.name.includes("Heera") || v.name.includes("Ravi")),
+            v => v.lang === "en-IN" && (v.name.includes("Natural") || v.name.includes("Online")),
+            v => v.name.includes("Google") && (v.lang === "en-IN" || v.name.includes("India") || v.name.includes("Indian")),
+            v => v.lang === "en-IN",
+            v => v.lang.startsWith("en-IN"),
             v => v.name.includes("Natural") || v.name.includes("Online (Natural)"),
             v => v.name.includes("Google US English") || v.name.includes("Google UK English Female"),
-            v => v.name.includes("Samantha") || v.name.includes("Karen") || v.name.includes("Victoria"),
-            v => v.name.includes("Microsoft Jenny") || v.name.includes("Microsoft Aria") || v.name.includes("Microsoft Guy"),
-            v => v.lang.startsWith("en-US") && !v.name.includes("David Desktop") && !v.name.includes("Zira Desktop"),
             v => v.lang.startsWith("en")
         ];
 
@@ -405,12 +408,13 @@ voice_js = f"""
 
         const text = "{voice_briefing}";
         const utter = new SpeechSynthesisUtterance(text);
-        utter.rate = 0.96;
-        utter.pitch = 1.02;
+        utter.lang = "en-IN"; // Standard Indian English Locale
+        utter.rate = 0.94;
+        utter.pitch = 1.0;
         utter.volume = 0.95;
 
-        const humanVoice = getNeuralHumanVoice();
-        if (humanVoice) utter.voice = humanVoice;
+        const indianVoice = getNeuralHumanVoice();
+        if (indianVoice) utter.voice = indianVoice;
 
         utter.onstart = () => {{ voiceTriggered = true; }};
         window.speechSynthesis.speak(utter);
