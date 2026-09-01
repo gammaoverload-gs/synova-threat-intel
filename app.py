@@ -306,6 +306,32 @@ st.markdown(
         50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 16px {primary_color}; }}
     }}
 
+    /* Custom Replay Action Button styled like SOC Badge */
+    div[data-testid="stButton"] > button[key="replay_btn_header"], 
+    .replay-cyber-btn button {{
+        background: {glow_rgba} !important;
+        border: 1px solid {primary_color} !important;
+        color: {primary_color} !important;
+        font-size: 11px !important;
+        padding: 5px 14px !important;
+        border-radius: 20px !important;
+        font-family: 'Courier New', monospace !important;
+        font-weight: bold !important;
+        letter-spacing: 1.5px !important;
+        box-shadow: 0 0 15px {glow_rgba} !important;
+        transition: all 0.3s ease-in-out !important;
+        text-transform: uppercase !important;
+        float: right !important;
+    }}
+
+    div[data-testid="stButton"] > button[key="replay_btn_header"]:hover,
+    .replay-cyber-btn button:hover {{
+        background: {primary_color} !important;
+        color: #04070d !important;
+        box-shadow: 0 0 22px {primary_color} !important;
+        transform: translateY(-1px) !important;
+    }}
+
     [data-testid="stFileUploadDropzone"], .stFileUploader section {{
         background: rgba(8, 14, 26, 0.75) !important;
         backdrop-filter: blur(16px) !important;
@@ -390,8 +416,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Header Section with SOC Radar Badge and Replay Button underneath
-col1, col2 = st.columns([3.5, 1.5])
+# Header Section with SOC Radar Badge and Matching Replay Button
+col1, col2 = st.columns([3.3, 1.7])
 with col1:
     st.markdown(
         f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Command Center</span></h1>",
@@ -403,13 +429,18 @@ with col1:
     )
 with col2:
     st.markdown(
-        f"<div style='text-align: right; margin-top: 10px;'><span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span></div>",
+        f"""
+        <div style='display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 10px;'>
+            <span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-    st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
-    if st.button("🔁 Replay Defense Animation", key="replay_btn_header", use_container_width=True):
+    st.markdown('<div class="replay-cyber-btn" style="margin-top: 6px;">', unsafe_allow_html=True)
+    if st.button("🔁 REPLAY DEFENSE PROTOCOL", key="replay_btn_header"):
         st.session_state.intro_done = False
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.divider()
 
