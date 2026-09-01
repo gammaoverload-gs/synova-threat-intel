@@ -25,47 +25,6 @@ audio_type = "none"
 
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
-# File Uploader
-uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
-
-if uploaded_file is not None:
-    with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
-        raw_bytes = uploaded_file.getvalue()
-        engine = EmailIngestionEngine(raw_bytes, api_key=api_key)
-        results = engine.parse_email()
-
-    raw_score = str(results.get("ai_analysis", {}).get("score", "0"))
-    try:
-        score_num = int("".join([c for c in raw_score.split("/")[0] if c.isdigit()]))
-    except Exception:
-        score_num = 0
-
-    origin_city = str(results["metadata"]["geo_data"].get("city", "Unknown"))
-    origin_country = str(results["metadata"]["geo_data"].get("country", "Unknown"))
-    ip_type = str(results["metadata"]["geo_data"].get("ip_type", "Residential ISP"))
-
-    if score_num >= 70:
-        primary_color = "#ff3355"
-        glow_rgba = "rgba(255, 51, 85, 0.25)"
-        bg_glow = "rgba(255, 51, 85, 0.25)"
-        badge_text = "CRITICAL THREAT CONFIRMED"
-        audio_type = "critical"
-        voice_briefing = f"Alert. High-risk spearphishing vector detected from {origin_city}, {origin_country}. Infrastructure identified as {ip_type}. Automated quarantine playbooks are now active."
-    elif score_num >= 40:
-        primary_color = "#ffaa00"
-        glow_rgba = "rgba(255, 170, 0, 0.25)"
-        bg_glow = "rgba(255, 170, 0, 0.22)"
-        badge_text = "SUSPICIOUS PROFILE DETECTED"
-        audio_type = "warning"
-        voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
-    else:
-        primary_color = "#00a8ff"
-        glow_rgba = "rgba(0, 168, 255, 0.16)"
-        bg_glow = "rgba(0, 168, 255, 0.20)"
-        badge_text = "CLEAN ARTIFACT CONFIRMED"
-        audio_type = "clean"
-        voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
-
 # Voice JS Engine
 voice_js = f"""
 <script>
@@ -126,187 +85,205 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- CLEAN UI & BACKGROUND SVG INJECTION ---
-ui_styles = f"""
-<style>
-.stApp {{
-    background-color: #04070d !important;
-    background-image: 
-        radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 65%),
-        radial-gradient(circle at 90% 90%, rgba(0, 168, 255, 0.08) 0%, transparent 50%),
-        linear-gradient({glow_rgba} 1px, transparent 1px),
-        linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
-    background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
-    position: relative;
-}}
+# Main File Ingestion
+uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
 
-.ambient-shield-wrapper {{
-    position: fixed;
-    top: 52%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 580px;
-    height: 640px;
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.75;
-    animation: shieldPulseGlow 6s ease-in-out infinite alternate;
-}}
+if uploaded_file is not None:
+    with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
+        raw_bytes = uploaded_file.getvalue()
+        engine = EmailIngestionEngine(raw_bytes, api_key=api_key)
+        results = engine.parse_email()
 
-.laser-scanline {{
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 120px;
-    background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, rgba(0, 168, 255, 0.22) 80%, transparent 100%);
-    box-shadow: 0 0 15px {glow_rgba};
-    pointer-events: none;
-    z-index: 0;
-    animation: laserScanDown 5s ease-in-out infinite alternate;
-}}
+    raw_score = str(results.get("ai_analysis", {}).get("score", "0"))
+    try:
+        score_num = int("".join([c for c in raw_score.split("/")[0] if c.isdigit()]))
+    except Exception:
+        score_num = 0
 
-@keyframes laserScanDown {{
-    0% {{ transform: translateY(-20vh); opacity: 0.1; }}
-    50% {{ opacity: 0.5; }}
-    100% {{ transform: translateY(105vh); opacity: 0.1; }}
-}}
+    origin_city = str(results["metadata"]["geo_data"].get("city", "Unknown"))
+    origin_country = str(results["metadata"]["geo_data"].get("country", "Unknown"))
+    ip_type = str(results["metadata"]["geo_data"].get("ip_type", "Residential ISP"))
 
-@keyframes shieldPulseGlow {{
-    0% {{ transform: translate(-50%, -50%) scale(0.96); opacity: 0.45; }}
-    100% {{ transform: translate(-50%, -50%) scale(1.03); opacity: 0.85; }}
-}}
+    if score_num >= 70:
+        primary_color = "#ff3355"
+        glow_rgba = "rgba(255, 51, 85, 0.25)"
+        bg_glow = "rgba(255, 51, 85, 0.25)"
+        badge_text = "CRITICAL THREAT CONFIRMED"
+        audio_type = "critical"
+        voice_briefing = f"Alert. High-risk spearphishing vector detected from {origin_city}, {origin_country}. Infrastructure identified as {ip_type}. Automated quarantine playbooks are now active."
+    elif score_num >= 40:
+        primary_color = "#ffaa00"
+        glow_rgba = "rgba(255, 170, 0, 0.25)"
+        bg_glow = "rgba(255, 170, 0, 0.22)"
+        badge_text = "SUSPICIOUS PROFILE DETECTED"
+        audio_type = "warning"
+        voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
+    else:
+        primary_color = "#00a8ff"
+        glow_rgba = "rgba(0, 168, 255, 0.16)"
+        bg_glow = "rgba(0, 168, 255, 0.20)"
+        badge_text = "CLEAN ARTIFACT CONFIRMED"
+        audio_type = "clean"
+        voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-.live-badge {{
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: {glow_rgba};
-    border: 1px solid {primary_color};
-    color: {primary_color};
-    font-size: 11px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    letter-spacing: 1.5px;
-    box-shadow: 0 0 15px {glow_rgba};
-}}
+# --- PURE CSS BACKGROUND INJECTION (SHIELD + LASER LINE) ---
+shield_svg_encoded = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 600' fill='none'><path d='M250 30 C370 30 450 65 450 160 C450 380 340 500 250 560 C160 500 50 380 50 160 C50 65 130 30 250 30 Z' stroke='{primary_color}' stroke-width='3' stroke-opacity='0.45' fill='none'/><path d='M250 70 C340 70 410 100 410 175 C410 350 320 460 250 510 C180 460 90 350 90 175 C90 100 160 70 250 70 Z' stroke='{primary_color}' stroke-width='1.5' stroke-dasharray='8 6' stroke-opacity='0.35' fill='none'/><path d='M250 120 C305 120 355 145 355 200 C355 315 295 390 250 430 C205 390 145 315 145 200 C145 145 195 120 250 120 Z' stroke='{primary_color}' stroke-width='2' stroke-opacity='0.35' fill='none'/><line x1='250' y1='180' x2='250' y2='370' stroke='{primary_color}' stroke-width='1.5' stroke-opacity='0.3'/><line x1='180' y1='260' x2='320' y2='260' stroke='{primary_color}' stroke-width='1.5' stroke-opacity='0.3'/></svg>""".replace("#", "%23")
 
-.pulse-dot {{
-    width: 8px;
-    height: 8px;
-    background-color: {primary_color};
-    border-radius: 50%;
-    box-shadow: 0 0 10px {primary_color};
-    display: inline-block;
-    animation: socPulse 1.2s infinite ease-in-out !important;
-}}
+st.markdown(
+    f"""
+    <style>
+    /* Background Shield & Grid */
+    .stApp {{
+        background-color: #04070d !important;
+        background-image: 
+            url("data:image/svg+xml,{shield_svg_encoded}"),
+            radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 65%),
+            radial-gradient(circle at 90% 90%, rgba(0, 168, 255, 0.08) 0%, transparent 50%),
+            linear-gradient({glow_rgba} 1px, transparent 1px),
+            linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
+        background-position: center center, center top, right bottom, 0 0, 0 0 !important;
+        background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat !important;
+        background-size: 550px 650px, 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+    }}
 
-@keyframes socPulse {{
-    0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
-    50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px {primary_color}; }}
-}}
+    /* Laser Scanner Sweep */
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; height: 90px;
+        background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, rgba(0, 168, 255, 0.25) 85%, transparent 100%);
+        animation: laserScan 6s ease-in-out infinite alternate;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.6;
+    }}
 
-[data-testid="stFileUploadDropzone"], .stFileUploader section {{
-    background: rgba(8, 14, 26, 0.75) !important;
-    backdrop-filter: blur(16px) !important;
-    border: 1.5px dashed {primary_color} !important;
-    border-radius: 16px !important;
-    box-shadow: 0 0 20px {glow_rgba} !important;
-}}
+    @keyframes laserScan {{
+        0% {{ transform: translateY(-10vh); opacity: 0.1; }}
+        50% {{ opacity: 0.7; }}
+        100% {{ transform: translateY(105vh); opacity: 0.1; }}
+    }}
 
-[data-testid="stMetric"] {{
-    background: rgba(10, 18, 32, 0.75) !important;
-    backdrop-filter: blur(14px) !important;
-    border: 1px solid {primary_color} !important;
-    border-radius: 12px !important;
-    padding: 10px 14px !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
-}}
-[data-testid="stMetricValue"] {{
-    color: {primary_color} !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 20px !important;
-    text-shadow: 0 0 12px {primary_color};
-}}
+    /* Ensure all Streamlit content displays on top */
+    [data-testid="stAppViewBlockContainer"] {{
+        position: relative;
+        z-index: 2;
+    }}
 
-.soc-terminal {{
-    background: rgba(5, 8, 15, 0.95);
-    border: 1px solid {primary_color};
-    border-left: 4px solid {primary_color};
-    border-radius: 8px;
-    padding: 16px;
-    font-family: 'JetBrains Mono', 'Courier New', monospace;
-    color: #d1d5db;
-    font-size: 13px;
-    line-height: 1.6;
-    box-shadow: 0 0 25px {glow_rgba};
-    margin-bottom: 20px;
-}}
+    .live-badge {{
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: {glow_rgba};
+        border: 1px solid {primary_color};
+        color: {primary_color};
+        font-size: 11px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        letter-spacing: 1.5px;
+        box-shadow: 0 0 15px {glow_rgba};
+    }}
 
-.ttp-card {{
-    display: inline-block;
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid {primary_color};
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin: 6px;
-    min-width: 220px;
-}}
+    .pulse-dot {{
+        width: 8px;
+        height: 8px;
+        background-color: {primary_color};
+        border-radius: 50%;
+        box-shadow: 0 0 10px {primary_color};
+        display: inline-block;
+        animation: socPulse 1.2s infinite ease-in-out !important;
+    }}
 
-.timeline-item {{
-    position: relative;
-    padding-left: 24px;
-    border-left: 2px solid {primary_color};
-    margin-bottom: 14px;
-}}
-.timeline-dot {{
-    position: absolute;
-    left: -6px;
-    top: 2px;
-    width: 10px;
-    height: 10px;
-    background: {primary_color};
-    border-radius: 50%;
-    box-shadow: 0 0 8px {primary_color};
-}}
+    @keyframes socPulse {{
+        0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
+        50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px {primary_color}; }}
+    }}
 
-.layer-card {{
-    background: rgba(10, 18, 32, 0.85);
-    border: 1px solid {primary_color};
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 10px;
-}}
-.layer-title {{
-    color: {primary_color};
-    font-size: 13px;
-    font-weight: bold;
-    font-family: monospace;
-    margin-bottom: 4px;
-    text-transform: uppercase;
-}}
-</style>
-<div class="laser-scanline"></div>
-<div class="ambient-shield-wrapper">
-<svg viewBox="0 0 500 600" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M250 30 C370 30 450 65 450 160 C450 380 340 500 250 560 C160 500 50 380 50 160 C50 65 130 30 250 30 Z" stroke="{primary_color}" stroke-width="3" stroke-opacity="0.4" fill="url(#shieldGlow)"/>
-<path d="M250 70 C340 70 410 100 410 175 C410 350 320 460 250 510 C180 460 90 350 90 175 C90 100 160 70 250 70 Z" stroke="{primary_color}" stroke-width="1.5" stroke-dasharray="8 6" stroke-opacity="0.35" fill="none"/>
-<path d="M250 120 C305 120 355 145 355 200 C355 315 295 390 250 430 C205 390 145 315 145 200 C145 145 195 120 250 120 Z" stroke="{primary_color}" stroke-width="2" stroke-opacity="0.4" fill="rgba(0, 168, 255, 0.04)"/>
-<line x1="250" y1="180" x2="250" y2="370" stroke="{primary_color}" stroke-width="1.5" stroke-opacity="0.3"/>
-<line x1="180" y1="260" x2="320" y2="260" stroke="{primary_color}" stroke-width="1.5" stroke-opacity="0.3"/>
-<defs>
-<radialGradient id="shieldGlow" cx="50%" cy="35%" r="65%">
-<stop offset="0%" stop-color="{primary_color}" stop-opacity="0.14"/>
-<stop offset="60%" stop-color="{primary_color}" stop-opacity="0.03"/>
-<stop offset="100%" stop-color="#04070d" stop-opacity="0"/>
-</radialGradient>
-</defs>
-</svg>
-</div>
-"""
-st.markdown(ui_styles, unsafe_allow_html=True)
+    [data-testid="stFileUploadDropzone"], .stFileUploader section {{
+        background: rgba(8, 14, 26, 0.75) !important;
+        backdrop-filter: blur(16px) !important;
+        border: 1.5px dashed {primary_color} !important;
+        border-radius: 16px !important;
+        box-shadow: 0 0 20px {glow_rgba} !important;
+    }}
+
+    [data-testid="stMetric"] {{
+        background: rgba(10, 18, 32, 0.75) !important;
+        backdrop-filter: blur(14px) !important;
+        border: 1px solid {primary_color} !important;
+        border-radius: 12px !important;
+        padding: 10px 14px !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+    }}
+    [data-testid="stMetricValue"] {{
+        color: {primary_color} !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 20px !important;
+        text-shadow: 0 0 12px {primary_color};
+    }}
+
+    .soc-terminal {{
+        background: rgba(5, 8, 15, 0.95);
+        border: 1px solid {primary_color};
+        border-left: 4px solid {primary_color};
+        border-radius: 8px;
+        padding: 16px;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        color: #d1d5db;
+        font-size: 13px;
+        line-height: 1.6;
+        box-shadow: 0 0 25px {glow_rgba};
+        margin-bottom: 20px;
+    }}
+
+    .ttp-card {{
+        display: inline-block;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid {primary_color};
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin: 6px;
+        min-width: 220px;
+    }}
+
+    .timeline-item {{
+        position: relative;
+        padding-left: 24px;
+        border-left: 2px solid {primary_color};
+        margin-bottom: 14px;
+    }}
+    .timeline-dot {{
+        position: absolute;
+        left: -6px;
+        top: 2px;
+        width: 10px;
+        height: 10px;
+        background: {primary_color};
+        border-radius: 50%;
+        box-shadow: 0 0 8px {primary_color};
+    }}
+
+    .layer-card {{
+        background: rgba(10, 18, 32, 0.85);
+        border: 1px solid {primary_color};
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+    }}
+    .layer-title {{
+        color: {primary_color};
+        font-size: 13px;
+        font-weight: bold;
+        font-family: monospace;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Header Section
 col1, col2 = st.columns([3.5, 1.5])
