@@ -371,28 +371,34 @@ if uploaded_file is not None:
         pulse_duration = "4.0s"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-# Voice JS Engine (Configured for Indian English Accent: en-IN)
+# Voice JS Engine (Indian Male Voice: en-IN)
 voice_js = f"""
 <script>
 (function() {{
     let voiceTriggered = false;
-    function getNeuralHumanVoice() {{
+    function getIndianMaleVoice() {{
         const voices = window.speechSynthesis.getVoices();
         if (!voices || voices.length === 0) return null;
 
-        // Indian English (en-IN) Priority Matchers
-        const priorityMatchers = [
-            v => v.lang === "en-IN" && (v.name.includes("Neerja") || v.name.includes("Prabhat") || v.name.includes("Heera") || v.name.includes("Ravi")),
-            v => v.lang === "en-IN" && (v.name.includes("Natural") || v.name.includes("Online")),
-            v => v.name.includes("Google") && (v.lang === "en-IN" || v.name.includes("India") || v.name.includes("Indian")),
+        // Priority Indian Male Matchers
+        const maleMatchers = [
+            // 1. Explicit Indian Male Named Voices
+            v => (v.lang === "en-IN" || v.lang.startsWith("en-IN")) && (
+                v.name.toLowerCase().includes("prabhat") || 
+                v.name.toLowerCase().includes("ravi") || 
+                v.name.toLowerCase().includes("madhav") ||
+                v.name.toLowerCase().includes("hemant") ||
+                v.name.toLowerCase().includes("male")
+            ),
+            // 2. Google / Microsoft / Natural en-IN voices
+            v => v.lang === "en-IN" && (v.name.includes("Google") || v.name.includes("Natural")),
             v => v.lang === "en-IN",
             v => v.lang.startsWith("en-IN"),
-            v => v.name.includes("Natural") || v.name.includes("Online (Natural)"),
-            v => v.name.includes("Google US English") || v.name.includes("Google UK English Female"),
-            v => v.lang.startsWith("en")
+            // 3. Fallback General Male Voices
+            v => (v.name.includes("Guy") || v.name.includes("David") || v.name.includes("George")) && v.lang.startsWith("en")
         ];
 
-        for (let matcher of priorityMatchers) {{
+        for (let matcher of maleMatchers) {{
             const match = voices.find(matcher);
             if (match) return match;
         }}
@@ -408,13 +414,13 @@ voice_js = f"""
 
         const text = "{voice_briefing}";
         const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = "en-IN"; // Standard Indian English Locale
-        utter.rate = 0.94;
-        utter.pitch = 1.0;
+        utter.lang = "en-IN";
+        utter.rate = 0.93;
+        utter.pitch = 0.88; // Lowered pitch calibrated for deep male tone
         utter.volume = 0.95;
 
-        const indianVoice = getNeuralHumanVoice();
-        if (indianVoice) utter.voice = indianVoice;
+        const maleVoice = getIndianMaleVoice();
+        if (maleVoice) utter.voice = maleVoice;
 
         utter.onstart = () => {{ voiceTriggered = true; }};
         window.speechSynthesis.speak(utter);
