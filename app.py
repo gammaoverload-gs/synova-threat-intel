@@ -28,32 +28,20 @@ if "replay" in st.query_params:
 if "intro_done" not in st.session_state:
     st.session_state.intro_done = False
 
-# Default Home Theme: Electric Cyber Blue
-primary_color = "#00a8ff"
-glow_rgba = "rgba(0, 168, 255, 0.16)"
-bg_glow = "rgba(0, 168, 255, 0.20)"
-badge_text = "SOC RADAR ACTIVE"
-score_num = 0
-results = None
-audio_type = "none"
-pulse_duration = "5.0s"
-
-voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
-
 # --- STEP 1: INITIAL PROTECTION LOADING SCREEN ---
 if not st.session_state.intro_done:
     st.markdown(
-        f"""
+        """
         <style>
-        .stApp {{
+        .stApp {
             background-color: #04070d !important;
             background-image: 
                 radial-gradient(circle at 50% 50%, rgba(0, 168, 255, 0.15) 0%, transparent 65%),
                 linear-gradient(rgba(0, 168, 255, 0.08) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 168, 255, 0.08) 1px, transparent 1px) !important;
             background-size: 100% 100%, 40px 40px, 40px 40px !important;
-        }}
-        .intro-container {{
+        }
+        .intro-container {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -61,8 +49,8 @@ if not st.session_state.intro_done:
             text-align: center;
             margin-top: 15vh;
             margin-bottom: 25px;
-        }}
-        .intro-shield-svg {{
+        }
+        .intro-shield-svg {
             width: 120px;
             height: 140px;
             fill: none;
@@ -72,13 +60,13 @@ if not st.session_state.intro_done:
             stroke-dashoffset: 450;
             animation: drawIntroShield 2.2s cubic-bezier(0.65, 0, 0.35, 1) forwards;
             filter: drop-shadow(0 0 20px rgba(0, 168, 255, 0.6));
-        }}
-        @keyframes drawIntroShield {{
-            0% {{ stroke-dashoffset: 450; transform: scale(0.9); opacity: 0.3; }}
-            80% {{ stroke-dashoffset: 0; transform: scale(1.04); opacity: 1; }}
-            100% {{ stroke-dashoffset: 0; transform: scale(1); opacity: 1; }}
-        }}
-        .intro-title {{
+        }
+        @keyframes drawIntroShield {
+            0% { stroke-dashoffset: 450; transform: scale(0.9); opacity: 0.3; }
+            80% { stroke-dashoffset: 0; transform: scale(1.04); opacity: 1; }
+            100% { stroke-dashoffset: 0; transform: scale(1); opacity: 1; }
+        }
+        .intro-title {
             color: #00a8ff;
             font-family: 'JetBrains Mono', monospace;
             font-size: 20px;
@@ -86,14 +74,14 @@ if not st.session_state.intro_done:
             letter-spacing: 3.5px;
             margin-top: 22px;
             text-shadow: 0 0 12px rgba(0, 168, 255, 0.6);
-        }}
-        .intro-sub {{
+        }
+        .intro-sub {
             color: #94a3b8;
             font-family: monospace;
             font-size: 13px;
             letter-spacing: 1.5px;
             margin-top: 8px;
-        }}
+        }
         </style>
         <div class="intro-container">
             <svg class="intro-shield-svg" viewBox="0 0 24 28">
@@ -121,8 +109,65 @@ if not st.session_state.intro_done:
     st.session_state.intro_done = True
     st.rerun()
 
-# --- STEP 2 & 3: MAIN APP INTERFACE (POST-INTRO) ---
+# --- STEP 2: THREAT STATE CALCULATION (EXECUTED BEFORE RENDERING CSS) ---
+primary_color = "#00a8ff"
+glow_rgba = "rgba(0, 168, 255, 0.16)"
+bg_glow = "rgba(0, 168, 255, 0.20)"
+badge_text = "SOC RADAR ACTIVE"
+score_num = 0
+results = None
+audio_type = "none"
+pulse_duration = "5.0s"
+voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
+# Temporary container for top-level file uploader state
+uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"], key="threat_file_input")
+
+if uploaded_file is not None:
+    with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
+        raw_bytes = uploaded_file.getvalue()
+        engine = EmailIngestionEngine(raw_bytes, api_key=api_key)
+        results = engine.parse_email()
+
+    raw_score = str(results.get("ai_analysis", {}).get("score", "0"))
+    try:
+        score_num = int("".join([c for c in raw_score.split("/")[0] if c.isdigit()]))
+    except Exception:
+        score_num = 0
+
+    origin_city = str(results["metadata"]["geo_data"].get("city", "Unknown"))
+    origin_country = str(results["metadata"]["geo_data"].get("country", "Unknown"))
+    ip_type = str(results["metadata"]["geo_data"].get("ip_type", "Residential ISP"))
+
+    if score_num >= 70:
+        # High / Critical Risk: Crimson Red with Rapid 0.65s Strobe
+        primary_color = "#ff3355"
+        glow_rgba = "rgba(255, 51, 85, 0.35)"
+        bg_glow = "rgba(255, 51, 85, 0.30)"
+        badge_text = "CRITICAL THREAT CONFIRMED"
+        audio_type = "critical"
+        pulse_duration = "0.65s"
+        voice_briefing = f"Alert. High-risk spearphishing vector detected from {origin_city}, {origin_country}. Infrastructure identified as {ip_type}. Automated quarantine playbooks are now active."
+    elif score_num >= 40:
+        # Medium Risk / Suspicious: Amber Orange with 1.6s Pulse
+        primary_color = "#ffaa00"
+        glow_rgba = "rgba(255, 170, 0, 0.25)"
+        bg_glow = "rgba(255, 170, 0, 0.22)"
+        badge_text = "SUSPICIOUS PROFILE DETECTED"
+        audio_type = "warning"
+        pulse_duration = "1.6s"
+        voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
+    else:
+        # Low Threat / Clean Artifact: Cyber Green with 4.0s Calm Pulse
+        primary_color = "#00ffcc"
+        glow_rgba = "rgba(0, 255, 204, 0.18)"
+        bg_glow = "rgba(0, 255, 204, 0.20)"
+        badge_text = "CLEAN ARTIFACT CONFIRMED"
+        audio_type = "clean"
+        pulse_duration = "4.0s"
+        voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
+
+# --- STEP 3: DYNAMIC CSS & COLOR INJECTION ---
 shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.45' fill='{primary_color}' fill-opacity='0.05'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.35' fill='none'/></svg>""".replace("#", "%23")
 
 st.markdown(
@@ -172,21 +217,21 @@ st.markdown(
         100% {{ transform: translateY(105vh); opacity: 0.1; }}
     }}
 
-    /* Ensure all Streamlit content displays on top */
+    /* Content Stacking */
     [data-testid="stAppViewBlockContainer"] {{
         position: relative;
         z-index: 2;
     }}
 
-    /* Shared Identical SOC Badge Styling */
+    /* Shared Identical SOC Badge & Replay Button Styling */
     .live-badge, .replay-badge {{
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
-        background: {glow_rgba};
-        border: 1px solid {primary_color};
-        color: {primary_color};
+        background: {glow_rgba} !important;
+        border: 1px solid {primary_color} !important;
+        color: {primary_color} !important;
         font-size: 11px;
         padding: 6px 14px;
         border-radius: 20px;
@@ -330,62 +375,14 @@ with header_col2:
 
 st.divider()
 
-# --- FILE INGESTION SECTION ---
-uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
-
-if uploaded_file is not None:
-    with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
-        raw_bytes = uploaded_file.getvalue()
-        engine = EmailIngestionEngine(raw_bytes, api_key=api_key)
-        results = engine.parse_email()
-
-    raw_score = str(results.get("ai_analysis", {}).get("score", "0"))
-    try:
-        score_num = int("".join([c for c in raw_score.split("/")[0] if c.isdigit()]))
-    except Exception:
-        score_num = 0
-
-    origin_city = str(results["metadata"]["geo_data"].get("city", "Unknown"))
-    origin_country = str(results["metadata"]["geo_data"].get("country", "Unknown"))
-    ip_type = str(results["metadata"]["geo_data"].get("ip_type", "Residential ISP"))
-
-    if score_num >= 70:
-        # High / Critical Risk: Crimson Red with Rapid 0.65s Strobe
-        primary_color = "#ff3355"
-        glow_rgba = "rgba(255, 51, 85, 0.35)"
-        bg_glow = "rgba(255, 51, 85, 0.30)"
-        badge_text = "CRITICAL THREAT CONFIRMED"
-        audio_type = "critical"
-        pulse_duration = "0.65s"
-        voice_briefing = f"Alert. High-risk spearphishing vector detected from {origin_city}, {origin_country}. Infrastructure identified as {ip_type}. Automated quarantine playbooks are now active."
-    elif score_num >= 40:
-        # Medium Risk / Suspicious: Amber Orange with 1.6s Pulse
-        primary_color = "#ffaa00"
-        glow_rgba = "rgba(255, 170, 0, 0.25)"
-        bg_glow = "rgba(255, 170, 0, 0.22)"
-        badge_text = "SUSPICIOUS PROFILE DETECTED"
-        audio_type = "warning"
-        pulse_duration = "1.6s"
-        voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
-    else:
-        # Low Threat / Clean Artifact: Cyber Green with 4.0s Calm Pulse
-        primary_color = "#00ffcc"
-        glow_rgba = "rgba(0, 255, 204, 0.18)"
-        bg_glow = "rgba(0, 255, 204, 0.20)"
-        badge_text = "CLEAN ARTIFACT CONFIRMED"
-        audio_type = "clean"
-        pulse_duration = "4.0s"
-        voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
-
 # --- ULTRA-REALISTIC INDIAN HUMAN VOICE (ELEVENLABS) ---
 def dispatch_real_human_voice(text_prompt: str):
     if not eleven_client:
         return
     try:
-        # Voice ID: "aEO01A4wXmiMrgdqHjTZ" -> Aditi (Natural Indian Accent)
         audio_stream = eleven_client.text_to_speech.convert(
             text=text_prompt,
-            voice_id="aEO01A4wXmiMrgdqHjTZ",
+            voice_id="aEO01A4wXmiMrgdqHjTZ",  # Aditi (Natural Indian Accent)
             model_id="eleven_multilingual_v2",
             voice_settings={
                 "stability": 0.55,
