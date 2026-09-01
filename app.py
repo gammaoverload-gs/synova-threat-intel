@@ -377,16 +377,22 @@ if uploaded_file is not None:
         pulse_duration = "4.0s"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-# --- ULTRA-REALISTIC HUMAN VOICE GENERATOR (ELEVENLABS API) ---
+# --- ULTRA-REALISTIC INDIAN HUMAN VOICE (ELEVENLABS) ---
 def dispatch_real_human_voice(text_prompt: str):
     if not eleven_client:
         return
     try:
-        # High quality multilingual natural human voice
+        # Voice ID: "aEO01A4wXmiMrgdqHjTZ" -> Aditi (Natural Indian Accent)
         audio_stream = eleven_client.text_to_speech.convert(
             text=text_prompt,
-            voice_id="EXAVITQu4vr4xnSDxMaL",  # Studio human voice ID
-            model_id="eleven_multilingual_v2"
+            voice_id="aEO01A4wXmiMrgdqHjTZ",
+            model_id="eleven_multilingual_v2",
+            voice_settings={
+                "stability": 0.55,
+                "similarity_boost": 0.80,
+                "style": 0.20,
+                "use_speaker_boost": True
+            }
         )
         audio_bytes = b"".join(list(audio_stream))
         b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
