@@ -18,13 +18,6 @@ api_key = st.secrets.get("GEMINI_API_KEY", "")
 if "intro_done" not in st.session_state:
     st.session_state.intro_done = False
 
-# Sidebar Controls
-with st.sidebar:
-    st.markdown("### ⚙️ System Controls")
-    if st.button("🔁 Replay Defense Animation", use_container_width=True):
-        st.session_state.intro_done = False
-        st.rerun()
-
 # Default Home Theme: Electric Cyber Blue
 primary_color = "#00a8ff"
 glow_rgba = "rgba(0, 168, 255, 0.16)"
@@ -397,7 +390,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Header Section
+# Header Section with SOC Radar Badge and Replay Button underneath
 col1, col2 = st.columns([3.5, 1.5])
 with col1:
     st.markdown(
@@ -410,9 +403,13 @@ with col1:
     )
 with col2:
     st.markdown(
-        f"<div style='text-align: right; margin-top: 15px;'><span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span></div>",
+        f"<div style='text-align: right; margin-top: 10px;'><span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span></div>",
         unsafe_allow_html=True,
     )
+    st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
+    if st.button("🔁 Replay Defense Animation", key="replay_btn_header", use_container_width=True):
+        st.session_state.intro_done = False
+        st.rerun()
 
 st.divider()
 
