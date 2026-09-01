@@ -59,7 +59,6 @@ if uploaded_file is not None:
         audio_type = "warning"
         voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
     else:
-        # Clean analysis maintains electric blue theme
         primary_color = "#00a8ff"
         glow_rgba = "rgba(0, 168, 255, 0.16)"
         bg_glow = "rgba(0, 168, 255, 0.20)"
@@ -127,221 +126,187 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- REALISTIC VECTOR SHIELD + FAINT LASER SCANNER STYLES ---
-st.markdown(
-    f"""
-    <style>
-    .stApp {{
-        background-color: #04070d !important;
-        background-image: 
-            radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 65%),
-            radial-gradient(circle at 90% 90%, rgba(0, 168, 255, 0.08) 0%, transparent 50%),
-            linear-gradient({glow_rgba} 1px, transparent 1px),
-            linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
-        background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
-        position: relative;
-    }}
+# --- CLEAN UI & BACKGROUND SVG INJECTION ---
+ui_styles = f"""
+<style>
+.stApp {{
+    background-color: #04070d !important;
+    background-image: 
+        radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 65%),
+        radial-gradient(circle at 90% 90%, rgba(0, 168, 255, 0.08) 0%, transparent 50%),
+        linear-gradient({glow_rgba} 1px, transparent 1px),
+        linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
+    background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+    position: relative;
+}}
 
-    /* Realistic Curved Faint Shield Container */
-    .ambient-shield-wrapper {{
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 580px;
-        height: 640px;
-        pointer-events: none;
-        z-index: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        opacity: 0.7;
-        animation: shieldPulseGlow 6s ease-in-out infinite alternate;
-    }}
+.ambient-shield-wrapper {{
+    position: fixed;
+    top: 52%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 580px;
+    height: 640px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.75;
+    animation: shieldPulseGlow 6s ease-in-out infinite alternate;
+}}
 
-    .realistic-shield-svg {{
-        width: 100%;
-        height: 100%;
-        filter: drop-shadow(0 0 25px {glow_rgba});
-    }}
+.laser-scanline {{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 120px;
+    background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, rgba(0, 168, 255, 0.22) 80%, transparent 100%);
+    box-shadow: 0 0 15px {glow_rgba};
+    pointer-events: none;
+    z-index: 0;
+    animation: laserScanDown 5s ease-in-out infinite alternate;
+}}
 
-    /* Animated Faint Laser Sweep */
-    .laser-scanline {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 140px;
-        background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, rgba(0, 168, 255, 0.25) 85%, transparent 100%);
-        box-shadow: 0 0 20px {glow_rgba};
-        pointer-events: none;
-        z-index: 0;
-        animation: laserScanDown 5s ease-in-out infinite alternate;
-    }}
+@keyframes laserScanDown {{
+    0% {{ transform: translateY(-20vh); opacity: 0.1; }}
+    50% {{ opacity: 0.5; }}
+    100% {{ transform: translateY(105vh); opacity: 0.1; }}
+}}
 
-    @keyframes laserScanDown {{
-        0% {{ transform: translateY(-30vh); opacity: 0.15; }}
-        50% {{ opacity: 0.65; }}
-        100% {{ transform: translateY(110vh); opacity: 0.15; }}
-    }}
+@keyframes shieldPulseGlow {{
+    0% {{ transform: translate(-50%, -50%) scale(0.96); opacity: 0.45; }}
+    100% {{ transform: translate(-50%, -50%) scale(1.03); opacity: 0.85; }}
+}}
 
-    @keyframes shieldPulseGlow {{
-        0% {{
-            transform: translate(-50%, -50%) scale(0.96);
-            opacity: 0.45;
-        }}
-        100% {{
-            transform: translate(-50%, -50%) scale(1.03);
-            opacity: 0.85;
-        }}
-    }}
+.live-badge {{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: {glow_rgba};
+    border: 1px solid {primary_color};
+    color: {primary_color};
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    box-shadow: 0 0 15px {glow_rgba};
+}}
 
-    .live-badge {{
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: {glow_rgba};
-        border: 1px solid {primary_color};
-        color: {primary_color};
-        font-size: 11px;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-        letter-spacing: 1.5px;
-        box-shadow: 0 0 15px {glow_rgba};
-    }}
+.pulse-dot {{
+    width: 8px;
+    height: 8px;
+    background-color: {primary_color};
+    border-radius: 50%;
+    box-shadow: 0 0 10px {primary_color};
+    display: inline-block;
+    animation: socPulse 1.2s infinite ease-in-out !important;
+}}
 
-    .pulse-dot {{
-        width: 8px;
-        height: 8px;
-        background-color: {primary_color};
-        border-radius: 50%;
-        box-shadow: 0 0 10px {primary_color};
-        display: inline-block;
-        animation: socPulse 1.2s infinite ease-in-out !important;
-    }}
+@keyframes socPulse {{
+    0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
+    50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px {primary_color}; }}
+}}
 
-    @keyframes socPulse {{
-        0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
-        50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px {primary_color}; }}
-    }}
+[data-testid="stFileUploadDropzone"], .stFileUploader section {{
+    background: rgba(8, 14, 26, 0.75) !important;
+    backdrop-filter: blur(16px) !important;
+    border: 1.5px dashed {primary_color} !important;
+    border-radius: 16px !important;
+    box-shadow: 0 0 20px {glow_rgba} !important;
+}}
 
-    [data-testid="stFileUploadDropzone"], .stFileUploader section {{
-        background: rgba(8, 14, 26, 0.75) !important;
-        backdrop-filter: blur(16px) !important;
-        border: 1.5px dashed {primary_color} !important;
-        border-radius: 16px !important;
-        box-shadow: 0 0 20px {glow_rgba} !important;
-    }}
+[data-testid="stMetric"] {{
+    background: rgba(10, 18, 32, 0.75) !important;
+    backdrop-filter: blur(14px) !important;
+    border: 1px solid {primary_color} !important;
+    border-radius: 12px !important;
+    padding: 10px 14px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+}}
+[data-testid="stMetricValue"] {{
+    color: {primary_color} !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 20px !important;
+    text-shadow: 0 0 12px {primary_color};
+}}
 
-    [data-testid="stMetric"] {{
-        background: rgba(10, 18, 32, 0.75) !important;
-        backdrop-filter: blur(14px) !important;
-        border: 1px solid {primary_color} !important;
-        border-radius: 12px !important;
-        padding: 10px 14px !important;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
-    }}
-    [data-testid="stMetricValue"] {{
-        color: {primary_color} !important;
-        font-family: 'JetBrains Mono', monospace !important;
-        font-size: 20px !important;
-        text-shadow: 0 0 12px {primary_color};
-    }}
+.soc-terminal {{
+    background: rgba(5, 8, 15, 0.95);
+    border: 1px solid {primary_color};
+    border-left: 4px solid {primary_color};
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    color: #d1d5db;
+    font-size: 13px;
+    line-height: 1.6;
+    box-shadow: 0 0 25px {glow_rgba};
+    margin-bottom: 20px;
+}}
 
-    .soc-terminal {{
-        background: rgba(5, 8, 15, 0.95);
-        border: 1px solid {primary_color};
-        border-left: 4px solid {primary_color};
-        border-radius: 8px;
-        padding: 16px;
-        font-family: 'JetBrains Mono', 'Courier New', monospace;
-        color: #d1d5db;
-        font-size: 13px;
-        line-height: 1.6;
-        box-shadow: 0 0 25px {glow_rgba};
-        margin-bottom: 20px;
-    }}
+.ttp-card {{
+    display: inline-block;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid {primary_color};
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 6px;
+    min-width: 220px;
+}}
 
-    .ttp-card {{
-        display: inline-block;
-        background: rgba(15, 23, 42, 0.9);
-        border: 1px solid {primary_color};
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin: 6px;
-        min-width: 220px;
-    }}
+.timeline-item {{
+    position: relative;
+    padding-left: 24px;
+    border-left: 2px solid {primary_color};
+    margin-bottom: 14px;
+}}
+.timeline-dot {{
+    position: absolute;
+    left: -6px;
+    top: 2px;
+    width: 10px;
+    height: 10px;
+    background: {primary_color};
+    border-radius: 50%;
+    box-shadow: 0 0 8px {primary_color};
+}}
 
-    .timeline-item {{
-        position: relative;
-        padding-left: 24px;
-        border-left: 2px solid {primary_color};
-        margin-bottom: 14px;
-    }}
-    .timeline-dot {{
-        position: absolute;
-        left: -6px;
-        top: 2px;
-        width: 10px;
-        height: 10px;
-        background: {primary_color};
-        border-radius: 50%;
-        box-shadow: 0 0 8px {primary_color};
-    }}
-
-    .layer-card {{
-        background: rgba(10, 18, 32, 0.85);
-        border: 1px solid {primary_color};
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin-bottom: 10px;
-    }}
-    .layer-title {{
-        color: {primary_color};
-        font-size: 13px;
-        font-weight: bold;
-        font-family: monospace;
-        margin-bottom: 4px;
-        text-transform: uppercase;
-    }}
-    </style>
-
-    <!-- Faint Laser Radar Sweep -->
-    <div class="laser-scanline"></div>
-
-    <!-- Realistic Curved Shield SVG Background -->
-    <div class="ambient-shield-wrapper">
-        <svg class="realistic-shield-svg" viewBox="0 0 500 600" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Outer Shield Hull -->
-            <path d="M250 30 C370 30 450 65 450 160 C450 380 340 500 250 560 C160 500 50 380 50 160 C50 65 130 30 250 30 Z" 
-                  stroke="{primary_color}" stroke-width="3" stroke-opacity="0.35" fill="url(#shieldRadialGlow)"/>
-            
-            <!-- Inner Bevel Shield Crest -->
-            <path d="M250 70 C340 70 410 100 410 175 C410 350 320 460 250 510 C180 460 90 350 90 175 C90 100 160 70 250 70 Z" 
-                  stroke="{primary_color}" stroke-width="1.5" stroke-dasharray="8 6" stroke-opacity="0.3" fill="none"/>
-
-            <!-- Center Defense Core -->
-            <path d="M250 120 C305 120 355 145 355 200 C355 315 295 390 250 430 C205 390 145 315 145 200 C145 145 195 120 250 120 Z" 
-                  stroke="{primary_color}" stroke-width="2" stroke-opacity="0.4" fill="rgba(0, 168, 255, 0.03)"/>
-            
-            <!-- Shield Center Cyber Crosshair / Emblem -->
-            <line x1="250" y1="180" x2="250" y2="370" stroke="{primary_color}" stroke-width="1.5" stroke-opacity="0.25"/>
-            <line x1="180" y1="260" x2="320" y2="260" stroke="{primary_color}" stroke-width="1.5" stroke-opacity="0.25"/>
-
-            <defs>
-                <radialGradient id="shieldRadialGlow" cx="50%" cy="35%" r="65%">
-                    <stop offset="0%" stop-color="{primary_color}" stop-opacity="0.12"/>
-                    <stop offset="60%" stop-color="{primary_color}" stop-opacity="0.03"/>
-                    <stop offset="100%" stop-color="#04070d" stop-opacity="0"/>
-                </radialGradient>
-            </defs>
-        </svg>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+.layer-card {{
+    background: rgba(10, 18, 32, 0.85);
+    border: 1px solid {primary_color};
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+}}
+.layer-title {{
+    color: {primary_color};
+    font-size: 13px;
+    font-weight: bold;
+    font-family: monospace;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}}
+</style>
+<div class="laser-scanline"></div>
+<div class="ambient-shield-wrapper">
+<svg viewBox="0 0 500 600" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M250 30 C370 30 450 65 450 160 C450 380 340 500 250 560 C160 500 50 380 50 160 C50 65 130 30 250 30 Z" stroke="{primary_color}" stroke-width="3" stroke-opacity="0.4" fill="url(#shieldGlow)"/>
+<path d="M250 70 C340 70 410 100 410 175 C410 350 320 460 250 510 C180 460 90 350 90 175 C90 100 160 70 250 70 Z" stroke="{primary_color}" stroke-width="1.5" stroke-dasharray="8 6" stroke-opacity="0.35" fill="none"/>
+<path d="M250 120 C305 120 355 145 355 200 C355 315 295 390 250 430 C205 390 145 315 145 200 C145 145 195 120 250 120 Z" stroke="{primary_color}" stroke-width="2" stroke-opacity="0.4" fill="rgba(0, 168, 255, 0.04)"/>
+<line x1="250" y1="180" x2="250" y2="370" stroke="{primary_color}" stroke-width="1.5" stroke-opacity="0.3"/>
+<line x1="180" y1="260" x2="320" y2="260" stroke="{primary_color}" stroke-width="1.5" stroke-opacity="0.3"/>
+<defs>
+<radialGradient id="shieldGlow" cx="50%" cy="35%" r="65%">
+<stop offset="0%" stop-color="{primary_color}" stop-opacity="0.14"/>
+<stop offset="60%" stop-color="{primary_color}" stop-opacity="0.03"/>
+<stop offset="100%" stop-color="#04070d" stop-opacity="0"/>
+</radialGradient>
+</defs>
+</svg>
+</div>
+"""
+st.markdown(ui_styles, unsafe_allow_html=True)
 
 # Header Section
 col1, col2 = st.columns([3.5, 1.5])
