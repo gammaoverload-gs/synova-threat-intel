@@ -170,7 +170,7 @@ if uploaded_file is not None:
         pulse_duration = "4.0s"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-# --- STEP 3: DYNAMIC CSS INJECTION ---
+# --- STEP 3: DYNAMIC CSS INJECTION WITH SMOOTH LASER ---
 shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.45' fill='{primary_color}' fill-opacity='0.05'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.35' fill='none'/></svg>""".replace("#", "%23")
 
 st.markdown(
@@ -201,21 +201,38 @@ st.markdown(
         }}
     }}
 
+    /* Ultra-Smooth Ambient Laser Scanner */
     .stApp::before {{
         content: "";
         position: fixed;
-        top: 0; left: 0; right: 0; height: 90px;
-        background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, {primary_color}44 85%, transparent 100%);
-        animation: laserScan 6s ease-in-out infinite alternate;
+        top: 0; left: 0; right: 0; 
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, {primary_color}66 25%, {primary_color} 50%, {primary_color}66 75%, transparent 100%);
+        box-shadow: 
+            0 0 15px 2px {primary_color}44,
+            0 0 35px 6px {glow_rgba};
+        filter: blur(0.5px);
+        animation: smoothLaserSweep 9s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
         pointer-events: none;
         z-index: 1;
-        opacity: 0.6;
+        opacity: 0.45;
     }}
 
-    @keyframes laserScan {{
-        0% {{ transform: translateY(-10vh); opacity: 0.1; }}
-        50% {{ opacity: 0.7; }}
-        100% {{ transform: translateY(105vh); opacity: 0.1; }}
+    @keyframes smoothLaserSweep {{
+        0% {{ 
+            transform: translateY(-5vh); 
+            opacity: 0.1;
+        }}
+        15% {{
+            opacity: 0.45;
+        }}
+        85% {{
+            opacity: 0.45;
+        }}
+        100% {{ 
+            transform: translateY(102vh); 
+            opacity: 0.1;
+        }}
     }}
 
     [data-testid="stAppViewBlockContainer"] {{
@@ -374,7 +391,7 @@ with header_container:
         )
     st.divider()
 
-# --- STEP 5: DEDICATED SINGLE-DISPATCH AUDIO ENGINE (NO DOUBLE SPEECH) ---
+# --- STEP 5: DEDICATED SINGLE-DISPATCH AUDIO ENGINE ---
 current_audio_hash = hashlib.md5(voice_briefing.encode('utf-8')).hexdigest()
 
 if st.session_state.last_played_audio_hash != current_audio_hash:
@@ -403,7 +420,6 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
         if (window.parent.__synovaLastAudio === audioId) return;
         window.parent.__synovaLastAudio = audioId;
 
-        // Stop any running speech synthesis
         if ('speechSynthesis' in window) {{
             window.speechSynthesis.cancel();
         }}
@@ -627,13 +643,13 @@ with content_container:
                                 stroke-dasharray="{circumference}" stroke-dashoffset="{stroke_dashoffset}"
                                 stroke-linecap="round" transform="rotate(-90 60 60)"
                                 style="transition: stroke-dashoffset 1s ease-in-out; filter: drop-shadow(0 0 6px {primary_color});"/>
-                    <text x="60" y="58" font-size="22" font-family="'JetBrains Mono', monospace" font-weight="bold" fill="{primary_color}" text-anchor="middle">{score_num}</text>
-                    <text x="60" y="74" font-size="10" font-family="sans-serif" fill="#94a3b8" text-anchor="middle">THREAT INDEX</text>
-                </svg>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
+                        <text x="60" y="58" font-size="22" font-family="'JetBrains Mono', monospace" font-weight="bold" fill="{primary_color}" text-anchor="middle">{score_num}</text>
+                        <text x="60" y="74" font-size="10" font-family="sans-serif" fill="#94a3b8" text-anchor="middle">THREAT INDEX</text>
+                    </svg>
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
 
         with dash_col2:
             m1, m2, m3 = st.columns(3)
