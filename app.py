@@ -103,7 +103,7 @@ if not st.session_state.intro_done:
 
     progress_bar = st.progress(0)
     for percent in range(100):
-        time.sleep(0.04)  # ~4.0 to 4.5 seconds total
+        time.sleep(0.04)
         progress_bar.progress(percent + 1)
 
     st.session_state.intro_done = True
@@ -120,7 +120,6 @@ audio_type = "none"
 pulse_duration = "5.0s"
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
-# Temporary container for top-level file uploader state
 uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"], key="threat_file_input")
 
 if uploaded_file is not None:
@@ -140,7 +139,6 @@ if uploaded_file is not None:
     ip_type = str(results["metadata"]["geo_data"].get("ip_type", "Residential ISP"))
 
     if score_num >= 70:
-        # High / Critical Risk: Crimson Red with Rapid 0.65s Strobe
         primary_color = "#ff3355"
         glow_rgba = "rgba(255, 51, 85, 0.35)"
         bg_glow = "rgba(255, 51, 85, 0.30)"
@@ -149,7 +147,6 @@ if uploaded_file is not None:
         pulse_duration = "0.65s"
         voice_briefing = f"Alert. High-risk spearphishing vector detected from {origin_city}, {origin_country}. Infrastructure identified as {ip_type}. Automated quarantine playbooks are now active."
     elif score_num >= 40:
-        # Medium Risk / Suspicious: Amber Orange with 1.6s Pulse
         primary_color = "#ffaa00"
         glow_rgba = "rgba(255, 170, 0, 0.25)"
         bg_glow = "rgba(255, 170, 0, 0.22)"
@@ -158,7 +155,6 @@ if uploaded_file is not None:
         pulse_duration = "1.6s"
         voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
     else:
-        # Low Threat / Clean Artifact: Cyber Green with 4.0s Calm Pulse
         primary_color = "#00ffcc"
         glow_rgba = "rgba(0, 255, 204, 0.18)"
         bg_glow = "rgba(0, 255, 204, 0.20)"
@@ -173,7 +169,6 @@ shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 2
 st.markdown(
     f"""
     <style>
-    /* Background Shield & Grid with Dynamic Threat Blink */
     .stApp {{
         background-color: #04070d !important;
         background-image: 
@@ -199,7 +194,6 @@ st.markdown(
         }}
     }}
 
-    /* Laser Scanner Sweep */
     .stApp::before {{
         content: "";
         position: fixed;
@@ -217,13 +211,11 @@ st.markdown(
         100% {{ transform: translateY(105vh); opacity: 0.1; }}
     }}
 
-    /* Content Stacking */
     [data-testid="stAppViewBlockContainer"] {{
         position: relative;
         z-index: 2;
     }}
 
-    /* Shared Identical SOC Badge & Replay Button Styling */
     .live-badge, .replay-badge {{
         display: inline-flex;
         align-items: center;
@@ -375,14 +367,14 @@ with header_col2:
 
 st.divider()
 
-# --- ULTRA-REALISTIC INDIAN HUMAN VOICE (ELEVENLABS) ---
-def dispatch_real_human_voice(text_prompt: str):
-    if not eleven_client:
-        return
+# --- AUDIO ENGINE: ELEVENLABS WITH AUTOPLAY BYPASS & BROWSER FALLBACK ---
+audio_b64_payload = ""
+
+if eleven_client:
     try:
         audio_stream = eleven_client.text_to_speech.convert(
-            text=text_prompt,
-            voice_id="aEO01A4wXmiMrgdqHjTZ",  # Aditi (Natural Indian Accent)
+            text=voice_briefing,
+            voice_id="aEO01A4wXmiMrgdqHjTZ",  # Aditi / Indian Natural Tone
             model_id="eleven_multilingual_v2",
             voice_settings={
                 "stability": 0.55,
@@ -392,22 +384,52 @@ def dispatch_real_human_voice(text_prompt: str):
             }
         )
         audio_bytes = b"".join(list(audio_stream))
-        b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
-        st.markdown(
-            f"""
-            <audio autoplay style="display:none;">
-                <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
-            </audio>
-            """,
-            unsafe_allow_html=True
-        )
+        audio_b64_payload = base64.b64encode(audio_bytes).decode("utf-8")
     except Exception:
-        pass
+        audio_b64_payload = ""
 
-# Trigger real human voice dispatch
-if "last_dispatched_voice" not in st.session_state or st.session_state.last_dispatched_voice != voice_briefing:
-    st.session_state.last_dispatched_voice = voice_briefing
-    dispatch_real_human_voice(voice_briefing)
+audio_bridge_js = f"""
+<script>
+(function() {{
+    const b64Data = "{audio_b64_payload}";
+    const textMsg = "{voice_briefing}";
+
+    function playAudioStream() {{
+        if (b64Data && b64Data.length > 50) {{
+            const audio = new Audio("data:audio/mp3;base64," + b64Data);
+            audio.volume = 0.95;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {{
+                playPromise.catch(() => {{
+                    // Fallback to trigger on first interaction if blocked by browser policy
+                    const unlock = () => {{
+                        audio.play();
+                        window.parent.document.removeEventListener('click', unlock);
+                        document.removeEventListener('click', unlock);
+                    }};
+                    window.parent.document.addEventListener('click', unlock, {{ once: true }});
+                    document.addEventListener('click', unlock, {{ once: true }});
+                }});
+            }}
+        }} else if ('speechSynthesis' in window) {{
+            // Neural Indian Browser Voice Fallback
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(textMsg);
+            utter.lang = "en-IN";
+            utter.rate = 0.94;
+            utter.pitch = 1.0;
+            const voices = window.speechSynthesis.getVoices();
+            const indVoice = voices.find(v => v.lang === "en-IN" || v.name.includes("India") || v.name.includes("Neerja"));
+            if (indVoice) utter.voice = indVoice;
+            window.speechSynthesis.speak(utter);
+        }}
+    }}
+
+    setTimeout(playAudioStream, 350);
+}})();
+</script>
+"""
+st.components.v1.html(audio_bridge_js, height=0)
 
 def build_pdf_buffer(results_data):
     buffer = io.BytesIO()
