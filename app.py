@@ -12,16 +12,6 @@ from streamlit_folium import st_folium
 
 st.set_page_config(page_title="SYNOVA Autonomous SOC Platform", page_icon="🛡️", layout="wide")
 
-# --- INTRO ANIMATION CONTROLLER ---
-if "animation_played" not in st.session_state:
-    st.session_state.animation_played = False
-
-with st.sidebar:
-    st.markdown("### ⚙️ System Controls")
-    if st.button("🔁 Replay Defense Animation", use_container_width=True):
-        st.session_state.animation_played = False
-        st.rerun()
-
 api_key = st.secrets.get("GEMINI_API_KEY", "")
 
 primary_color = "#00ffcc"
@@ -32,75 +22,10 @@ score_num = 0
 results = None
 audio_type = "none"
 
-# --- INTRO DIALOG ANIMATION (SKIPPABLE & AUTO-DISMISS) ---
-@st.dialog("🛡️ DEFENSE MATRIX INITIALIZATION", width="small")
-def show_intro_animation():
-    st.markdown(
-        f"""
-        <style>
-        .shield-dialog {{
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 10px;
-        }}
-        .shield-svg-box {{
-            width: 100px;
-            height: 120px;
-            fill: none;
-            stroke: {primary_color};
-            stroke-width: 3.5;
-            stroke-dasharray: 450;
-            stroke-dashoffset: 450;
-            animation: drawShieldBox 2s ease-in-out infinite alternate;
-            filter: drop-shadow(0 0 16px {primary_color});
-        }}
-        @keyframes drawShieldBox {{
-            0% {{ stroke-dashoffset: 450; transform: scale(0.92); }}
-            100% {{ stroke-dashoffset: 0; transform: scale(1.05); }}
-        }}
-        .scan-msg {{
-            color: {primary_color};
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin-top: 15px;
-        }}
-        </style>
-        <div class="shield-dialog">
-            <svg class="shield-svg-box" viewBox="0 0 24 28">
-                <path d="M12 2L2 6v8c0 7.5 10 12 10 12s10-4.5 10-12V6l-10-4z" />
-            </svg>
-            <div class="scan-msg">ENGAGING ACTIVE SHIELD...</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    
-    col_l, col_btn, col_r = st.columns([1, 2, 1])
-    with col_btn:
-        if st.button("⚡ Skip Intro", use_container_width=True):
-            st.session_state.animation_played = True
-            st.rerun()
-
-    progress = st.progress(0)
-    for i in range(100):
-        time.sleep(0.04)  # ~4-5 Seconds
-        progress.progress(i + 1)
-    
-    st.session_state.animation_played = True
-    st.rerun()
-
-if not st.session_state.animation_played:
-    show_intro_animation()
-
-# --- MAIN DASHBOARD LOGIC ---
-uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
-
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
+
+# File Uploader
+uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
 
 if uploaded_file is not None:
     with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
@@ -200,11 +125,10 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- CLEAN BACKGROUND WITH FAINT AMBIENT SHIELD ---
+# --- CLEAN CSS & SUBTLE AMBIENT SHIELD BACKGROUND ---
 st.markdown(
     f"""
     <style>
-    /* App Base Styles */
     .stApp {{
         background-color: #04070d !important;
         background-image: 
@@ -213,11 +137,10 @@ st.markdown(
             linear-gradient({glow_rgba} 1px, transparent 1px),
             linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
         background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
-        position: relative;
     }}
 
-    /* Safe Faint Ambient Shield Behind Elements (z-index: 0) */
-    .ambient-bg-shield {{
+    /* Safe Ambient Faint Shield (Non-blocking) */
+    .faint-shield-bg {{
         position: fixed;
         top: 52%;
         left: 50%;
@@ -226,15 +149,15 @@ st.markdown(
         height: 620px;
         clip-path: polygon(50% 0%, 100% 20%, 100% 75%, 50% 100%, 0% 75%, 0% 20%);
         background: radial-gradient(circle, {glow_rgba} 0%, rgba(4, 7, 13, 0) 75%);
-        border: 1px solid {glow_rgba};
+        border: 1.5px solid {glow_rgba};
         pointer-events: none;
         z-index: 0;
-        animation: ambientShieldPulse 5s ease-in-out infinite alternate;
+        animation: faintShieldPulse 6s ease-in-out infinite alternate;
     }}
 
-    @keyframes ambientShieldPulse {{
+    @keyframes faintShieldPulse {{
         0% {{ transform: translate(-50%, -50%) scale(0.96); opacity: 0.35; }}
-        100% {{ transform: translate(-50%, -50%) scale(1.03); opacity: 0.75; }}
+        100% {{ transform: translate(-50%, -50%) scale(1.04); opacity: 0.8; box-shadow: inset 0 0 50px {glow_rgba}; }}
     }}
 
     .live-badge {{
@@ -349,8 +272,7 @@ st.markdown(
     }}
     </style>
 
-    <!-- Faint Shield rendered safely behind layout -->
-    <div class="ambient-bg-shield"></div>
+    <div class="faint-shield-bg"></div>
     """,
     unsafe_allow_html=True,
 )
