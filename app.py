@@ -113,6 +113,234 @@ if not st.session_state.intro_done:
 
 # --- STEP 2 & 3: MAIN APP INTERFACE (POST-INTRO) ---
 
+shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.45' fill='{primary_color}' fill-opacity='0.05'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.35' fill='none'/></svg>""".replace("#", "%23")
+
+st.markdown(
+    f"""
+    <style>
+    /* Background Shield & Grid with Dynamic Threat Blink */
+    .stApp {{
+        background-color: #04070d !important;
+        background-image: 
+            url("data:image/svg+xml,{shield_emoji_svg}"),
+            radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 65%),
+            radial-gradient(circle at 90% 90%, {glow_rgba} 0%, transparent 50%),
+            linear-gradient({glow_rgba} 1px, transparent 1px),
+            linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
+        background-position: center 48%, center top, right bottom, 0 0, 0 0 !important;
+        background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat !important;
+        background-size: 400px 460px, 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+        animation: threatShieldGlowPulse {pulse_duration} ease-in-out infinite alternate;
+    }}
+
+    @keyframes threatShieldGlowPulse {{
+        0% {{
+            filter: drop-shadow(0 0 4px {primary_color}22);
+            opacity: 0.88;
+        }}
+        100% {{
+            filter: drop-shadow(0 0 25px {primary_color}) drop-shadow(0 0 45px {primary_color}66);
+            opacity: 1;
+        }}
+    }}
+
+    /* Laser Scanner Sweep */
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; height: 90px;
+        background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, {primary_color}44 85%, transparent 100%);
+        animation: laserScan 6s ease-in-out infinite alternate;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.6;
+    }}
+
+    @keyframes laserScan {{
+        0% {{ transform: translateY(-10vh); opacity: 0.1; }}
+        50% {{ opacity: 0.7; }}
+        100% {{ transform: translateY(105vh); opacity: 0.1; }}
+    }}
+
+    /* Ensure all Streamlit content displays on top */
+    [data-testid="stAppViewBlockContainer"] {{
+        position: relative;
+        z-index: 2;
+    }}
+
+    .live-badge {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: {glow_rgba};
+        border: 1px solid {primary_color};
+        color: {primary_color};
+        font-size: 11px;
+        padding: 7px 16px;
+        border-radius: 20px;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        letter-spacing: 1.5px;
+        box-shadow: 0 0 15px {glow_rgba};
+        white-space: nowrap;
+    }}
+
+    .pulse-dot {{
+        width: 8px;
+        height: 8px;
+        background-color: {primary_color};
+        border-radius: 50%;
+        box-shadow: 0 0 10px {primary_color};
+        display: inline-block;
+        animation: socPulse {pulse_duration} infinite ease-in-out !important;
+    }}
+
+    @keyframes socPulse {{
+        0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
+        50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 16px {primary_color}; }}
+    }}
+
+    /* Replay Button matching the Badge styling */
+    .replay-cyber-wrap div.stButton > button {{
+        background: {glow_rgba} !important;
+        border: 1px solid {primary_color} !important;
+        color: {primary_color} !important;
+        font-size: 11px !important;
+        padding: 6px 16px !important;
+        border-radius: 20px !important;
+        font-family: 'Courier New', monospace !important;
+        font-weight: bold !important;
+        letter-spacing: 1.5px !important;
+        box-shadow: 0 0 15px {glow_rgba} !important;
+        transition: all 0.3s ease !important;
+        text-transform: uppercase !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: auto !important;
+    }}
+
+    .replay-cyber-wrap div.stButton > button:hover {{
+        background: {primary_color} !important;
+        color: #04070d !important;
+        box-shadow: 0 0 25px {primary_color} !important;
+        transform: translateY(-1px) !important;
+    }}
+
+    [data-testid="stFileUploadDropzone"], .stFileUploader section {{
+        background: rgba(8, 14, 26, 0.75) !important;
+        backdrop-filter: blur(16px) !important;
+        border: 1.5px dashed {primary_color} !important;
+        border-radius: 16px !important;
+        box-shadow: 0 0 20px {glow_rgba} !important;
+    }}
+
+    [data-testid="stMetric"] {{
+        background: rgba(10, 18, 32, 0.75) !important;
+        backdrop-filter: blur(14px) !important;
+        border: 1px solid {primary_color} !important;
+        border-radius: 12px !important;
+        padding: 10px 14px !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+    }}
+    [data-testid="stMetricValue"] {{
+        color: {primary_color} !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 20px !important;
+        text-shadow: 0 0 12px {primary_color};
+    }}
+
+    .soc-terminal {{
+        background: rgba(5, 8, 15, 0.95);
+        border: 1px solid {primary_color};
+        border-left: 4px solid {primary_color};
+        border-radius: 8px;
+        padding: 16px;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        color: #d1d5db;
+        font-size: 13px;
+        line-height: 1.6;
+        box-shadow: 0 0 25px {glow_rgba};
+        margin-bottom: 20px;
+    }}
+
+    .ttp-card {{
+        display: inline-block;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid {primary_color};
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin: 6px;
+        min-width: 220px;
+    }}
+
+    .timeline-item {{
+        position: relative;
+        padding-left: 24px;
+        border-left: 2px solid {primary_color};
+        margin-bottom: 14px;
+    }}
+    .timeline-dot {{
+        position: absolute;
+        left: -6px;
+        top: 2px;
+        width: 10px;
+        height: 10px;
+        background: {primary_color};
+        border-radius: 50%;
+        box-shadow: 0 0 8px {primary_color};
+    }}
+
+    .layer-card {{
+        background: rgba(10, 18, 32, 0.85);
+        border: 1px solid {primary_color};
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+    }}
+    .layer-title {{
+        color: {primary_color};
+        font-size: 13px;
+        font-weight: bold;
+        font-family: monospace;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# --- TOP HEADER SECTION (Rendered first) ---
+header_col1, header_col2 = st.columns([3.2, 1.8])
+with header_col1:
+    st.markdown(
+        f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Command Center</span></h1>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Autonomous AI Email Threat Detection & SOAR Incident Response Platform</p>",
+        unsafe_allow_html=True,
+    )
+with header_col2:
+    st.markdown(
+        f"""
+        <div style='display: flex; justify-content: flex-end; margin-top: 10px;'>
+            <span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("<div class='replay-cyber-wrap' style='display: flex; justify-content: flex-end; margin-top: 8px;'>", unsafe_allow_html=True)
+    if st.button("🔁 REPLAY DEFENSE PROTOCOL", key="replay_defense_btn"):
+        st.session_state.intro_done = False
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+st.divider()
+
+# --- FILE INGESTION SECTION ---
 uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
 
 if uploaded_file is not None:
@@ -218,231 +446,6 @@ voice_js = f"""
 </script>
 """
 st.components.v1.html(voice_js, height=0)
-
-# --- CLASSIC SHIELD EMOJI (DYNAMIC GLOW & BLINK FREQUENCY) ---
-shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.45' fill='{primary_color}' fill-opacity='0.05'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.35' fill='none'/></svg>""".replace("#", "%23")
-
-st.markdown(
-    f"""
-    <style>
-    /* Background Shield & Grid with Dynamic Threat Blink */
-    .stApp {{
-        background-color: #04070d !important;
-        background-image: 
-            url("data:image/svg+xml,{shield_emoji_svg}"),
-            radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 65%),
-            radial-gradient(circle at 90% 90%, {glow_rgba} 0%, transparent 50%),
-            linear-gradient({glow_rgba} 1px, transparent 1px),
-            linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
-        background-position: center 48%, center top, right bottom, 0 0, 0 0 !important;
-        background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat !important;
-        background-size: 400px 460px, 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
-        animation: threatShieldGlowPulse {pulse_duration} ease-in-out infinite alternate;
-    }}
-
-    @keyframes threatShieldGlowPulse {{
-        0% {{
-            filter: drop-shadow(0 0 4px {primary_color}22);
-            opacity: 0.88;
-        }}
-        100% {{
-            filter: drop-shadow(0 0 25px {primary_color}) drop-shadow(0 0 45px {primary_color}66);
-            opacity: 1;
-        }}
-    }}
-
-    /* Laser Scanner Sweep */
-    .stApp::before {{
-        content: "";
-        position: fixed;
-        top: 0; left: 0; right: 0; height: 90px;
-        background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, {primary_color}44 85%, transparent 100%);
-        animation: laserScan 6s ease-in-out infinite alternate;
-        pointer-events: none;
-        z-index: 1;
-        opacity: 0.6;
-    }}
-
-    @keyframes laserScan {{
-        0% {{ transform: translateY(-10vh); opacity: 0.1; }}
-        50% {{ opacity: 0.7; }}
-        100% {{ transform: translateY(105vh); opacity: 0.1; }}
-    }}
-
-    /* Ensure all Streamlit content displays on top */
-    [data-testid="stAppViewBlockContainer"] {{
-        position: relative;
-        z-index: 2;
-    }}
-
-    .live-badge {{
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: {glow_rgba};
-        border: 1px solid {primary_color};
-        color: {primary_color};
-        font-size: 11px;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-        letter-spacing: 1.5px;
-        box-shadow: 0 0 15px {glow_rgba};
-    }}
-
-    .pulse-dot {{
-        width: 8px;
-        height: 8px;
-        background-color: {primary_color};
-        border-radius: 50%;
-        box-shadow: 0 0 10px {primary_color};
-        display: inline-block;
-        animation: socPulse {pulse_duration} infinite ease-in-out !important;
-    }}
-
-    @keyframes socPulse {{
-        0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
-        50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 16px {primary_color}; }}
-    }}
-
-    /* Custom Replay Action Button styled like SOC Badge */
-    div[data-testid="stButton"] > button[key="replay_btn_header"], 
-    .replay-cyber-btn button {{
-        background: {glow_rgba} !important;
-        border: 1px solid {primary_color} !important;
-        color: {primary_color} !important;
-        font-size: 11px !important;
-        padding: 5px 14px !important;
-        border-radius: 20px !important;
-        font-family: 'Courier New', monospace !important;
-        font-weight: bold !important;
-        letter-spacing: 1.5px !important;
-        box-shadow: 0 0 15px {glow_rgba} !important;
-        transition: all 0.3s ease-in-out !important;
-        text-transform: uppercase !important;
-        float: right !important;
-    }}
-
-    div[data-testid="stButton"] > button[key="replay_btn_header"]:hover,
-    .replay-cyber-btn button:hover {{
-        background: {primary_color} !important;
-        color: #04070d !important;
-        box-shadow: 0 0 22px {primary_color} !important;
-        transform: translateY(-1px) !important;
-    }}
-
-    [data-testid="stFileUploadDropzone"], .stFileUploader section {{
-        background: rgba(8, 14, 26, 0.75) !important;
-        backdrop-filter: blur(16px) !important;
-        border: 1.5px dashed {primary_color} !important;
-        border-radius: 16px !important;
-        box-shadow: 0 0 20px {glow_rgba} !important;
-    }}
-
-    [data-testid="stMetric"] {{
-        background: rgba(10, 18, 32, 0.75) !important;
-        backdrop-filter: blur(14px) !important;
-        border: 1px solid {primary_color} !important;
-        border-radius: 12px !important;
-        padding: 10px 14px !important;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
-    }}
-    [data-testid="stMetricValue"] {{
-        color: {primary_color} !important;
-        font-family: 'JetBrains Mono', monospace !important;
-        font-size: 20px !important;
-        text-shadow: 0 0 12px {primary_color};
-    }}
-
-    .soc-terminal {{
-        background: rgba(5, 8, 15, 0.95);
-        border: 1px solid {primary_color};
-        border-left: 4px solid {primary_color};
-        border-radius: 8px;
-        padding: 16px;
-        font-family: 'JetBrains Mono', 'Courier New', monospace;
-        color: #d1d5db;
-        font-size: 13px;
-        line-height: 1.6;
-        box-shadow: 0 0 25px {glow_rgba};
-        margin-bottom: 20px;
-    }}
-
-    .ttp-card {{
-        display: inline-block;
-        background: rgba(15, 23, 42, 0.9);
-        border: 1px solid {primary_color};
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin: 6px;
-        min-width: 220px;
-    }}
-
-    .timeline-item {{
-        position: relative;
-        padding-left: 24px;
-        border-left: 2px solid {primary_color};
-        margin-bottom: 14px;
-    }}
-    .timeline-dot {{
-        position: absolute;
-        left: -6px;
-        top: 2px;
-        width: 10px;
-        height: 10px;
-        background: {primary_color};
-        border-radius: 50%;
-        box-shadow: 0 0 8px {primary_color};
-    }}
-
-    .layer-card {{
-        background: rgba(10, 18, 32, 0.85);
-        border: 1px solid {primary_color};
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin-bottom: 10px;
-    }}
-    .layer-title {{
-        color: {primary_color};
-        font-size: 13px;
-        font-weight: bold;
-        font-family: monospace;
-        margin-bottom: 4px;
-        text-transform: uppercase;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# Header Section with SOC Radar Badge and Matching Replay Button
-col1, col2 = st.columns([3.3, 1.7])
-with col1:
-    st.markdown(
-        f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Command Center</span></h1>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        "<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Autonomous AI Email Threat Detection & SOAR Incident Response Platform</p>",
-        unsafe_allow_html=True,
-    )
-with col2:
-    st.markdown(
-        f"""
-        <div style='display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 10px;'>
-            <span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.markdown('<div class="replay-cyber-btn" style="margin-top: 6px;">', unsafe_allow_html=True)
-    if st.button("🔁 REPLAY DEFENSE PROTOCOL", key="replay_btn_header"):
-        st.session_state.intro_done = False
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-st.divider()
 
 def build_pdf_buffer(results_data):
     buffer = io.BytesIO()
