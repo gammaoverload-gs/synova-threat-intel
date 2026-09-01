@@ -14,7 +14,11 @@ st.set_page_config(page_title="SYNOVA Autonomous SOC Platform", page_icon="🛡�
 
 api_key = st.secrets.get("GEMINI_API_KEY", "")
 
-# --- INTRO ANIMATION SESSION CONTROLLER ---
+# --- INTRO ANIMATION SESSION & QUERY TRIGGER CONTROLLER ---
+if "replay" in st.query_params:
+    st.query_params.clear()
+    st.session_state.intro_done = False
+
 if "intro_done" not in st.session_state:
     st.session_state.intro_done = False
 
@@ -168,7 +172,8 @@ st.markdown(
         z-index: 2;
     }}
 
-    .live-badge {{
+    /* Shared Identical SOC Badge Styling */
+    .live-badge, .replay-badge {{
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -177,13 +182,23 @@ st.markdown(
         border: 1px solid {primary_color};
         color: {primary_color};
         font-size: 11px;
-        padding: 7px 16px;
+        padding: 6px 14px;
         border-radius: 20px;
         font-family: 'Courier New', monospace;
         font-weight: bold;
         letter-spacing: 1.5px;
         box-shadow: 0 0 15px {glow_rgba};
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: all 0.25s ease-in-out;
         white-space: nowrap;
+    }}
+
+    .replay-badge:hover {{
+        background: {primary_color} !important;
+        color: #04070d !important;
+        box-shadow: 0 0 25px {primary_color} !important;
+        transform: translateY(-1px);
     }}
 
     .pulse-dot {{
@@ -199,33 +214,6 @@ st.markdown(
     @keyframes socPulse {{
         0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
         50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 16px {primary_color}; }}
-    }}
-
-    /* Replay Button matching the Badge styling */
-    .replay-cyber-wrap div.stButton > button {{
-        background: {glow_rgba} !important;
-        border: 1px solid {primary_color} !important;
-        color: {primary_color} !important;
-        font-size: 11px !important;
-        padding: 6px 16px !important;
-        border-radius: 20px !important;
-        font-family: 'Courier New', monospace !important;
-        font-weight: bold !important;
-        letter-spacing: 1.5px !important;
-        box-shadow: 0 0 15px {glow_rgba} !important;
-        transition: all 0.3s ease !important;
-        text-transform: uppercase !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        width: auto !important;
-    }}
-
-    .replay-cyber-wrap div.stButton > button:hover {{
-        background: {primary_color} !important;
-        color: #04070d !important;
-        box-shadow: 0 0 25px {primary_color} !important;
-        transform: translateY(-1px) !important;
     }}
 
     [data-testid="stFileUploadDropzone"], .stFileUploader section {{
@@ -312,7 +300,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- TOP HEADER SECTION (Rendered first) ---
+# --- TOP HEADER SECTION (Perfect Aligned Badges) ---
 header_col1, header_col2 = st.columns([3.2, 1.8])
 with header_col1:
     st.markdown(
@@ -326,17 +314,13 @@ with header_col1:
 with header_col2:
     st.markdown(
         f"""
-        <div style='display: flex; justify-content: flex-end; margin-top: 10px;'>
+        <div style='display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 8px;'>
             <span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span>
+            <a href='?replay=1' target='_self' class='replay-badge'>🔁 REPLAY DEFENSE PROTOCOL</a>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.markdown("<div class='replay-cyber-wrap' style='display: flex; justify-content: flex-end; margin-top: 8px;'>", unsafe_allow_html=True)
-    if st.button("🔁 REPLAY DEFENSE PROTOCOL", key="replay_defense_btn"):
-        st.session_state.intro_done = False
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 st.divider()
 
