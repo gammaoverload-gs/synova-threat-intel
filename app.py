@@ -22,6 +22,8 @@ badge_text = "SOC RADAR ACTIVE"
 score_num = 0
 results = None
 audio_type = "none"
+pulse_duration = "5.0s"
+welcome_status_msg = "MATRIX ONLINE // STANDBY FOR INCOMING THREAT ARTIFACT"
 
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
@@ -45,28 +47,34 @@ if uploaded_file is not None:
     ip_type = str(results["metadata"]["geo_data"].get("ip_type", "Residential ISP"))
 
     if score_num >= 70:
-        # High / Critical Risk: Crimson Red
+        # High / Critical Risk: Crimson Red with Rapid 0.65s Strobe
         primary_color = "#ff3355"
-        glow_rgba = "rgba(255, 51, 85, 0.25)"
-        bg_glow = "rgba(255, 51, 85, 0.25)"
+        glow_rgba = "rgba(255, 51, 85, 0.35)"
+        bg_glow = "rgba(255, 51, 85, 0.30)"
         badge_text = "CRITICAL THREAT CONFIRMED"
         audio_type = "critical"
+        pulse_duration = "0.65s"
+        welcome_status_msg = f"CRITICAL INCIDENT ALERT // HOSTILE SPEARPHISHING VECTOR DETECTED [{score_num}/100]"
         voice_briefing = f"Alert. High-risk spearphishing vector detected from {origin_city}, {origin_country}. Infrastructure identified as {ip_type}. Automated quarantine playbooks are now active."
     elif score_num >= 40:
-        # Medium Risk / Suspicious: Amber Orange
+        # Medium Risk / Suspicious: Amber Orange with 1.6s Pulse
         primary_color = "#ffaa00"
         glow_rgba = "rgba(255, 170, 0, 0.25)"
         bg_glow = "rgba(255, 170, 0, 0.22)"
         badge_text = "SUSPICIOUS PROFILE DETECTED"
         audio_type = "warning"
+        pulse_duration = "1.6s"
+        welcome_status_msg = f"SECURITY WARNING // ELEVATED RISK HEURISTICS DETECTED [{score_num}/100]"
         voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
     else:
-        # Low Threat / Clean Artifact: Cyber Green
+        # Low Threat / Clean Artifact: Cyber Green with 4.0s Calm Pulse
         primary_color = "#00ffcc"
         glow_rgba = "rgba(0, 255, 204, 0.18)"
         bg_glow = "rgba(0, 255, 204, 0.20)"
         badge_text = "CLEAN ARTIFACT CONFIRMED"
         audio_type = "clean"
+        pulse_duration = "4.0s"
+        welcome_status_msg = f"VERIFIED CLEAN // NO MALICIOUS SIGNATURES FOUND [{score_num}/100]"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
 # Voice JS Engine
@@ -129,13 +137,13 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- CLASSIC SHIELD EMOJI SHAPE (CLEAN & FAINT) ---
-shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.28' fill='{primary_color}' fill-opacity='0.03'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.20' fill='none'/></svg>""".replace("#", "%23")
+# --- CLASSIC SHIELD EMOJI (DYNAMIC GLOW & BLINK FREQUENCY) ---
+shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.45' fill='{primary_color}' fill-opacity='0.05'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.35' fill='none'/></svg>""".replace("#", "%23")
 
 st.markdown(
     f"""
     <style>
-    /* Background Shield & Grid */
+    /* Background Shield & Grid with Dynamic Threat Blink */
     .stApp {{
         background-color: #04070d !important;
         background-image: 
@@ -146,7 +154,47 @@ st.markdown(
             linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
         background-position: center 48%, center top, right bottom, 0 0, 0 0 !important;
         background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat !important;
-        background-size: 380px 440px, 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+        background-size: 400px 460px, 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+        animation: threatShieldGlowPulse {pulse_duration} ease-in-out infinite alternate;
+    }}
+
+    @keyframes threatShieldGlowPulse {{
+        0% {{
+            filter: drop-shadow(0 0 4px {primary_color}22);
+            opacity: 0.88;
+        }}
+        100% {{
+            filter: drop-shadow(0 0 25px {primary_color}) drop-shadow(0 0 45px {primary_color}66);
+            opacity: 1;
+        }}
+    }}
+
+    /* Top Welcome Banner */
+    .welcome-top-bar {{
+        background: linear-gradient(90deg, rgba(8, 14, 26, 0.95), {glow_rgba}, rgba(8, 14, 26, 0.95));
+        border: 1px solid {primary_color};
+        border-radius: 8px;
+        padding: 8px 16px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 0 15px {glow_rgba};
+    }}
+    .welcome-text {{
+        color: #f1f5f9;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 12px;
+        letter-spacing: 1.5px;
+        font-weight: 600;
+    }}
+    .welcome-status {{
+        color: {primary_color};
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 1.2px;
+        text-shadow: 0 0 8px {primary_color};
     }}
 
     /* Laser Scanner Sweep */
@@ -196,12 +244,12 @@ st.markdown(
         border-radius: 50%;
         box-shadow: 0 0 10px {primary_color};
         display: inline-block;
-        animation: socPulse 1.2s infinite ease-in-out !important;
+        animation: socPulse {pulse_duration} infinite ease-in-out !important;
     }}
 
     @keyframes socPulse {{
         0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
-        50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 14px {primary_color}; }}
+        50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 16px {primary_color}; }}
     }}
 
     [data-testid="stFileUploadDropzone"], .stFileUploader section {{
@@ -284,6 +332,12 @@ st.markdown(
         text-transform: uppercase;
     }}
     </style>
+
+    <!-- Top Welcome & Threat Status Banner -->
+    <div class="welcome-top-bar">
+        <span class="welcome-text">🛰️ WELCOME OPERATOR // SYNOVA AUTONOMOUS SOC MATRIX ACTIVE</span>
+        <span class="welcome-status">{welcome_status_msg}</span>
+    </div>
     """,
     unsafe_allow_html=True,
 )
