@@ -109,18 +109,24 @@ if not st.session_state.intro_done:
     st.session_state.intro_done = True
     st.rerun()
 
-# --- STEP 2: THREAT STATE CALCULATION (EXECUTED BEFORE RENDERING CSS) ---
+# --- STEP 2: SETUP CONTAINERS (Guarantees Header on TOP) ---
+header_container = st.container()
+uploader_container = st.container()
+content_container = st.container()
+
+# Default Blue Standby Theme
 primary_color = "#00a8ff"
 glow_rgba = "rgba(0, 168, 255, 0.16)"
 bg_glow = "rgba(0, 168, 255, 0.20)"
 badge_text = "SOC RADAR ACTIVE"
 score_num = 0
 results = None
-audio_type = "none"
 pulse_duration = "5.0s"
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
-uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"], key="threat_file_input")
+# Render Uploader inside its dedicated middle container
+with uploader_container:
+    uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"], key="threat_file_input")
 
 if uploaded_file is not None:
     with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
@@ -143,7 +149,6 @@ if uploaded_file is not None:
         glow_rgba = "rgba(255, 51, 85, 0.35)"
         bg_glow = "rgba(255, 51, 85, 0.30)"
         badge_text = "CRITICAL THREAT CONFIRMED"
-        audio_type = "critical"
         pulse_duration = "0.65s"
         voice_briefing = f"Alert. High-risk spearphishing vector detected from {origin_city}, {origin_country}. Infrastructure identified as {ip_type}. Automated quarantine playbooks are now active."
     elif score_num >= 40:
@@ -151,7 +156,6 @@ if uploaded_file is not None:
         glow_rgba = "rgba(255, 170, 0, 0.25)"
         bg_glow = "rgba(255, 170, 0, 0.22)"
         badge_text = "SUSPICIOUS PROFILE DETECTED"
-        audio_type = "warning"
         pulse_duration = "1.6s"
         voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
     else:
@@ -159,11 +163,10 @@ if uploaded_file is not None:
         glow_rgba = "rgba(0, 255, 204, 0.18)"
         bg_glow = "rgba(0, 255, 204, 0.20)"
         badge_text = "CLEAN ARTIFACT CONFIRMED"
-        audio_type = "clean"
         pulse_duration = "4.0s"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-# --- STEP 3: DYNAMIC CSS & COLOR INJECTION ---
+# --- STEP 3: DYNAMIC CSS & THREAT GLOW INJECTION ---
 shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.45' fill='{primary_color}' fill-opacity='0.05'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.35' fill='none'/></svg>""".replace("#", "%23")
 
 st.markdown(
@@ -343,57 +346,85 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- TOP HEADER SECTION ---
-header_col1, header_col2 = st.columns([3.2, 1.8])
-with header_col1:
-    st.markdown(
-        f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Command Center</span></h1>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        "<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Autonomous AI Email Threat Detection & SOAR Incident Response Platform</p>",
-        unsafe_allow_html=True,
-    )
-with header_col2:
-    st.markdown(
-        f"""
-        <div style='display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 8px;'>
-            <span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span>
-            <a href='?replay=1' target='_self' class='replay-badge'>🔁 REPLAY DEFENSE PROTOCOL</a>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+# --- STEP 4: RENDER TOP HEADER FIRST ---
+with header_container:
+    col1, col2 = st.columns([3.2, 1.8])
+    with col1:
+        st.markdown(
+            f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Command Center</span></h1>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            "<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Autonomous AI Email Threat Detection & SOAR Incident Response Platform</p>",
+            unsafe_allow_html=True,
+        )
+    with col2:
+        st.markdown(
+            f"""
+            <div style='display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 8px;'>
+                <span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span>
+                <a href='?replay=1' target='_self' class='replay-badge'>🔁 REPLAY DEFENSE PROTOCOL</a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    st.divider()
 
-st.divider()
+# --- STEP 5: AUDIO ENGINE (ELEVENLABS + AUTONOMOUS PLAYBACK GUARANTEE) ---
+audio_b64_payload = ""
 
-# --- ULTRA-REALISTIC NATURAL HUMAN VOICE (ELEVENLABS API) ---
-def dispatch_real_human_voice(text_prompt: str):
-    if not eleven_client:
-        return
+if eleven_client:
     try:
         audio_stream = eleven_client.text_to_speech.convert(
-            text=text_prompt,
+            text=voice_briefing,
             voice_id="EXAVITQu4vr4xnSDxMaL",
             model_id="eleven_multilingual_v2"
         )
         audio_bytes = b"".join(list(audio_stream))
-        b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
-        st.markdown(
-            f"""
-            <audio autoplay style="display:none;">
-                <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
-            </audio>
-            """,
-            unsafe_allow_html=True
-        )
+        audio_b64_payload = base64.b64encode(audio_bytes).decode("utf-8")
     except Exception:
-        pass
+        audio_b64_payload = ""
 
-# Trigger real human voice dispatch
-if "last_dispatched_voice" not in st.session_state or st.session_state.last_dispatched_voice != voice_briefing:
-    st.session_state.last_dispatched_voice = voice_briefing
-    dispatch_real_human_voice(voice_briefing)
+audio_bridge_js = f"""
+<script>
+(function() {{
+    const b64Data = "{audio_b64_payload}";
+    const textMsg = "{voice_briefing}";
+
+    function executeVoicePlayback() {{
+        if (b64Data && b64Data.length > 50) {{
+            const audio = new Audio("data:audio/mp3;base64," + b64Data);
+            audio.volume = 0.95;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {{
+                playPromise.catch(() => {{
+                    const unlock = () => {{
+                        audio.play();
+                        window.parent.document.removeEventListener('click', unlock);
+                        document.removeEventListener('click', unlock);
+                    }};
+                    window.parent.document.addEventListener('click', unlock, {{ once: true }});
+                    document.addEventListener('click', unlock, {{ once: true }});
+                }});
+            }}
+        }} else if ('speechSynthesis' in window) {{
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(textMsg);
+            utter.rate = 0.94;
+            utter.pitch = 1.0;
+            window.speechSynthesis.speak(utter);
+        }}
+    }}
+
+    setTimeout(executeVoicePlayback, 400);
+    ['dragover', 'drop', 'keydown'].forEach(evt => {{
+        window.parent.document.addEventListener(evt, executeVoicePlayback, {{ once: true }});
+        document.addEventListener(evt, executeVoicePlayback, {{ once: true }});
+    }});
+}})();
+</script>
+"""
+st.components.v1.html(audio_bridge_js, height=0)
 
 def build_pdf_buffer(results_data):
     buffer = io.BytesIO()
@@ -511,171 +542,171 @@ def build_pdf_buffer(results_data):
     buffer.seek(0)
     return buffer
 
-# --- EMPTY STATE / WELCOME SCREEN ---
-if not uploaded_file:
-    st.markdown(
-        f"""
-        <div style="
-            background: linear-gradient(135deg, rgba(8, 14, 26, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%);
-            border: 1px solid rgba(0, 168, 255, 0.3);
-            border-left: 5px solid {primary_color};
-            border-radius: 12px;
-            padding: 24px;
-            margin-top: 10px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0, 168, 255, 0.1);
-        ">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                <h3 style="color: #ffffff; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 20px;">
-                    ⚡ WELCOME TO THE SYNOVA THREAT INTELLIGENCE MATRIX
-                </h3>
-                <span style="background: rgba(0, 168, 255, 0.15); color: {primary_color}; border: 1px solid {primary_color}; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-family: monospace;">
-                    ZERO-TRUST SOC
-                </span>
-            </div>
-            <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-                SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level email attack vectors. Upload any suspicious raw <code>.eml</code> or <code>.msg</code> byte payload to execute real-time AI cognitive triage, MITRE ATT&CK® adversary mapping, and automated SOAR firewall containment playbooks.
-            </p>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
-                    1. DROP RAW MIME PAYLOAD
-                </span>
-                <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
-                    2. IN-MEMORY FORENSIC RECONSTRUCTION
-                </span>
-                <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
-                    3. DUAL-ENGINE AI TRIAGE & AUDIO DISPATCH
-                </span>
-                <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
-                    4. INSTANT SOAR BLOCKLIST & PDF
-                </span>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.metric(label="CORE ENGINE", value="ZERO-DISK", delta="RAM Buffer")
-    with c2:
-        st.metric(label="GEO RADAR", value="LIVE IP", delta="Hop Tracer")
-    with c3:
-        st.metric(label="AI BRAIN", value="GEMINI", delta="Heuristics")
-    with c4:
-        st.metric(label="SOAR DEFENSE", value="ACTIVE", delta="IPTables/DNS")
-
-# --- ACTIVE INVESTIGATION VIEW ---
-else:
-    dash_col1, dash_col2 = st.columns([1.2, 3])
-
-    with dash_col1:
-        circumference = 282.74
-        stroke_dashoffset = circumference - (score_num / 100.0) * circumference
+# --- STEP 6: RENDER MAIN INVESTIGATION OR EMPTY STATE ---
+with content_container:
+    if not uploaded_file:
         st.markdown(
             f"""
-            <div style="text-align: center; background: rgba(10, 18, 32, 0.75); border: 1px solid {primary_color}; border-radius: 12px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.6);">
-                <svg width="150" height="150" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="45" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10"/>
-                    <circle cx="60" cy="60" r="45" fill="none" stroke="{primary_color}" stroke-width="10"
-                            stroke-dasharray="{circumference}" stroke-dashoffset="{stroke_dashoffset}"
-                            stroke-linecap="round" transform="rotate(-90 60 60)"
-                            style="transition: stroke-dashoffset 1s ease-in-out; filter: drop-shadow(0 0 6px {primary_color});"/>
-                    <text x="60" y="58" font-size="22" font-family="'JetBrains Mono', monospace" font-weight="bold" fill="{primary_color}" text-anchor="middle">{score_num}</text>
-                    <text x="60" y="74" font-size="10" font-family="sans-serif" fill="#94a3b8" text-anchor="middle">THREAT INDEX</text>
-                </svg>
+            <div style="
+                background: linear-gradient(135deg, rgba(8, 14, 26, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%);
+                border: 1px solid rgba(0, 168, 255, 0.3);
+                border-left: 5px solid {primary_color};
+                border-radius: 12px;
+                padding: 24px;
+                margin-top: 10px;
+                margin-bottom: 25px;
+                box-shadow: 0 10px 30px rgba(0, 168, 255, 0.1);
+            ">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <h3 style="color: #ffffff; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 20px;">
+                        ⚡ WELCOME TO THE SYNOVA THREAT INTELLIGENCE MATRIX
+                    </h3>
+                    <span style="background: rgba(0, 168, 255, 0.15); color: {primary_color}; border: 1px solid {primary_color}; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-family: monospace;">
+                        ZERO-TRUST SOC
+                    </span>
+                </div>
+                <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level email attack vectors. Upload any suspicious raw <code>.eml</code> or <code>.msg</code> byte payload to execute real-time AI cognitive triage, MITRE ATT&CK® adversary mapping, and automated SOAR firewall containment playbooks.
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
+                        1. DROP RAW MIME PAYLOAD
+                    </span>
+                    <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
+                        2. IN-MEMORY FORENSIC RECONSTRUCTION
+                    </span>
+                    <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
+                        3. DUAL-ENGINE AI TRIAGE & AUDIO DISPATCH
+                    </span>
+                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
+                        4. INSTANT SOAR BLOCKLIST & PDF
+                    </span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.metric(label="CORE ENGINE", value="ZERO-DISK", delta="RAM Buffer")
+        with c2:
+            st.metric(label="GEO RADAR", value="LIVE IP", delta="Hop Tracer")
+        with c3:
+            st.metric(label="AI BRAIN", value="GEMINI", delta="Heuristics")
+        with c4:
+            st.metric(label="SOAR DEFENSE", value="ACTIVE", delta="IPTables/DNS")
+
+    else:
+        dash_col1, dash_col2 = st.columns([1.2, 3])
+
+        with dash_col1:
+            circumference = 282.74
+            stroke_dashoffset = circumference - (score_num / 100.0) * circumference
+            st.markdown(
+                f"""
+                <div style="text-align: center; background: rgba(10, 18, 32, 0.75); border: 1px solid {primary_color}; border-radius: 12px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.6);">
+                    <svg width="150" height="150" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="45" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10"/>
+                        <circle cx="60" cy="60" r="45" fill="none" stroke="{primary_color}" stroke-width="10"
+                                stroke-dasharray="{circumference}" stroke-dashoffset="{stroke_dashoffset}"
+                                stroke-linecap="round" transform="rotate(-90 60 60)"
+                                style="transition: stroke-dashoffset 1s ease-in-out; filter: drop-shadow(0 0 6px {primary_color});"/>
+                        <text x="60" y="58" font-size="22" font-family="'JetBrains Mono', monospace" font-weight="bold" fill="{primary_color}" text-anchor="middle">{score_num}</text>
+                        <text x="60" y="74" font-size="10" font-family="sans-serif" fill="#94a3b8" text-anchor="middle">THREAT INDEX</text>
+                    </svg>
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+        with dash_col2:
+            m1, m2, m3 = st.columns(3)
+            m1.metric("SENDER ORIGIN IP", str(results["metadata"]["sender_ip"] or "Hidden"))
+            m2.metric("SPF RECORD", "PASS" if results["authentication"]["spf_pass"] else "FAIL / NONE")
+            m3.metric("EXTRACTED IOCs", f"{len(results['body_artifacts']['extracted_urls'])} URLs")
+
+            pdf_buffer = build_pdf_buffer(results)
+            st.download_button(
+                label="📥 Export Forensic Incident Report (PDF)",
+                data=pdf_buffer,
+                file_name="SYNOVA_Incident_Report.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
+
+        ai_score_val = results["ai_analysis"].get("ai_score_num", score_num)
+        heur_score_val = results["ai_analysis"].get("heuristic_score_num", score_num)
+
+        st.markdown("#### ⚖️ Dual-Engine Consensus Calibration")
+        bar_col1, bar_col2 = st.columns(2)
+        with bar_col1:
+            st.caption(f"🧠 Gemini LLM Cognitive Reasoning: **{ai_score_val}%** Confidence")
+            st.progress(ai_score_val / 100.0)
+        with bar_col2:
+            st.caption(f"⚡ Static Rule & Heuristic Engine: **{heur_score_val}%** Confidence")
+            st.progress(heur_score_val / 100.0)
+
+        ai_reason = results.get("ai_analysis", {}).get("analysis", "No forensic log generated.")
+        st.markdown(
+            f"""
+            <div class="soc-terminal">
+                <div style="color: {primary_color}; font-weight: bold; margin-bottom: 8px;">🤖 [SOC AGENT AUTONOMOUS TRIAGE LOG]</div>
+                <div>&gt; [TIMESTAMP] : {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}</div>
+                <div>&gt; [IP PROFILER] : Infrastructure Classification: <span style="color: {primary_color}; font-weight: bold;">{ip_type}</span></div>
+                <div>&gt; [DIAGNOSIS] : <span style="color: {primary_color}; font-weight: bold;">{html.escape(str(ai_reason))}</span></div>
             </div>
         """,
             unsafe_allow_html=True,
         )
 
-    with dash_col2:
-        m1, m2, m3 = st.columns(3)
-        m1.metric("SENDER ORIGIN IP", str(results["metadata"]["sender_ip"] or "Hidden"))
-        m2.metric("SPF RECORD", "PASS" if results["authentication"]["spf_pass"] else "FAIL / NONE")
-        m3.metric("EXTRACTED IOCs", f"{len(results['body_artifacts']['extracted_urls'])} URLs")
+        st.markdown("#### 🎯 MITRE ATT&CK® Mapped Adversary Techniques")
+        ttps = results.get("mitre_ttps", [])
+        ttp_html = ""
+        for ttp in ttps:
+            ttp_html += f"""
+                <div class="ttp-card">
+                    <div style="color:#94a3b8; font-size:11px; text-transform:uppercase;">{html.escape(str(ttp['tactic']))}</div>
+                    <div style="color:{primary_color}; font-family:monospace; font-weight:bold; font-size:13px;">{html.escape(str(ttp['id']))}</div>
+                    <div style="color:#ffffff; font-size:13px; font-weight:600; margin-top:2px;">{html.escape(str(ttp['name']))}</div>
+                </div>
+            """
+        st.markdown(f"<div style='margin-bottom: 20px;'>{ttp_html}</div>", unsafe_allow_html=True)
 
-        pdf_buffer = build_pdf_buffer(results)
-        st.download_button(
-            label="📥 Export Forensic Incident Report (PDF)",
-            data=pdf_buffer,
-            file_name="SYNOVA_Incident_Report.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-        )
-
-    ai_score_val = results["ai_analysis"].get("ai_score_num", score_num)
-    heur_score_val = results["ai_analysis"].get("heuristic_score_num", score_num)
-
-    st.markdown("#### ⚖️ Dual-Engine Consensus Calibration")
-    bar_col1, bar_col2 = st.columns(2)
-    with bar_col1:
-        st.caption(f"🧠 Gemini LLM Cognitive Reasoning: **{ai_score_val}%** Confidence")
-        st.progress(ai_score_val / 100.0)
-    with bar_col2:
-        st.caption(f"⚡ Static Rule & Heuristic Engine: **{heur_score_val}%** Confidence")
-        st.progress(heur_score_val / 100.0)
-
-    ai_reason = results.get("ai_analysis", {}).get("analysis", "No forensic log generated.")
-    st.markdown(
-        f"""
-        <div class="soc-terminal">
-            <div style="color: {primary_color}; font-weight: bold; margin-bottom: 8px;">🤖 [SOC AGENT AUTONOMOUS TRIAGE LOG]</div>
-            <div>&gt; [TIMESTAMP] : {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}</div>
-            <div>&gt; [IP PROFILER] : Infrastructure Classification: <span style="color: {primary_color}; font-weight: bold;">{ip_type}</span></div>
-            <div>&gt; [DIAGNOSIS] : <span style="color: {primary_color}; font-weight: bold;">{html.escape(str(ai_reason))}</span></div>
-        </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("#### 🎯 MITRE ATT&CK® Mapped Adversary Techniques")
-    ttps = results.get("mitre_ttps", [])
-    ttp_html = ""
-    for ttp in ttps:
-        ttp_html += f"""
-            <div class="ttp-card">
-                <div style="color:#94a3b8; font-size:11px; text-transform:uppercase;">{html.escape(str(ttp['tactic']))}</div>
-                <div style="color:{primary_color}; font-family:monospace; font-weight:bold; font-size:13px;">{html.escape(str(ttp['id']))}</div>
-                <div style="color:#ffffff; font-size:13px; font-weight:600; margin-top:2px;">{html.escape(str(ttp['name']))}</div>
-            </div>
-        """
-    st.markdown(f"<div style='margin-bottom: 20px;'>{ttp_html}</div>", unsafe_allow_html=True)
-
-    st.divider()
-
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "🛡️ SOAR Response & Mitigations",
-        "⚡ Kill-Chain Simulator",
-        "🧩 Payload Deconstruction Matrix",
-        "🕒 Attack Timeline",
-        "👁️ Defanged Preview",
-        "🔗 Routing Hops & Geo Radar",
-        "🔬 Raw Headers & Hex Dump",
-    ])
-
-    with tab1:
-        st.subheader("⚡ Automated SOAR Playbook Execution")
-        ai_mitigations = results.get("ai_analysis", {}).get("mitigations", "No mitigations available.")
-        st.markdown(ai_mitigations)
         st.divider()
-        col_soar1, col_soar2 = st.columns(2)
-        with col_soar1:
-            if st.button("🚫 Generate Egress Firewall Blocklist (iptables / Suricata)", use_container_width=True):
-                target_ip = results["metadata"]["sender_ip"]
-                st.code(
-                    f"""# --- AUTOMATED FIREWALL BLOCKLIST ---
+
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+            "🛡️ SOAR Response & Mitigations",
+            "⚡ Kill-Chain Simulator",
+            "🧩 Payload Deconstruction Matrix",
+            "🕒 Attack Timeline",
+            "👁️ Defanged Preview",
+            "🔗 Routing Hops & Geo Radar",
+            "🔬 Raw Headers & Hex Dump",
+        ])
+
+        with tab1:
+            st.subheader("⚡ Automated SOAR Playbook Execution")
+            ai_mitigations = results.get("ai_analysis", {}).get("mitigations", "No mitigations available.")
+            st.markdown(ai_mitigations)
+            st.divider()
+            col_soar1, col_soar2 = st.columns(2)
+            with col_soar1:
+                if st.button("🚫 Generate Egress Firewall Blocklist (iptables / Suricata)", use_container_width=True):
+                    target_ip = results["metadata"]["sender_ip"]
+                    st.code(
+                        f"""# --- AUTOMATED FIREWALL BLOCKLIST ---
 iptables -A INPUT -s {target_ip} -j DROP
 iptables -A FORWARD -s {target_ip} -j DROP
 alert ip {target_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Actor"; sid:9000001; rev:1;)
 """,
-                    language="bash",
-                )
-        with col_soar2:
-            if st.button("✉️ Draft Automated Abuse Takedown Notice", use_container_width=True):
-                target_ip = results["metadata"]["sender_ip"]
-                st.code(
-                    f"""To: abuse-desk@{str(results['metadata']['geo_data'].get('isp', 'upstream-provider')).replace(' ', '').lower()}.net
+                        language="bash",
+                    )
+            with col_soar2:
+                if st.button("✉️ Draft Automated Abuse Takedown Notice", use_container_width=True):
+                    target_ip = results["metadata"]["sender_ip"]
+                    st.code(
+                        f"""To: abuse-desk@{str(results['metadata']['geo_data'].get('isp', 'upstream-provider')).replace(' ', '').lower()}.net
 Subject: [URGENT] Abuse Notice: Malicious Campaign from {target_ip}
 
 Dear Abuse Team,
@@ -686,195 +717,195 @@ Our autonomous SOC (SYNOVA) detected active phishing telemetry from your ASN:
 
 Please isolate the compromised host immediately.
 """,
-                    language="text",
-                )
-
-    with tab2:
-        st.subheader("⚡ Adversary Kill-Chain Simulation (Impact Comparison)")
-        sim_mode = st.radio(
-            "Select Incident Scenario:",
-            ["🛑 Without SYNOVA (Unprotected Perimeter)", "🛡️ With SYNOVA Autonomous SOAR Engine"],
-            horizontal=True,
-        )
-
-        if "Without" in sim_mode:
-            st.error("""
-            **❌ Unmitigated Breach Simulation Flow:**
-            1. **Ingress:** Email lands in user inbox with zero behavioral inspection.
-            2. **Exploitation:** User clicks un-defanged link (`credential-harvesting-portal.com`).
-            3. **Privilege Escalation:** Corporate SSO session tokens exfiltrated to adversary Command & Control server.
-            4. **Lateral Movement:** Adversary pivots to internal LDAP/Active Directory domain controller.
-            
-            💰 **Estimated Financial & Regulatory Impact:** **$48,500 (Downtime + Forensics + Compliance Fines)**
-            """)
-        else:
-            st.success("""
-            **✅ SYNOVA Autonomous Containment Flow:**
-            1. **Ingress:** Zero-disk MIME parsing inspects raw RFC-822 stream in memory.
-            2. **AI Triage:** Gemini LLM detects urgency cues and domain spoofing in **180ms**.
-            3. **Neutralization:** DNS sinkhole and IP firewall block rule auto-staged across edge gateways.
-            4. **Quarantine:** Email neutralized and converted to defanged forensic preview.
-            
-            🛡️ **Mitigation Outcome:** **100% Data Exfiltration Prevented | Zero Endpoint Footprint**
-            """)
-
-    with tab3:
-        st.subheader("🧩 Multi-Layer Forensic Deconstruction Matrix")
-        from_str = html.escape(str(results["metadata"]["from"]))
-        subj_str = html.escape(str(results["metadata"]["subject"]))
-
-        st.markdown(
-            f"""
-        <div class="layer-card">
-            <div class="layer-title">Layer 1: Envelope & Identity Layer</div>
-            <div style="font-size:13px; color:#cbd5e1;">• From: <code>{from_str}</code></div>
-            <div style="font-size:13px; color:#cbd5e1;">• Subject: <code>{subj_str}</code></div>
-            <div style="font-size:13px; color:#cbd5e1;">• DMARC/SPF Alignment: <code>{"ALIGNED" if results['authentication']['spf_pass'] else "DISAVOWED / UNVERIFIED"}</code></div>
-        </div>
-        
-        <div class="layer-card">
-            <div class="layer-title">Layer 2: Transport & Routing Layer</div>
-            <div style="font-size:13px; color:#cbd5e1;">• Origin Relay Node: <code>{html.escape(str(results['metadata']['sender_ip']))}</code></div>
-            <div style="font-size:13px; color:#cbd5e1;">• Geo Anchor & Type: <code>{origin_city}, {origin_country} [{ip_type}]</code></div>
-            <div style="font-size:13px; color:#cbd5e1;">• Total Intermediate Relay Hops: <code>{len(results.get('routing_hops', []))}</code></div>
-        </div>
-
-        <div class="layer-card">
-            <div class="layer-title">Layer 3: Cognitive & Psychological Vector</div>
-            <div style="font-size:13px; color:#cbd5e1;">• Adversary Cues: <code>Urgency Cues / Social Engineering Pressure Tactics</code></div>
-            <div style="font-size:13px; color:#cbd5e1;">• Behavioral Tactic: <code>Initial Access (MITRE ATT&CK T1566)</code></div>
-        </div>
-
-        <div class="layer-card">
-            <div class="layer-title">Layer 4: Binary & Artifact Payload</div>
-            <div style="font-size:13px; color:#cbd5e1;">• Embedded URLs: <code>{len(results['body_artifacts']['extracted_urls'])} Hyperlinks extracted</code></div>
-            <div style="font-size:13px; color:#cbd5e1;">• High-Entropy MIME Attachments: <code>{len(results.get('attachments', []))} Files sandboxed</code></div>
-        </div>
-        """,
-            unsafe_allow_html=True,
-        )
-
-    with tab4:
-        st.subheader("🕒 Threat Execution & Detection Chronology")
-        date_stamp = html.escape(str(results["metadata"]["date"]))
-        origin_ip = html.escape(str(results["metadata"]["sender_ip"]))
-        st.markdown(
-            f"""
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <strong style="color: {primary_color};">Phase 1: Ingress Transmission [{date_stamp}]</strong>
-                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Threat packet initiated from Origin Node <code>{origin_ip}</code> ({origin_city}, {origin_country}) classified as <code>{ip_type}</code>.</p>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <strong style="color: {primary_color};">Phase 2: Gateway Relay & Auth Check</strong>
-                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">MIME stream processed by MX gateway. SPF Status: <code>{"PASS" if results['authentication']['spf_pass'] else "FAILED/UNVERIFIED"}</code>.</p>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <strong style="color: {primary_color};">Phase 3: Payload Extraction & Heuristic Parsing</strong>
-                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Extracted {len(results['body_artifacts']['extracted_urls'])} URLs and evaluated MIME attachments against SHA-256 entropy check.</p>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <strong style="color: {primary_color};">Phase 4: Autonomous SOAR Quarantine Action</strong>
-                <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Calculated Threat Index <code>{score_num}/100</code>. Dynamic mitigation playbooks generated.</p>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-
-    with tab5:
-        st.subheader("👁️ Pre-Scan Defanged HTML Sandbox Preview")
-        raw_body_text = str(results["body_artifacts"]["raw_body"] or "")
-        safe_preview = html.escape(raw_body_text)
-        for u in results["body_artifacts"]["extracted_urls"]:
-            safe_u = html.escape(str(u))
-            defanged_badge = (
-                f'<span style="color:#ff3355; background:rgba(255,51,85,0.15); '
-                f'padding:2px 6px; border-radius:4px; font-family:monospace; '
-                f'text-decoration:line-through;">[DEFANGED_URL: {safe_u}]</span>'
-            )
-            safe_preview = safe_preview.replace(safe_u, defanged_badge)
-        safe_preview = safe_preview.replace("\n", "<br/>")
-
-        st.markdown(
-            f"""
-            <div style="background:rgba(10,15,26,0.9); border:1px dashed {primary_color}; border-radius:8px; padding:16px; color:#cbd5e1; font-family:sans-serif; line-height:1.5;">
-                <div style="font-size:11px; color:#f59e0b; margin-bottom:8px;">⚠️ Malicious scripts, zero-font cloaking, and hyperlinks neutralized:</div>
-                {safe_preview}
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
-
-    with tab6:
-        st.subheader("📡 Visual Node-to-Node SMTP Hop Chain")
-        hops = results.get("routing_hops", [])
-        if hops:
-            hop_cols = st.columns(len(hops) * 2 - 1)
-            for i, hop in enumerate(hops):
-                with hop_cols[i * 2]:
-                    st.markdown(
-                        f"""
-                        <div style="background: rgba(10, 18, 32, 0.85); border: 1px solid {primary_color}; padding: 10px; border-radius: 8px; text-align: center;">
-                            <div style="font-size:11px; color:#94a3b8;">HOP #{hop['hop_number']}</div>
-                            <div style="font-size:12px; font-weight:bold; color:{primary_color};">{html.escape(str(hop['hop_ip']))}</div>
-                            <div style="font-size:10px; color:#64748b;">{html.escape(str(hop['by']))[:18]}</div>
-                        </div>
-                    """,
-                        unsafe_allow_html=True,
+                        language="text",
                     )
-                if i < len(hops) - 1:
-                    with hop_cols[i * 2 + 1]:
+
+        with tab2:
+            st.subheader("⚡ Adversary Kill-Chain Simulation (Impact Comparison)")
+            sim_mode = st.radio(
+                "Select Incident Scenario:",
+                ["🛑 Without SYNOVA (Unprotected Perimeter)", "🛡️ With SYNOVA Autonomous SOAR Engine"],
+                horizontal=True,
+            )
+
+            if "Without" in sim_mode:
+                st.error("""
+                **❌ Unmitigated Breach Simulation Flow:**
+                1. **Ingress:** Email lands in user inbox with zero behavioral inspection.
+                2. **Exploitation:** User clicks un-defanged link (`credential-harvesting-portal.com`).
+                3. **Privilege Escalation:** Corporate SSO session tokens exfiltrated to adversary Command & Control server.
+                4. **Lateral Movement:** Adversary pivots to internal LDAP/Active Directory domain controller.
+                
+                💰 **Estimated Financial & Regulatory Impact:** **$48,500 (Downtime + Forensics + Compliance Fines)**
+                """)
+            else:
+                st.success("""
+                **✅ SYNOVA Autonomous Containment Flow:**
+                1. **Ingress:** Zero-disk MIME parsing inspects raw RFC-822 stream in memory.
+                2. **AI Triage:** Gemini LLM detects urgency cues and domain spoofing in **180ms**.
+                3. **Neutralization:** DNS sinkhole and IP firewall block rule auto-staged across edge gateways.
+                4. **Quarantine:** Email neutralized and converted to defanged forensic preview.
+                
+                🛡️ **Mitigation Outcome:** **100% Data Exfiltration Prevented | Zero Endpoint Footprint**
+                """)
+
+        with tab3:
+            st.subheader("🧩 Multi-Layer Forensic Deconstruction Matrix")
+            from_str = html.escape(str(results["metadata"]["from"]))
+            subj_str = html.escape(str(results["metadata"]["subject"]))
+
+            st.markdown(
+                f"""
+            <div class="layer-card">
+                <div class="layer-title">Layer 1: Envelope & Identity Layer</div>
+                <div style="font-size:13px; color:#cbd5e1;">• From: <code>{from_str}</code></div>
+                <div style="font-size:13px; color:#cbd5e1;">• Subject: <code>{subj_str}</code></div>
+                <div style="font-size:13px; color:#cbd5e1;">• DMARC/SPF Alignment: <code>{"ALIGNED" if results['authentication']['spf_pass'] else "DISAVOWED / UNVERIFIED"}</code></div>
+            </div>
+            
+            <div class="layer-card">
+                <div class="layer-title">Layer 2: Transport & Routing Layer</div>
+                <div style="font-size:13px; color:#cbd5e1;">• Origin Relay Node: <code>{html.escape(str(results['metadata']['sender_ip']))}</code></div>
+                <div style="font-size:13px; color:#cbd5e1;">• Geo Anchor & Type: <code>{origin_city}, {origin_country} [{ip_type}]</code></div>
+                <div style="font-size:13px; color:#cbd5e1;">• Total Intermediate Relay Hops: <code>{len(results.get('routing_hops', []))}</code></div>
+            </div>
+
+            <div class="layer-card">
+                <div class="layer-title">Layer 3: Cognitive & Psychological Vector</div>
+                <div style="font-size:13px; color:#cbd5e1;">• Adversary Cues: <code>Urgency Cues / Social Engineering Pressure Tactics</code></div>
+                <div style="font-size:13px; color:#cbd5e1;">• Behavioral Tactic: <code>Initial Access (MITRE ATT&CK T1566)</code></div>
+            </div>
+
+            <div class="layer-card">
+                <div class="layer-title">Layer 4: Binary & Artifact Payload</div>
+                <div style="font-size:13px; color:#cbd5e1;">• Embedded URLs: <code>{len(results['body_artifacts']['extracted_urls'])} Hyperlinks extracted</code></div>
+                <div style="font-size:13px; color:#cbd5e1;">• High-Entropy MIME Attachments: <code>{len(results.get('attachments', []))} Files sandboxed</code></div>
+            </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+        with tab4:
+            st.subheader("🕒 Threat Execution & Detection Chronology")
+            date_stamp = html.escape(str(results["metadata"]["date"]))
+            origin_ip = html.escape(str(results["metadata"]["sender_ip"]))
+            st.markdown(
+                f"""
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <strong style="color: {primary_color};">Phase 1: Ingress Transmission [{date_stamp}]</strong>
+                    <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Threat packet initiated from Origin Node <code>{origin_ip}</code> ({origin_city}, {origin_country}) classified as <code>{ip_type}</code>.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <strong style="color: {primary_color};">Phase 2: Gateway Relay & Auth Check</strong>
+                    <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">MIME stream processed by MX gateway. SPF Status: <code>{"PASS" if results['authentication']['spf_pass'] else "FAILED/UNVERIFIED"}</code>.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <strong style="color: {primary_color};">Phase 3: Payload Extraction & Heuristic Parsing</strong>
+                    <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Extracted {len(results['body_artifacts']['extracted_urls'])} URLs and evaluated MIME attachments against SHA-256 entropy check.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <strong style="color: {primary_color};">Phase 4: Autonomous SOAR Quarantine Action</strong>
+                    <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Calculated Threat Index <code>{score_num}/100</code>. Dynamic mitigation playbooks generated.</p>
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+        with tab5:
+            st.subheader("👁️ Pre-Scan Defanged HTML Sandbox Preview")
+            raw_body_text = str(results["body_artifacts"]["raw_body"] or "")
+            safe_preview = html.escape(raw_body_text)
+            for u in results["body_artifacts"]["extracted_urls"]:
+                safe_u = html.escape(str(u))
+                defanged_badge = (
+                    f'<span style="color:#ff3355; background:rgba(255,51,85,0.15); '
+                    f'padding:2px 6px; border-radius:4px; font-family:monospace; '
+                    f'text-decoration:line-through;">[DEFANGED_URL: {safe_u}]</span>'
+                )
+                safe_preview = safe_preview.replace(safe_u, defanged_badge)
+            safe_preview = safe_preview.replace("\n", "<br/>")
+
+            st.markdown(
+                f"""
+                <div style="background:rgba(10,15,26,0.9); border:1px dashed {primary_color}; border-radius:8px; padding:16px; color:#cbd5e1; font-family:sans-serif; line-height:1.5;">
+                    <div style="font-size:11px; color:#f59e0b; margin-bottom:8px;">⚠️ Malicious scripts, zero-font cloaking, and hyperlinks neutralized:</div>
+                    {safe_preview}
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
+
+        with tab6:
+            st.subheader("📡 Visual Node-to-Node SMTP Hop Chain")
+            hops = results.get("routing_hops", [])
+            if hops:
+                hop_cols = st.columns(len(hops) * 2 - 1)
+                for i, hop in enumerate(hops):
+                    with hop_cols[i * 2]:
                         st.markdown(
-                            f"<div style='color:{primary_color}; font-size:20px; text-align:center; padding-top:10px;'>➔</div>",
+                            f"""
+                            <div style="background: rgba(10, 18, 32, 0.85); border: 1px solid {primary_color}; padding: 10px; border-radius: 8px; text-align: center;">
+                                <div style="font-size:11px; color:#94a3b8;">HOP #{hop['hop_number']}</div>
+                                <div style="font-size:12px; font-weight:bold; color:{primary_color};">{html.escape(str(hop['hop_ip']))}</div>
+                                <div style="font-size:10px; color:#64748b;">{html.escape(str(hop['by']))[:18]}</div>
+                            </div>
+                        """,
                             unsafe_allow_html=True,
                         )
+                    if i < len(hops) - 1:
+                        with hop_cols[i * 2 + 1]:
+                            st.markdown(
+                                f"<div style='color:{primary_color}; font-size:20px; text-align:center; padding-top:10px;'>➔</div>",
+                                unsafe_allow_html=True,
+                            )
 
-        st.divider()
-        map_col, data_col = st.columns([1.5, 1])
-        with map_col:
-            st.subheader("📍 Attacker Geolocation Radar & Infrastructure")
-            geo = results["metadata"].get("geo_data", {})
-            lat = geo.get("lat", 0.0)
-            lon = geo.get("lon", 0.0)
-            city = geo.get("city", "Unknown")
-            country = geo.get("country", "Unknown")
-            isp = geo.get("isp", "Unknown")
+            st.divider()
+            map_col, data_col = st.columns([1.5, 1])
+            with map_col:
+                st.subheader("📍 Attacker Geolocation Radar & Infrastructure")
+                geo = results["metadata"].get("geo_data", {})
+                lat = geo.get("lat", 0.0)
+                lon = geo.get("lon", 0.0)
+                city = geo.get("city", "Unknown")
+                country = geo.get("country", "Unknown")
+                isp = geo.get("isp", "Unknown")
 
-            if lat != 0.0 and lon != 0.0:
-                m = folium.Map(
-                    location=[lat, lon],
-                    zoom_start=4,
-                    tiles="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-                    attr="Esri",
-                )
-                folium.CircleMarker(
-                    location=[lat, lon],
-                    radius=10,
-                    color=primary_color,
-                    fill=True,
-                    fill_color=primary_color,
-                    fill_opacity=0.85,
-                    popup=f"<b>Origin:</b> {city}, {country}<br><b>Type:</b> {ip_type}<br><b>ISP:</b> {isp}",
-                    tooltip=f"Threat Origin: {city}, {country}",
-                ).add_to(m)
-                st_folium(m, width=600, height=350)
-            else:
-                st.warning("Could not trace IP location for map.")
+                if lat != 0.0 and lon != 0.0:
+                    m = folium.Map(
+                        location=[lat, lon],
+                        zoom_start=4,
+                        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+                        attr="Esri",
+                    )
+                    folium.CircleMarker(
+                        location=[lat, lon],
+                        radius=10,
+                        color=primary_color,
+                        fill=True,
+                        fill_color=primary_color,
+                        fill_opacity=0.85,
+                        popup=f"<b>Origin:</b> {city}, {country}<br><b>Type:</b> {ip_type}<br><b>ISP:</b> {isp}",
+                        tooltip=f"Threat Origin: {city}, {country}",
+                    ).add_to(m)
+                    st_folium(m, width=600, height=350)
+                else:
+                    st.warning("Could not trace IP location for map.")
 
-        with data_col:
-            st.subheader("Network Telemetry")
-            st.markdown(f"**Origin IP:** `{results['metadata']['sender_ip']}`")
-            st.markdown(f"**Infrastructure Type:** `{ip_type}`")
-            st.markdown(f"**Country:** {country}")
-            st.markdown(f"**City:** {city}")
-            st.markdown(f"**ISP / ASN:** {isp}")
+            with data_col:
+                st.subheader("Network Telemetry")
+                st.markdown(f"**Origin IP:** `{results['metadata']['sender_ip']}`")
+                st.markdown(f"**Infrastructure Type:** `{ip_type}`")
+                st.markdown(f"**Country:** {country}")
+                st.markdown(f"**City:** {city}")
+                st.markdown(f"**ISP / ASN:** {isp}")
 
-    with tab7:
-        st.subheader("🔬 Raw RFC-822 Email Headers & Hex Stream Inspector")
-        st.markdown("**Raw Envelope Headers:**")
-        st.json(results.get("raw_headers", {}))
-        st.markdown("**First 512-Bytes Hex Dump Preview:**")
-        st.code(results.get("raw_hex_preview", ""), language="text")
+        with tab7:
+            st.subheader("🔬 Raw RFC-822 Email Headers & Hex Stream Inspector")
+            st.markdown("**Raw Envelope Headers:**")
+            st.json(results.get("raw_headers", {}))
+            st.markdown("**First 512-Bytes Hex Dump Preview:**")
+            st.code(results.get("raw_hex_preview", ""), language="text")
