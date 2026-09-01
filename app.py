@@ -34,7 +34,8 @@ score_num = 0
 results = None
 audio_type = "none"
 pulse_duration = "5.0s"
-welcome_status_msg = "MATRIX ONLINE // STANDBY FOR INCOMING THREAT ARTIFACT"
+
+voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
 # --- STEP 1: INITIAL PROTECTION LOADING SCREEN ---
 if not st.session_state.intro_done:
@@ -100,7 +101,7 @@ if not st.session_state.intro_done:
             <div class="intro-sub">CALIBRATING ZERO-DISK FORENSIC HEURISTICS</div>
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     col_l, col_btn, col_r = st.columns([1.5, 1, 1.5])
@@ -120,8 +121,6 @@ if not st.session_state.intro_done:
 # --- STEP 2 & 3: MAIN APP INTERFACE (POST-INTRO) ---
 
 uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
-
-voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
 if uploaded_file is not None:
     with st.spinner("Executing Zero-Disk Forensics & AI Triage Pipeline..."):
@@ -147,7 +146,6 @@ if uploaded_file is not None:
         badge_text = "CRITICAL THREAT CONFIRMED"
         audio_type = "critical"
         pulse_duration = "0.65s"
-        welcome_status_msg = f"CRITICAL INCIDENT ALERT // HOSTILE SPEARPHISHING VECTOR DETECTED [{score_num}/100]"
         voice_briefing = f"Alert. High-risk spearphishing vector detected from {origin_city}, {origin_country}. Infrastructure identified as {ip_type}. Automated quarantine playbooks are now active."
     elif score_num >= 40:
         # Medium Risk / Suspicious: Amber Orange with 1.6s Pulse
@@ -157,7 +155,6 @@ if uploaded_file is not None:
         badge_text = "SUSPICIOUS PROFILE DETECTED"
         audio_type = "warning"
         pulse_duration = "1.6s"
-        welcome_status_msg = f"SECURITY WARNING // ELEVATED RISK HEURISTICS DETECTED [{score_num}/100]"
         voice_briefing = f"Caution. Suspicious behavioral heuristics logged. Sender origin anchored at {origin_city}."
     else:
         # Low Threat / Clean Artifact: Cyber Green with 4.0s Calm Pulse
@@ -167,7 +164,6 @@ if uploaded_file is not None:
         badge_text = "CLEAN ARTIFACT CONFIRMED"
         audio_type = "clean"
         pulse_duration = "4.0s"
-        welcome_status_msg = f"VERIFIED CLEAN // NO MALICIOUS SIGNATURES FOUND [{score_num}/100]"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
 # Voice JS Engine
@@ -260,34 +256,6 @@ st.markdown(
             filter: drop-shadow(0 0 25px {primary_color}) drop-shadow(0 0 45px {primary_color}66);
             opacity: 1;
         }}
-    }}
-
-    /* Top Welcome Banner */
-    .welcome-top-bar {{
-        background: linear-gradient(90deg, rgba(8, 14, 26, 0.95), {glow_rgba}, rgba(8, 14, 26, 0.95));
-        border: 1px solid {primary_color};
-        border-radius: 8px;
-        padding: 8px 16px;
-        margin-bottom: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 0 15px {glow_rgba};
-    }}
-    .welcome-text {{
-        color: #f1f5f9;
-        font-family: 'JetBrains Mono', 'Courier New', monospace;
-        font-size: 12px;
-        letter-spacing: 1.5px;
-        font-weight: 600;
-    }}
-    .welcome-status {{
-        color: {primary_color};
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 11px;
-        font-weight: bold;
-        letter-spacing: 1.2px;
-        text-shadow: 0 0 8px {primary_color};
     }}
 
     /* Laser Scanner Sweep */
@@ -425,12 +393,6 @@ st.markdown(
         text-transform: uppercase;
     }}
     </style>
-
-    <!-- Top Welcome & Threat Status Banner -->
-    <div class="welcome-top-bar">
-        <span class="welcome-text">🛰️ WELCOME OPERATOR // SYNOVA AUTONOMOUS SOC MATRIX ACTIVE</span>
-        <span class="welcome-status">{welcome_status_msg}</span>
-    </div>
     """,
     unsafe_allow_html=True,
 )
