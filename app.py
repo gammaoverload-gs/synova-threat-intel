@@ -129,8 +129,8 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- PURE CSS BACKGROUND INJECTION (SHIELD + LASER LINE) ---
-shield_svg_encoded = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 600' fill='none'><path d='M250 30 C370 30 450 65 450 160 C450 380 340 500 250 560 C160 500 50 380 50 160 C50 65 130 30 250 30 Z' stroke='{primary_color}' stroke-width='3' stroke-opacity='0.45' fill='none'/><path d='M250 70 C340 70 410 100 410 175 C410 350 320 460 250 510 C180 460 90 350 90 175 C90 100 160 70 250 70 Z' stroke='{primary_color}' stroke-width='1.5' stroke-dasharray='8 6' stroke-opacity='0.35' fill='none'/><path d='M250 120 C305 120 355 145 355 200 C355 315 295 390 250 430 C205 390 145 315 145 200 C145 145 195 120 250 120 Z' stroke='{primary_color}' stroke-width='2' stroke-opacity='0.35' fill='none'/><line x1='250' y1='180' x2='250' y2='370' stroke='{primary_color}' stroke-width='1.5' stroke-opacity='0.3'/><line x1='180' y1='260' x2='320' y2='260' stroke='{primary_color}' stroke-width='1.5' stroke-opacity='0.3'/></svg>""".replace("#", "%23")
+# --- CLASSIC SHIELD EMOJI SHAPE (CLEAN & FAINT) ---
+shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.28' fill='{primary_color}' fill-opacity='0.03'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.20' fill='none'/></svg>""".replace("#", "%23")
 
 st.markdown(
     f"""
@@ -139,14 +139,14 @@ st.markdown(
     .stApp {{
         background-color: #04070d !important;
         background-image: 
-            url("data:image/svg+xml,{shield_svg_encoded}"),
+            url("data:image/svg+xml,{shield_emoji_svg}"),
             radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 65%),
             radial-gradient(circle at 90% 90%, {glow_rgba} 0%, transparent 50%),
             linear-gradient({glow_rgba} 1px, transparent 1px),
             linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
-        background-position: center center, center top, right bottom, 0 0, 0 0 !important;
+        background-position: center 48%, center top, right bottom, 0 0, 0 0 !important;
         background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat !important;
-        background-size: 550px 650px, 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+        background-size: 380px 440px, 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
     }}
 
     /* Laser Scanner Sweep */
