@@ -12,21 +12,17 @@ from streamlit_folium import st_folium
 
 st.set_page_config(page_title="SYNOVA Autonomous SOC Platform", page_icon="🛡️", layout="wide")
 
-# --- ANIMATION STATE INITIALIZATION ---
+# --- INTRO ANIMATION CONTROLLER ---
 if "animation_played" not in st.session_state:
     st.session_state.animation_played = False
-if "force_replay" not in st.session_state:
-    st.session_state.force_replay = False
 
-api_key = st.secrets.get("GEMINI_API_KEY", "")
-
-# Sidebar Controls for Replay
 with st.sidebar:
     st.markdown("### ⚙️ System Controls")
     if st.button("🔁 Replay Defense Animation", use_container_width=True):
         st.session_state.animation_played = False
-        st.session_state.force_replay = True
         st.rerun()
+
+api_key = st.secrets.get("GEMINI_API_KEY", "")
 
 primary_color = "#00ffcc"
 glow_rgba = "rgba(0, 255, 204, 0.15)"
@@ -36,80 +32,72 @@ score_num = 0
 results = None
 audio_type = "none"
 
-# --- INTRO PROTECTION SCAN SCREEN (5 SECONDS OR SKIPPABLE) ---
-if not st.session_state.animation_played:
+# --- INTRO DIALOG ANIMATION (SKIPPABLE & AUTO-DISMISS) ---
+@st.dialog("🛡️ DEFENSE MATRIX INITIALIZATION", width="small")
+def show_intro_animation():
     st.markdown(
         f"""
         <style>
-        .stApp {{
-            background-color: #04070d !important;
+        .shield-dialog {{
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-        }}
-        .scan-container {{
+            justify-content: center;
             text-align: center;
-            margin-top: 5vh;
+            padding: 10px;
         }}
-        .shield-svg {{
-            width: 130px;
-            height: 150px;
+        .shield-svg-box {{
+            width: 100px;
+            height: 120px;
             fill: none;
             stroke: {primary_color};
             stroke-width: 3.5;
             stroke-dasharray: 450;
             stroke-dashoffset: 450;
-            animation: drawShield 2.2s cubic-bezier(0.65, 0, 0.35, 1) forwards infinite alternate;
-            filter: drop-shadow(0 0 20px {primary_color});
+            animation: drawShieldBox 2s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 16px {primary_color});
         }}
-        @keyframes drawShield {{
-            0% {{ stroke-dashoffset: 450; transform: scale(0.9); }}
+        @keyframes drawShieldBox {{
+            0% {{ stroke-dashoffset: 450; transform: scale(0.92); }}
             100% {{ stroke-dashoffset: 0; transform: scale(1.05); }}
         }}
-        .scan-title {{
+        .scan-msg {{
             color: {primary_color};
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
-            font-size: 20px;
-            letter-spacing: 4px;
-            margin-top: 25px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
             font-weight: bold;
-            text-shadow: 0 0 12px {primary_color};
-            animation: textFlicker 1.2s infinite;
-        }}
-        @keyframes textFlicker {{
-            0%, 100% {{ opacity: 0.7; }}
-            50% {{ opacity: 1; }}
+            letter-spacing: 2px;
+            margin-top: 15px;
         }}
         </style>
-        <div class="scan-container">
-            <svg class="shield-svg" viewBox="0 0 24 28">
+        <div class="shield-dialog">
+            <svg class="shield-svg-box" viewBox="0 0 24 28">
                 <path d="M12 2L2 6v8c0 7.5 10 12 10 12s10-4.5 10-12V6l-10-4z" />
             </svg>
-            <div class="scan-title">INITIALIZING DEFENSE MATRIX...</div>
-            <p style="color: #64748b; font-family: monospace; font-size: 13px; margin-top: 8px;">CALIBRATING NEURAL SOC HEURISTICS</p>
+            <div class="scan-msg">ENGAGING ACTIVE SHIELD...</div>
         </div>
         """,
         unsafe_allow_html=True
     )
-
-    col_space1, col_skip, col_space2 = st.columns([1.8, 1, 1.8])
-    with col_skip:
+    
+    col_l, col_btn, col_r = st.columns([1, 2, 1])
+    with col_btn:
         if st.button("⚡ Skip Intro", use_container_width=True):
             st.session_state.animation_played = True
             st.rerun()
 
-    prog_bar = st.progress(0)
-    for percent_complete in range(100):
-        time.sleep(0.045)  # Total 4.5 - 5 seconds
-        prog_bar.progress(percent_complete + 1)
-
+    progress = st.progress(0)
+    for i in range(100):
+        time.sleep(0.04)  # ~4-5 Seconds
+        progress.progress(i + 1)
+    
     st.session_state.animation_played = True
     st.rerun()
 
-# ==========================================
-# MAIN DASHBOARD INTERFACE (POST-ANIMATION)
-# ==========================================
+if not st.session_state.animation_played:
+    show_intro_animation()
 
+# --- MAIN DASHBOARD LOGIC ---
 uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"])
 
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
@@ -212,78 +200,41 @@ voice_js = f"""
 """
 st.components.v1.html(voice_js, height=0)
 
-# --- AMBIENT SHIELD BACKGROUND & UI STYLES ---
+# --- CLEAN BACKGROUND WITH FAINT AMBIENT SHIELD ---
 st.markdown(
     f"""
     <style>
-    /* 1. FAINT CRT SCANLINE OVERLAY */
-    .stApp::before {{
-        content: " ";
-        display: block;
-        position: fixed;
-        top: 0; left: 0; bottom: 0; right: 0;
-        background: linear-gradient(rgba(18, 16, 16, 0) 50%, {glow_rgba} 50%), 
-                    linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.01));
-        z-index: 99999;
-        background-size: 100% 3px, 3px 100%;
-        pointer-events: none;
-        opacity: 0.4;
-    }}
-
-    /* 2. SUBTLE SOFT VERTICAL RADAR SWEEP */
-    .stApp::after {{
-        content: "";
-        position: fixed;
-        top: 0; left: 0; right: 0; height: 100vh;
-        background: linear-gradient(180deg, transparent 0%, {glow_rgba} 50%, transparent 100%);
-        animation: subtleRadarSweep 6s ease-in-out infinite;
-        pointer-events: none;
-        z-index: 99998;
-    }}
-
-    @keyframes subtleRadarSweep {{
-        0% {{ transform: translateY(-100%); }}
-        100% {{ transform: translateY(100%); }}
-    }}
-
-    /* 3. BACKGROUND GRID & AMBIENT PULSING FAINT SHIELD */
+    /* App Base Styles */
     .stApp {{
         background-color: #04070d !important;
         background-image: 
-            radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 70%),
-            radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 65%),
+            radial-gradient(circle at 90% 90%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
             linear-gradient({glow_rgba} 1px, transparent 1px),
             linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
         background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
         position: relative;
     }}
 
+    /* Safe Faint Ambient Shield Behind Elements (z-index: 0) */
     .ambient-bg-shield {{
         position: fixed;
-        top: 50%;
+        top: 52%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 600px;
-        height: 700px;
+        width: 520px;
+        height: 620px;
         clip-path: polygon(50% 0%, 100% 20%, 100% 75%, 50% 100%, 0% 75%, 0% 20%);
-        background: radial-gradient(circle, {glow_rgba} 0%, rgba(4, 7, 13, 0) 72%);
-        border: 1.5px solid {glow_rgba};
+        background: radial-gradient(circle, {glow_rgba} 0%, rgba(4, 7, 13, 0) 75%);
+        border: 1px solid {glow_rgba};
         pointer-events: none;
         z-index: 0;
-        animation: ambientShieldGlow 6s ease-in-out infinite alternate;
+        animation: ambientShieldPulse 5s ease-in-out infinite alternate;
     }}
 
-    @keyframes ambientShieldGlow {{
-        0% {{
-            transform: translate(-50%, -50%) scale(0.96);
-            opacity: 0.3;
-            box-shadow: inset 0 0 30px {glow_rgba};
-        }}
-        100% {{
-            transform: translate(-50%, -50%) scale(1.04);
-            opacity: 0.8;
-            box-shadow: inset 0 0 65px {glow_rgba}, 0 0 40px {glow_rgba};
-        }}
+    @keyframes ambientShieldPulse {{
+        0% {{ transform: translate(-50%, -50%) scale(0.96); opacity: 0.35; }}
+        100% {{ transform: translate(-50%, -50%) scale(1.03); opacity: 0.75; }}
     }}
 
     .live-badge {{
@@ -398,7 +349,7 @@ st.markdown(
     }}
     </style>
 
-    <!-- Continuous Ambient Faint Shield in Background -->
+    <!-- Faint Shield rendered safely behind layout -->
     <div class="ambient-bg-shield"></div>
     """,
     unsafe_allow_html=True,
