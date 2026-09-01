@@ -2,6 +2,7 @@ import base64
 import html
 import io
 import time
+import hashlib
 import folium
 from elevenlabs.client import ElevenLabs
 from ingestion_engine import EmailIngestionEngine
@@ -20,13 +21,17 @@ elevenlabs_api_key = st.secrets.get("ELEVENLABS_API_KEY", "")
 # Initialize ElevenLabs Client
 eleven_client = ElevenLabs(api_key=elevenlabs_api_key) if elevenlabs_api_key else None
 
-# --- INTRO ANIMATION SESSION & QUERY TRIGGER CONTROLLER ---
+# --- SESSION CONTROLLERS ---
 if "replay" in st.query_params:
     st.query_params.clear()
     st.session_state.intro_done = False
+    st.session_state.last_played_audio_hash = None
 
 if "intro_done" not in st.session_state:
     st.session_state.intro_done = False
+
+if "last_played_audio_hash" not in st.session_state:
+    st.session_state.last_played_audio_hash = None
 
 # --- STEP 1: INITIAL PROTECTION LOADING SCREEN ---
 if not st.session_state.intro_done:
@@ -109,12 +114,11 @@ if not st.session_state.intro_done:
     st.session_state.intro_done = True
     st.rerun()
 
-# --- STEP 2: SETUP CONTAINERS (Guarantees Header on TOP) ---
+# --- STEP 2: SETUP CONTAINERS ---
 header_container = st.container()
 uploader_container = st.container()
 content_container = st.container()
 
-# Default Blue Standby Theme
 primary_color = "#00a8ff"
 glow_rgba = "rgba(0, 168, 255, 0.16)"
 bg_glow = "rgba(0, 168, 255, 0.20)"
@@ -124,7 +128,7 @@ results = None
 pulse_duration = "5.0s"
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
-# Render Uploader inside its dedicated middle container
+# Render Uploader directly in place
 with uploader_container:
     uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"], key="threat_file_input")
 
@@ -166,7 +170,7 @@ if uploaded_file is not None:
         pulse_duration = "4.0s"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-# --- STEP 3: DYNAMIC CSS & THREAT GLOW INJECTION ---
+# --- STEP 3: DYNAMIC CSS INJECTION ---
 shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.45' fill='{primary_color}' fill-opacity='0.05'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.35' fill='none'/></svg>""".replace("#", "%23")
 
 st.markdown(
@@ -346,7 +350,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- STEP 4: RENDER TOP HEADER FIRST ---
+# --- STEP 4: RENDER TOP HEADER ---
 with header_container:
     col1, col2 = st.columns([3.2, 1.8])
     with col1:
@@ -370,61 +374,72 @@ with header_container:
         )
     st.divider()
 
-# --- STEP 5: AUDIO ENGINE (ELEVENLABS + AUTONOMOUS PLAYBACK GUARANTEE) ---
-audio_b64_payload = ""
+# --- STEP 5: DEDICATED SINGLE-DISPATCH AUDIO ENGINE (NO DOUBLE SPEECH) ---
+current_audio_hash = hashlib.md5(voice_briefing.encode('utf-8')).hexdigest()
 
-if eleven_client:
-    try:
-        audio_stream = eleven_client.text_to_speech.convert(
-            text=voice_briefing,
-            voice_id="EXAVITQu4vr4xnSDxMaL",
-            model_id="eleven_multilingual_v2"
-        )
-        audio_bytes = b"".join(list(audio_stream))
-        audio_b64_payload = base64.b64encode(audio_bytes).decode("utf-8")
-    except Exception:
-        audio_b64_payload = ""
+if st.session_state.last_played_audio_hash != current_audio_hash:
+    st.session_state.last_played_audio_hash = current_audio_hash
+    audio_b64_payload = ""
 
-audio_bridge_js = f"""
-<script>
-(function() {{
-    const b64Data = "{audio_b64_payload}";
-    const textMsg = "{voice_briefing}";
+    if eleven_client:
+        try:
+            audio_stream = eleven_client.text_to_speech.convert(
+                text=voice_briefing,
+                voice_id="EXAVITQu4vr4xnSDxMaL",
+                model_id="eleven_multilingual_v2"
+            )
+            audio_bytes = b"".join(list(audio_stream))
+            audio_b64_payload = base64.b64encode(audio_bytes).decode("utf-8")
+        except Exception:
+            audio_b64_payload = ""
 
-    function executeVoicePlayback() {{
+    audio_bridge_js = f"""
+    <script>
+    (function() {{
+        const b64Data = "{audio_b64_payload}";
+        const textMsg = "{voice_briefing}";
+        const audioId = "{current_audio_hash}";
+
+        if (window.parent.__synovaLastAudio === audioId) return;
+        window.parent.__synovaLastAudio = audioId;
+
+        // Stop any running speech synthesis
+        if ('speechSynthesis' in window) {{
+            window.speechSynthesis.cancel();
+        }}
+        if (window.parent && window.parent.speechSynthesis) {{
+            window.parent.speechSynthesis.cancel();
+        }}
+
         if (b64Data && b64Data.length > 50) {{
+            if (window.parent.__currentSynovaAudio) {{
+                window.parent.__currentSynovaAudio.pause();
+                window.parent.__currentSynovaAudio.currentTime = 0;
+            }}
             const audio = new Audio("data:audio/mp3;base64," + b64Data);
             audio.volume = 0.95;
+            window.parent.__currentSynovaAudio = audio;
+            
             const playPromise = audio.play();
             if (playPromise !== undefined) {{
                 playPromise.catch(() => {{
                     const unlock = () => {{
                         audio.play();
                         window.parent.document.removeEventListener('click', unlock);
-                        document.removeEventListener('click', unlock);
                     }};
                     window.parent.document.addEventListener('click', unlock, {{ once: true }});
-                    document.addEventListener('click', unlock, {{ once: true }});
                 }});
             }}
         }} else if ('speechSynthesis' in window) {{
-            window.speechSynthesis.cancel();
             const utter = new SpeechSynthesisUtterance(textMsg);
-            utter.rate = 0.94;
+            utter.rate = 0.95;
             utter.pitch = 1.0;
             window.speechSynthesis.speak(utter);
         }}
-    }}
-
-    setTimeout(executeVoicePlayback, 400);
-    ['dragover', 'drop', 'keydown'].forEach(evt => {{
-        window.parent.document.addEventListener(evt, executeVoicePlayback, {{ once: true }});
-        document.addEventListener(evt, executeVoicePlayback, {{ once: true }});
-    }});
-}})();
-</script>
-"""
-st.components.v1.html(audio_bridge_js, height=0)
+    }})();
+    </script>
+    """
+    st.components.v1.html(audio_bridge_js, height=0)
 
 def build_pdf_buffer(results_data):
     buffer = io.BytesIO()
@@ -612,13 +627,13 @@ with content_container:
                                 stroke-dasharray="{circumference}" stroke-dashoffset="{stroke_dashoffset}"
                                 stroke-linecap="round" transform="rotate(-90 60 60)"
                                 style="transition: stroke-dashoffset 1s ease-in-out; filter: drop-shadow(0 0 6px {primary_color});"/>
-                        <text x="60" y="58" font-size="22" font-family="'JetBrains Mono', monospace" font-weight="bold" fill="{primary_color}" text-anchor="middle">{score_num}</text>
-                        <text x="60" y="74" font-size="10" font-family="sans-serif" fill="#94a3b8" text-anchor="middle">THREAT INDEX</text>
-                    </svg>
-                </div>
-            """,
-                unsafe_allow_html=True,
-            )
+                    <text x="60" y="58" font-size="22" font-family="'JetBrains Mono', monospace" font-weight="bold" fill="{primary_color}" text-anchor="middle">{score_num}</text>
+                    <text x="60" y="74" font-size="10" font-family="sans-serif" fill="#94a3b8" text-anchor="middle">THREAT INDEX</text>
+                </svg>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
 
         with dash_col2:
             m1, m2, m3 = st.columns(3)
