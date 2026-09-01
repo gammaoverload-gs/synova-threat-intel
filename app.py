@@ -1,7 +1,9 @@
+import base64
 import html
 import io
 import time
 import folium
+from elevenlabs.client import ElevenLabs
 from ingestion_engine import EmailIngestionEngine
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -13,6 +15,10 @@ from streamlit_folium import st_folium
 st.set_page_config(page_title="SYNOVA Autonomous SOC Platform", page_icon="🛡️", layout="wide")
 
 api_key = st.secrets.get("GEMINI_API_KEY", "")
+elevenlabs_api_key = st.secrets.get("ELEVENLABS_API_KEY", "")
+
+# Initialize ElevenLabs Client
+eleven_client = ElevenLabs(api_key=elevenlabs_api_key) if elevenlabs_api_key else None
 
 # --- INTRO ANIMATION SESSION & QUERY TRIGGER CONTROLLER ---
 if "replay" in st.query_params:
@@ -300,7 +306,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- TOP HEADER SECTION (Perfect Aligned Badges) ---
+# --- TOP HEADER SECTION ---
 header_col1, header_col2 = st.columns([3.2, 1.8])
 with header_col1:
     st.markdown(
@@ -371,67 +377,34 @@ if uploaded_file is not None:
         pulse_duration = "4.0s"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-# Voice JS Engine (Configured for Microsoft Indian Female Voices: Neerja / Heera / Swara)
-voice_js = f"""
-<script>
-(function() {{
-    let voiceTriggered = false;
-    function getMicrosoftIndianFemaleVoice() {{
-        const voices = window.speechSynthesis.getVoices();
-        if (!voices || voices.length === 0) return null;
+# --- ULTRA-REALISTIC HUMAN VOICE GENERATOR (ELEVENLABS API) ---
+def dispatch_real_human_voice(text_prompt: str):
+    if not eleven_client:
+        return
+    try:
+        # High quality multilingual natural human voice
+        audio_stream = eleven_client.text_to_speech.convert(
+            text=text_prompt,
+            voice_id="EXAVITQu4vr4xnSDxMaL",  # Studio human voice ID
+            model_id="eleven_multilingual_v2"
+        )
+        audio_bytes = b"".join(list(audio_stream))
+        b64_audio = base64.b64encode(audio_bytes).decode("utf-8")
+        st.markdown(
+            f"""
+            <audio autoplay style="display:none;">
+                <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
+            </audio>
+            """,
+            unsafe_allow_html=True
+        )
+    except Exception:
+        pass
 
-        // Priority matchers for Microsoft Indian Female Voices
-        const priorityMatchers = [
-            v => (v.name.includes("Neerja") || v.name.includes("Heera") || v.name.includes("Swara")) && (v.lang === "en-IN" || v.lang.startsWith("en-IN") || v.name.includes("Microsoft")),
-            v => v.name.includes("Microsoft") && v.name.includes("Online (Natural)") && (v.lang === "en-IN" || v.name.includes("India")),
-            v => v.name.includes("Microsoft") && (v.lang === "en-IN" || v.lang.startsWith("en-IN")),
-            v => (v.lang === "en-IN" || v.lang.startsWith("en-IN")) && (v.name.includes("Female") || v.name.includes("Google")),
-            v => v.lang === "en-IN" || v.lang.startsWith("en-IN"),
-            v => (v.name.includes("Jenny") || v.name.includes("Aria") || v.name.includes("Samantha")) && v.lang.startsWith("en")
-        ];
-
-        for (let matcher of priorityMatchers) {{
-            const match = voices.find(matcher);
-            if (match) return match;
-        }}
-        return voices[0];
-    }}
-
-    function executeSpeechDispatch() {{
-        if (voiceTriggered) return;
-        if (!('speechSynthesis' in window)) return;
-
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.resume();
-
-        const text = "{voice_briefing}";
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = "en-IN";
-        utter.rate = 0.95;
-        utter.pitch = 1.02; // Calibrated for clear, natural female tone
-        utter.volume = 0.95;
-
-        const femaleVoice = getMicrosoftIndianFemaleVoice();
-        if (femaleVoice) utter.voice = femaleVoice;
-
-        utter.onstart = () => {{ voiceTriggered = true; }};
-        window.speechSynthesis.speak(utter);
-    }}
-
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {{
-        window.speechSynthesis.onvoiceschanged = executeSpeechDispatch;
-    }}
-
-    setTimeout(executeSpeechDispatch, 400);
-
-    ['click', 'dragover', 'drop', 'keydown', 'touchstart'].forEach(evt => {{
-        window.parent.document.addEventListener(evt, executeSpeechDispatch, {{ once: true }});
-        document.addEventListener(evt, executeSpeechDispatch, {{ once: true }});
-    }});
-}})();
-</script>
-"""
-st.components.v1.html(voice_js, height=0)
+# Trigger real human voice dispatch
+if "last_dispatched_voice" not in st.session_state or st.session_state.last_dispatched_voice != voice_briefing:
+    st.session_state.last_dispatched_voice = voice_briefing
+    dispatch_real_human_voice(voice_briefing)
 
 def build_pdf_buffer(results_data):
     buffer = io.BytesIO()
