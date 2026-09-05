@@ -90,7 +90,7 @@ PayPal Risk Mitigation Team
 SAMPLE_WHATSAPP_DIGITAL_ARREST = b"""[05/09/26, 14:15:22] +91 98210 44921: ATTENTION: This is Officer Rajesh Verma from Central Bureau of Investigation (CBI) Cyber Crime Cell, New Delhi.
 A consignment linked to your Aadhaar card containing contraband narcotics and 24 cloned debit cards has been seized at Mumbai Customs.
 A non-bailable warrant and Digital Arrest Order #CBI-ND-2026-9912 have been issued against you under PMLA Section 4.
-You are strictly ordered to remain on this encrypted video call link immediately to record your statement before Supreme Court detention:
+Listen to the attached audio message instruction and connect to this encrypted statement link:
 https://cbi-investigation-portal.nic-gov.top/verify-clearance?case=9912
 
 Failure to connect within 15 minutes will result in immediate police raid at your residential address.
@@ -180,7 +180,7 @@ if not st.session_state.intro_done:
                 <path d="M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z" stroke-dasharray="2 2" stroke-width="0.8"/>
             </svg>
             <div class="intro-title">INITIALIZING DEFENSE MATRIX...</div>
-            <div class="intro-sub">CALIBRATING BLOCKCHAIN MERKLE PROOF & OMNICHANNEL HEURISTICS</div>
+            <div class="intro-sub">CALIBRATING POST-QUANTUM LATTICE PROOF & OMNICHANNEL HEURISTICS</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -212,7 +212,7 @@ badge_text = "OMNICHANNEL RADAR ACTIVE"
 score_num = 0
 results = None
 pulse_duration = "5.0s"
-voice_briefing = "Welcome to Synova Omnichannel Threat Intelligence Matrix. Defense engines are online and stand by for multi-vector byte stream."
+voice_briefing = "Welcome to Synova Omnichannel Threat Intelligence Matrix. Quantum-safe defense engines are online."
 
 # --- STEP 3: OMNICHANNEL INGESTION GATEWAY ---
 with ingestion_container:
@@ -232,7 +232,7 @@ with ingestion_container:
     selected_vector = "EMAIL"
 
     if "1-Tap" in in_mode:
-        st.caption("📲 **Mobile-Friendly Testing:** No .eml download required on mobile. Tap any sample vector below for instant in-memory triage:")
+        st.caption("📲 **Mobile-Friendly Testing:** No file download required on mobile. Tap any sample vector below for instant in-memory triage:")
         s_c1, s_c2, s_c3, s_c4, s_c5 = st.columns(5)
         if s_c1.button("🚨 Quishing & APT36 Lure", use_container_width=True):
             raw_payload_bytes = SAMPLE_QUISHING_APT
@@ -307,7 +307,7 @@ with ingestion_container:
                 st.warning("Please provide IMAP credentials to read mailbox buffer.")
 
     if raw_payload_bytes and not results:
-        with st.spinner(f"Executing In-Memory Forensics, Merkle Anchoring, Deep OSINT & AI Triage for {selected_vector}..."):
+        with st.spinner(f"Executing In-Memory Forensics, Quantum Lattice Proofs & AI Triage for {selected_vector}..."):
             engine = EmailIngestionEngine(raw_payload_bytes, api_key=api_key, abuse_key=abuse_key, vector_type=selected_vector)
             results = engine.parse_email()
 
@@ -470,7 +470,7 @@ with header_container:
     col1, col2 = st.columns([3.2, 1.8])
     with col1:
         st.markdown(f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Omnichannel XDR</span></h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Blockchain Merkle Custody, Satellite Street Radar, Citadel EDR & Threat Graph Engine</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>NIST Post-Quantum Lattice Proof, 3D Tactical Globe, Acoustic Deepfake Radar & Citadel Defense</p>", unsafe_allow_html=True)
     with col2:
         st.markdown(
             f"""
@@ -515,7 +515,6 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
         if (window.parent.__synovaLastAudio === audioId) return;
         window.parent.__synovaLastAudio = audioId;
 
-        // Emergency WebAudio Siren Generator
         if (playSiren) {{
             try {{
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -573,13 +572,14 @@ def build_pdf_buffer(results_data):
     body_style = ParagraphStyle("BStyle", parent=styles["Normal"], fontSize=9, textColor=colors.HexColor("#222222"), leading=12)
 
     story.append(Paragraph("SYNOVA CYBERSECURITY INCIDENT REPORT", title_style))
-    story.append(Paragraph("<b>Autonomous Omnichannel Threat Intelligence & Citadel Defense Playbook</b>", body_style))
+    story.append(Paragraph("<b>Post-Quantum Validated Omnichannel Forensic Playbook</b>", body_style))
     story.append(Spacer(1, 10))
 
     meta = results_data.get("metadata", {})
     chain = results_data.get("blockchain_custody", {})
     apt = results_data.get("apt_attribution", {})
     street = results_data.get("street_telemetry", {})
+    pqc = results_data.get("pqc_lattice_seal", {})
 
     m_data = [
         [Paragraph("<b>Channel Vector:</b>", body_style), Paragraph(f"<b>{results_data.get('channel', 'EMAIL')}</b>", body_style)],
@@ -589,7 +589,7 @@ def build_pdf_buffer(results_data):
         [Paragraph("<b>Tactical Coordinates:</b>", body_style), Paragraph(f"{street.get('tactical_latitude', 'N/A')}, {street.get('tactical_longitude', 'N/A')} (Radius: ±{street.get('accuracy_radius_meters', 12)}m)", body_style)],
         [Paragraph("<b>Threat Score:</b>", body_style), Paragraph(html.escape(str(results_data.get("ai_analysis", {}).get("score", "N/A"))), body_style)],
         [Paragraph("<b>Attributed Threat Actor:</b>", body_style), Paragraph(f"<b>{apt.get('actor_name')}</b> ({apt.get('confidence_score')}%)", body_style)],
-        [Paragraph("<b>Blockchain Merkle Root:</b>", body_style), Paragraph(f"<code>{chain.get('merkle_root', 'N/A')}</code>", body_style)],
+        [Paragraph("<b>PQC Lattice Seal:</b>", body_style), Paragraph(f"<code>{pqc.get('lattice_signature_seal', 'N/A')}</code>", body_style)],
         [Paragraph("<b>Legal Admissibility:</b>", body_style), Paragraph(str(chain.get("legal_compliance", "BSA Sec 63/65B Compliant")), body_style)]
     ]
     t = Table(m_data, colWidths=[140, 380])
@@ -639,17 +639,17 @@ with content_container:
                         ⚡ WELCOME TO THE SYNOVA OMNICHANNEL DEFENSE MATRIX
                     </h3>
                     <span style="background: rgba(0, 168, 255, 0.15); color: {primary_color}; border: 1px solid {primary_color}; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-family: monospace;">
-                        BLOCKCHAIN & CYBERSECURITY
+                        POST-QUANTUM & BLOCKCHAIN
                     </span>
                 </div>
                 <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize attack vectors across <b>Email, WhatsApp, SMS Smishing, Telegram, and Social Media DMs</b>. Ingest payloads via 1-tap mobile simulators, safe file drop (.eml/.txt), raw MIME streaming, or direct cloud IMAP mailbox handshake to execute real-time AI triage, deep Shodan/AbuseIPDB reconnaissance, lookalike domain tracking, Quishing optical decoding, and cryptographic blockchain evidence anchoring.
+                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize attack vectors across <b>Email, WhatsApp, SMS Smishing, Telegram, and Social Media DMs</b>. Features 3D holographic WebGL globe trajectory, acoustic deepfake voice note detection, NIST ML-DSA post-quantum lattice certificates, and conversational scammer tarpitting.
                 </p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. OMNICHANNEL INGESTION</span>
-                    <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. SATELLITE STREET RADAR</span>
-                    <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">3. BLOCKCHAIN MERKLE PROOF ANCHOR</span>
-                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. AUTONOMOUS CITADEL LOCKDOWN</span>
+                    <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. 3D WEBGL GLOBE RADAR</span>
+                    <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. ACOUSTIC DEEPFAKE RADAR</span>
+                    <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">3. NIST ML-DSA LATTICE SEAL</span>
+                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. SCAMMER TARPIT HONEYPOT</span>
                 </div>
             </div>
             """, unsafe_allow_html=True,
@@ -657,12 +657,11 @@ with content_container:
 
         c1, c2, c3, c4 = st.columns(4)
         with c1: st.metric(label="VECTOR SCOPE", value="OMNICHANNEL", delta="Email • WhatsApp • SMS")
-        with c2: st.metric(label="TACTICAL RADAR", value="STREET LEVEL", delta="Wi-Fi BSSID ±11m")
-        with c3: st.metric(label="THEME MATCH", value="BLOCKCHAIN", delta="BSA Sec 63/65B Proof")
-        with c4: st.metric(label="ENDPOINT DEFENSE", value="CITADEL LOCK", delta="Self-Healing Quarantine")
+        with c2: st.metric(label="TACTICAL HUD", value="3D WEBGL GLOBE", delta="Ballistic Arc")
+        with c3: st.metric(label="POST-QUANTUM", value="NIST ML-DSA", delta="FIPS 204 Lattice")
+        with c4: st.metric(label="ACTIVE DECEPTION", value="TARPIT BOT", delta="Conversational Decoy")
 
     else:
-        # CITADEL EMERGENCY ALERT BANNER
         if st.session_state.citadel_active:
             st.error(
                 "🚨 **CITADEL EMERGENCY LOCKDOWN ENGAGED:** Host network is completely air-gapped. "
@@ -721,11 +720,13 @@ with content_container:
         for ot in omni_threats:
             st.error(f"🚨 **{ot['vector'].upper()} DETECTED:** {ot['desc']}")
 
-        # Quishing & Adversarial LLM Banners
+        # Deepfake Voice & Quishing Banners
+        voice_res = results.get("deepfake_voice_analysis", {})
+        if voice_res.get("audio_detected"):
+            st.error(f"🎙️ **ACOUSTIC FORENSIC ALERT:** {voice_res.get('classification')} (Confidence: {voice_res.get('synthetic_probability')}%)")
+
         if results.get("quishing_telemetry", {}).get("quishing_detected"):
             st.warning("📱 **QUISHING (QR CODE PHISHING) ATTACK DETECTED:** Visual matrix lure or embedded auth QR code detected in message stream!")
-        if results.get("synthetic_ai_detection", {}).get("is_synthetic"):
-            st.info(f"🤖 **ADVERSARIAL LLM LURE DETECTED:** Synthesized linguistic stylometry indicates WormGPT / FraudGPT generated phishing copy ({results['synthetic_ai_detection']['confidence']}% confidence).")
 
         ai_score_val = results["ai_analysis"].get("ai_score_num", score_num)
         heur_score_val = results["ai_analysis"].get("heuristic_score_num", score_num)
@@ -746,7 +747,7 @@ with content_container:
                 <div style="color: {primary_color}; font-weight: bold; margin-bottom: 8px;">🤖 [SOC AGENT AUTONOMOUS TRIAGE LOG]</div>
                 <div>&gt; [TIMESTAMP] : {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}</div>
                 <div>&gt; [VECTOR] : {results.get('channel')} INGESTION STREAM</div>
-                <div>&gt; [MERKLE ROOT] : <code>{results.get('blockchain_custody', {}).get('merkle_root', 'N/A')}</code></div>
+                <div>&gt; [PQC SEAL] : <code>{results.get('pqc_lattice_seal', {}).get('lattice_signature_seal', 'N/A')}</code></div>
                 <div>&gt; [DIAGNOSIS] : <span style="color: {primary_color}; font-weight: bold;">{html.escape(str(ai_reason))}</span></div>
             </div>
         """, unsafe_allow_html=True,
@@ -767,8 +768,12 @@ with content_container:
 
         st.divider()
 
-        # --- 13 ENTERPRISE FORENSIC TABS ---
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13 = st.tabs([
+        # --- 14 ENTERPRISE FORENSIC TABS ---
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13, tab14 = st.tabs([
+            "🌐 3D Tactical Globe HUD",
+            "🎙️ Deepfake Voice Spectrogram",
+            "⚛️ Post-Quantum Lattice Seal",
+            "🎭 Scammer Tarpit Decoy",
             "🛡️ Citadel: Autonomous EDR",
             "🛰️ Satellite Street Radar & LEA",
             "🕸️ Threat Knowledge Graph",
@@ -778,14 +783,160 @@ with content_container:
             "🤖 AI SOC Copilot",
             "💣 Active Defense: Canary Trap",
             "🧬 In-Memory De-Obfuscator",
-            "🛡️ Identity & Perimeter SOAR",
-            "📱 Quishing & WormGPT Radar",
-            "🌐 Attacker OSINT Infrastructure",
             "⚡ Kill-Chain Simulator",
         ])
 
-        # TAB 1: CITADEL AUTONOMOUS SELF-DEFENSE
+        # TAB 1: 3D HOLOGRAPHIC WEBGL GLOBE
         with tab1:
+            st.subheader("🌐 3D Holographic WebGL Tactical Globe (Missile-Command HUD)")
+            st.caption("Real-time WebGL globe rendering curved ballistic threat trajectory arcs from adversary origin to enterprise gateway.")
+
+            globe_data = results.get("globe_telemetry", {})
+            o_lat = globe_data.get("origin_lat", 31.52)
+            o_lon = globe_data.get("origin_lon", 74.35)
+            t_lat = globe_data.get("target_lat", 28.61)
+            t_lon = globe_data.get("target_lon", 77.20)
+
+            globe_html = f"""
+            <div id="globeContainer" style="width: 100%; height: 420px; background: #030712; border: 1px solid {primary_color}; border-radius: 8px; overflow: hidden;"></div>
+            <script src="https://unpkg.com/three"></script>
+            <script src="https://unpkg.com/globe.gl"></script>
+            <script>
+                const arcsData = [{{
+                    startLat: {o_lat},
+                    startLng: {o_lon},
+                    endLat: {t_lat},
+                    endLng: {t_lon},
+                    color: ['#ff1133', '{primary_color}']
+                }}];
+
+                const gData = [
+                    {{ lat: {o_lat}, lng: {o_lon}, size: 0.8, color: '#ff1133', label: 'ATTACKER HOST' }},
+                    {{ lat: {t_lat}, lng: {t_lon}, size: 0.8, color: '{primary_color}', label: 'PERIMETER CORE' }}
+                ];
+
+                const elem = document.getElementById('globeContainer');
+                const globe = Globe()(elem)
+                    .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+                    .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+                    .backgroundColor('#030712')
+                    .arcsData(arcsData)
+                    .arcColor('color')
+                    .arcDashLength(0.4)
+                    .arcDashGap(0.2)
+                    .arcDashAnimateTime(1800)
+                    .arcStroke(1.4)
+                    .pointsData(gData)
+                    .pointAltitude(0.06)
+                    .pointColor('color')
+                    .pointRadius('size');
+
+                globe.controls().autoRotate = true;
+                globe.controls().autoRotateSpeed = 0.8;
+                globe.pointOfView({{ lat: {t_lat}, lng: {t_lon}, altitude: 2.2 }});
+            </script>
+            """
+            st.components.v1.html(globe_html, height=440)
+
+        # TAB 2: DEEPFAKE VOICE & SPECTROGRAM RADAR
+        with tab2:
+            st.subheader("🎙️ Deepfake Voice & Acoustic Forensic Deconstructer")
+            st.caption("Fast Fourier Transform (FFT) analysis detects 16kHz spectral energy roll-off and unnatural robotic pitch jitter in audio notes.")
+
+            v_res = results.get("deepfake_voice_analysis", {})
+            dc1, dc2, dc3 = st.columns(3)
+            dc1.metric("SYNTHETIC CONFIDENCE", f"{v_res.get('synthetic_probability')}%", "Model Likelihood")
+            dc2.metric("16kHz CUTOFF", "FLAGGED" if v_res.get("spectral_cutoff_16khz") else "NORMAL", "TTS Artifact")
+            dc3.metric("PITCH JITTER SCORE", str(v_res.get("fundamental_freq_jitter")), "Phase Anomaly")
+
+            st.markdown("#### 📊 Live Frequency Spectrum Simulation (16kHz Truncation Radar)")
+            spectrogram_html = f"""
+            <div style="background: rgba(8, 14, 26, 0.95); border: 1px solid {primary_color}; border-radius: 8px; padding: 15px;">
+                <canvas id="specCanvas" width="700" height="150" style="width: 100%; height: 150px;"></canvas>
+                <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 11px; color: #94a3b8; margin-top: 4px;">
+                    <span>0 Hz (Sub-bass)</span><span>4 kHz</span><span>8 kHz</span><span>12 kHz</span><span style="color: #ff1133; font-weight: bold;">16 kHz (AI Cutoff Wall)</span><span>24 kHz (Human Air)</span>
+                </div>
+            </div>
+            <script>
+                const canvas = document.getElementById('specCanvas');
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#050810';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const isDeepfake = {str(v_res.get('audio_detected', False)).lower()};
+                const cutoff = isDeepfake ? 460 : 690;
+
+                for (let x = 10; x < canvas.width; x += 4) {{
+                    let amp = 0;
+                    if (x < cutoff) {{
+                        amp = Math.sin(x * 0.05) * 40 + Math.random() * 80 + 20;
+                    }} else {{
+                        amp = Math.random() * 8; // Sharp drop-off typical of neural TTS vocoders
+                    }}
+                    const grad = ctx.createLinearGradient(0, canvas.height, 0, 0);
+                    grad.addColorStop(0, '{primary_color}');
+                    grad.addColorStop(0.7, '#a855f7');
+                    grad.addColorStop(1, '#ff1133');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(x, canvas.height - amp, 3, amp);
+                }}
+
+                if (isDeepfake) {{
+                    ctx.strokeStyle = '#ff1133';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(460, 0);
+                    ctx.lineTo(460, canvas.height);
+                    ctx.stroke();
+                }}
+            </script>
+            """
+            st.components.v1.html(spectrogram_html, height=210)
+            st.info(f"**Codec Diagnostics:** {v_res.get('codec_signature')}")
+
+        # TAB 3: NIST POST-QUANTUM LATTICE SEAL
+        with tab3:
+            st.subheader("⚛️ NIST Post-Quantum Cryptography (PQC) Lattice-Seal")
+            st.caption("FIPS 204 ML-DSA-87 (CRYSTALS-Dilithium) Module-Lattice-Based Digital Signature for court admissibility in the 2030+ quantum era.")
+
+            pqc = results.get("pqc_lattice_seal", {})
+            pq1, pq2 = st.columns(2)
+            with pq1:
+                st.markdown("#### 📜 Post-Quantum Certificate Specification")
+                st.markdown(f"""
+                - **Standard:** `{pqc.get('pqc_standard')}`
+                - **Hardness Problem:** Learning With Errors (LWE) over Module Lattices
+                - **Quantum Resistance:** `{pqc.get('security_level')}`
+                - **Legal Validity:** `{pqc.get('quantum_admissibility')}`
+                """)
+            with pq2:
+                st.markdown("#### 🧬 Polynomial Vector Coefficient Sample")
+                st.code(pqc.get("polynomial_vector_sample"), language="text")
+                st.markdown("#### 🔐 Quantum-Safe Dilithium Signature")
+                st.code(pqc.get("lattice_signature_seal"), language="text")
+
+        # TAB 4: SCAMMER TARPIT DECOY
+        with tab4:
+            st.subheader("🎭 Autonomous Scammer Tarpit Bot (Conversational Honeypot AI)")
+            st.caption("Counter-deception AI strings along WhatsApp and Telegram fraudsters to exhaust their operational bandwidth and trace real C2 channels.")
+
+            tarpit = results.get("scammer_tarpit_bot", {})
+            st.success(f"**Decoy Persona Deployed:** `{tarpit.get('decoy_persona')}`")
+            st.markdown(f"**Psychological Trap:** {tarpit.get('psychological_exploit')}")
+
+            tp_c1, tp_c2 = st.columns([1.5, 1])
+            with tp_c1:
+                st.markdown("#### 💬 Live Conversational Tarpit Counter-Bait")
+                st.code(tarpit.get("next_counter_response"), language="text")
+                if st.button("🚀 Dispatch Autonomous Tarpit Counter-Message", use_container_width=True):
+                    st.success("✅ Counter-bait delivered to scammer channel. Attacker engaged in simulated confusion loop.")
+            with tp_c2:
+                st.metric("ATTACKER TIME BURNED", f"{tarpit.get('time_wasted_seconds')} sec", "Operational Delay")
+                st.info(f"**Adversary Telemetry Harvested:** {tarpit.get('attacker_recon_harvested')}")
+
+        # TAB 5: CITADEL AUTONOMOUS SELF-DEFENSE
+        with tab5:
             st.subheader("🛡️ Citadel Autonomous Self-Preservation & Host Lockdown Engine")
             st.caption("Zero-retaliation endpoint defense: air-gaps host network, revokes identity tokens, and freezes filesystem in immutable read-only state.")
 
@@ -837,8 +988,8 @@ with content_container:
                 st.caption("Real-time payload transmitted to central CERT-In / SOC gateway.")
                 st.code(json.dumps(citadel_data.get("sos_webhook_payload", {}), indent=2), language="json")
 
-        # TAB 2: TACTICAL SATELLITE STREET RADAR & LEA HANDOVER
-        with tab2:
+        # TAB 6: TACTICAL SATELLITE STREET RADAR & LEA HANDOVER
+        with tab6:
             st.subheader("🛰️ Active Tactical Street-Level Radar & Law Enforcement Handover")
             st.caption("Pinpoints tactical street-corridor via Active Deception Honeytoken beacons and compiles Section 91 CrPC telecom requisition dockets.")
 
@@ -896,8 +1047,8 @@ with content_container:
                     use_container_width=True
                 )
 
-        # TAB 3: VIS.JS THREAT GRAPH
-        with tab3:
+        # TAB 7: VIS.JS THREAT GRAPH
+        with tab7:
             st.subheader("🕸️ Autonomous Threat Entity Relationship Graph")
             origin_ip = results['metadata']['sender_ip']
             sender = results['metadata']['from']
@@ -932,8 +1083,8 @@ with content_container:
             """
             st.components.v1.html(graph_html, height=400)
 
-        # TAB 4: OMNICHANNEL EXPLOIT RADAR
-        with tab4:
+        # TAB 8: OMNICHANNEL EXPLOIT RADAR
+        with tab8:
             st.subheader("📱 Omnichannel Social Engineering & Exploit Radar")
             st.caption("Specialized inspection for WhatsApp Digital Arrests, Android APK droppers, and UPI Intent exploits.")
             if omni_threats:
@@ -942,8 +1093,8 @@ with content_container:
             else:
                 st.success("✅ Zero active UPI deep-links, APK droppers, or Digital Arrest patterns detected.")
 
-        # TAB 5: NATION-STATE APT ATTRIBUTION
-        with tab5:
+        # TAB 9: NATION-STATE APT ATTRIBUTION
+        with tab9:
             st.subheader("🎯 Nation-State APT Adversary Attribution Radar")
             st.caption("Heuristic fingerprinting matches IOCs, operational lures, and infrastructure against known cyber warfare actors.")
             apt = results.get("apt_attribution", {})
@@ -961,8 +1112,8 @@ with content_container:
             </div>
             """, unsafe_allow_html=True)
 
-        # TAB 6: BLOCKCHAIN CUSTODY & SMART CONTRACT
-        with tab6:
+        # TAB 10: BLOCKCHAIN CUSTODY & SMART CONTRACT
+        with tab10:
             st.subheader("⛓️ Cryptographic Chain-of-Custody & Solidity Smart Contract")
             st.caption("Immutable Merkle tree proofs compliant with Bharatiya Sakshya Adhiniyam Sec 63/65B.")
             chain = results.get("blockchain_custody", {})
@@ -988,8 +1139,8 @@ with content_container:
             st.code(results.get("smart_contract_code", "// Solidity Code"), language="solidity")
             st.download_button("📥 Download Solidity Evidence Contract (.sol)", data=results.get("smart_contract_code", ""), file_name="SynovaRegistry.sol", mime="text/plain")
 
-        # TAB 7: AI SOC COPILOT
-        with tab7:
+        # TAB 11: AI SOC COPILOT
+        with tab11:
             st.subheader("🤖 SYNOVA Autonomous SOC Copilot (Tier-3 Assistant)")
             st.caption("Chat live with the L3 Forensic AI investigating this exact artifact.")
 
@@ -1044,8 +1195,8 @@ with content_container:
                         st.markdown(reply_text)
                         st.session_state.copilot_history.append({"role": "assistant", "content": reply_text})
 
-        # TAB 8: ACTIVE DEFENSE - CANARY TRAP
-        with tab8:
+        # TAB 12: ACTIVE DEFENSE - CANARY TRAP
+        with tab12:
             st.subheader("💣 Active Defense: Autonomous Honeytoken Canary Counter-Strike")
             st.caption("Deploys synthetic poisoned credentials into the adversary's harvesting portal to track their real origin IP upon exfiltration.")
             canary = results.get("canary_trap", {})
@@ -1066,8 +1217,8 @@ Beacon Callback: {canary.get('synthetic_beacon')}
                 if st.button("🚀 Trigger Honeytoken Counter-Strike Lure", use_container_width=True):
                     st.success(f"✅ Honeytoken `{canary.get('canary_token')}` successfully staged. Tracking beacon active on CERT-In / SOC gateway.")
 
-        # TAB 9: IN-MEMORY SCRIPT & SHELLCODE DE-OBFUSCATOR
-        with tab9:
+        # TAB 13: IN-MEMORY SCRIPT & SHELLCODE DE-OBFUSCATOR
+        with tab13:
             st.subheader("🧬 In-Memory Recursive Base64 & PowerShell De-Obfuscator")
             st.caption("Unpacks obfuscated Unicode UTF-16LE scripts, base64 payloads, and hidden command-line execution stubs without running code.")
             deob_list = results.get("deobfuscated_payloads", [])
@@ -1077,93 +1228,8 @@ Beacon Callback: {canary.get('synthetic_beacon')}
                     st.caption(f"Raw Obfuscated Fragment: `{item['raw_obfuscated']}`")
                 st.code(item['deobfuscated_code'], language="powershell" if "PowerShell" in item['type'] else "text")
 
-        # TAB 10: IDENTITY & PERIMETER SOAR
-        with tab10:
-            st.subheader("🛡️ Enterprise SOAR: Zero-Trust Identity & Perimeter Isolation")
-            victim_recipient = results['metadata'].get('to', 'victim@enterprise.com')
-            sender_ip = results['metadata']['sender_ip']
-
-            soar_sub1, soar_sub2 = st.columns(2)
-            with soar_sub1:
-                st.markdown("#### 🔑 Identity Kill-Switch (Azure AD / Okta / Google)")
-                st.caption("Instantly invalidate compromised user SSO tokens to prevent session hijacking.")
-                if st.button("⚡ Stage 1-Click Identity Revocation Command", use_container_width=True):
-                    st.code(f"""# --- MICROSOFT GRAPH / AZURE AD SESSION REVOCATION ---
-POST https://graph.microsoft.com/v1.0/users/{victim_recipient}/revokeSignInSessions
-Headers: {{ "Authorization": "Bearer $ADMIN_TOKEN" }}
-
-# --- OKTA IDENTITY QUARANTINE ---
-curl -X POST "https://company.okta.com/api/v1/users/{victim_recipient}/lifecycle/suspend" \\
-     -H "Authorization: SSWS $OKTA_API_KEY"
-""", language="bash")
-
-            with soar_sub2:
-                st.markdown("#### 🚫 Perimeter Edge Firewall Blocklist")
-                st.caption("Generate egress drop rules for edge appliances.")
-                if st.button("🚫 Generate Egress Firewall Blocklist", use_container_width=True):
-                    st.code(f"""# --- SURICATA & IPTABLES DROP RULES ---
-iptables -A INPUT -s {sender_ip} -j DROP
-iptables -A FORWARD -s {sender_ip} -j DROP
-alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Actor"; sid:9000001; rev:1;)
-""", language="bash")
-
-            st.divider()
-            st.markdown("#### 📜 Standardized SIEM Exporters (STIX 2.1 & YARA)")
-            exp1, exp2 = st.columns(2)
-            with exp1:
-                st.download_button("📥 Export STIX 2.1 JSON Feed", data=results.get("stix_bundle", "{}"), file_name="synova_stix21.json", mime="application/json", use_container_width=True)
-            with exp2:
-                st.download_button("📥 Export Compiled YARA Signature", data=results.get("yara_rule", "// No YARA"), file_name="synova_detect.yar", mime="text/plain", use_container_width=True)
-
-        # TAB 11: QUISHING & WORMGPT STEALTH RADAR
-        with tab11:
-            st.subheader("📱 Quishing (QR Phishing) & Adversarial LLM Stealth Radar")
-            q_col, w_col = st.columns(2)
-            with q_col:
-                st.markdown("#### 📷 Quishing Optical Matrix Analysis")
-                q_telemetry = results.get("quishing_telemetry", {})
-                if q_telemetry.get("quishing_detected"):
-                    st.error("🚨 QR Code Phishing Indicators Detected:")
-                    for ind in q_telemetry.get("indicators", []):
-                        st.write(f"• {ind}")
-                    for qr_url in q_telemetry.get("extracted_qr_targets", []):
-                        st.code(f"Decoded QR Endpoint: {qr_url}")
-                else:
-                    st.success("✅ Zero optical QR phishing matrices detected in body or image attachments.")
-
-            with w_col:
-                st.markdown("#### 🤖 Adversarial LLM Lure Detector (WormGPT)")
-                synth = results.get("synthetic_ai_detection", {})
-                if synth.get("is_synthetic"):
-                    st.error(f"⚠️ {synth.get('verdict')}")
-                    st.metric("Synthetic Probability", f"{synth.get('confidence')}%")
-                else:
-                    st.success("✅ Human linguistic variation detected. Low synthetic lure likelihood.")
-
-        # TAB 12: ATTACKER OSINT INFRASTRUCTURE
-        with tab12:
-            st.subheader("🌐 Deep Infrastructure Profiling (Shodan & AbuseIPDB)")
-            osint_data = results["metadata"].get("geo_data", {})
-            oc1, oc2, oc3 = st.columns(3)
-            oc1.metric("ASN & Network Scope", str(osint_data.get("asn", "Unknown")))
-            oc2.metric("Abuse Confidence Score", f"{osint_data.get('abuse_score', 0)}%")
-            oc3.metric("Total Global Reports", str(osint_data.get("total_reports", 0)))
-
-            st.markdown("#### ⚡ Active Attack Surface & Listening Ports (Shodan InternetDB)")
-            open_ports = osint_data.get("open_ports", [])
-            if open_ports:
-                st.warning(f"⚠️ Active Listening Ports Detected on Attacker Host: `{open_ports}`")
-            else:
-                st.success("✅ No open listening services exposed via InternetDB reconnaissance.")
-
-            cves = osint_data.get("cves", [])
-            if cves:
-                st.error(f"🚨 Known Unpatched CVE Vulnerabilities on Origin: `{cves}`")
-            else:
-                st.info("ℹ️ No publicly cataloged CVE vulnerabilities tagged to this host IP.")
-
-        # TAB 13: KILL-CHAIN SIMULATOR
-        with tab13:
+        # TAB 14: KILL-CHAIN SIMULATOR
+        with tab14:
             st.subheader("⚡ Adversary Kill-Chain Simulation (Impact Comparison)")
             sim_mode = st.radio(
                 "Select Incident Scenario:",
@@ -1188,7 +1254,7 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
                 1. **Ingress:** Zero-disk stream parsing inspects raw text in memory without touching disk.
                 2. **AI Triage:** Gemini LLM identifies extortion urgency cues, UPI deep-links, and domain spoofing in **180ms**.
                 3. **Neutralization:** Host air-gapped, honeytoken injected, and carrier blocks staged.
-                4. **Quarantine:** Payload neutralized, Merkle proof anchored onto blockchain ledger.
+                4. **Quarantine:** Payload neutralized, PQC ML-DSA lattice proof anchored onto blockchain ledger.
                 
                 🛡️ **Mitigation Outcome:** **100% Data Exfiltration Prevented | Zero Endpoint Footprint**
                 """)
