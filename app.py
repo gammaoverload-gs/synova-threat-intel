@@ -12,6 +12,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 import streamlit as st
 from streamlit_folium import st_folium
+import google.generativeai as genai
 
 st.set_page_config(page_title="SYNOVA Autonomous SOC Platform", page_icon="🛡️", layout="wide")
 
@@ -33,6 +34,9 @@ if "intro_done" not in st.session_state:
 
 if "last_played_audio_hash" not in st.session_state:
     st.session_state.last_played_audio_hash = None
+
+if "copilot_history" not in st.session_state:
+    st.session_state.copilot_history = []
 
 # --- STEP 1: INITIAL PROTECTION LOADING SCREEN ---
 if not st.session_state.intro_done:
@@ -235,14 +239,8 @@ st.markdown(
     }}
 
     @keyframes threatShieldGlowPulse {{
-        0% {{
-            filter: drop-shadow(0 0 4px {primary_color}22);
-            opacity: 0.88;
-        }}
-        100% {{
-            filter: drop-shadow(0 0 25px {primary_color}) drop-shadow(0 0 45px {primary_color}66);
-            opacity: 1;
-        }}
+        0% {{ filter: drop-shadow(0 0 4px {primary_color}22); opacity: 0.88; }}
+        100% {{ filter: drop-shadow(0 0 25px {primary_color}) drop-shadow(0 0 45px {primary_color}66); opacity: 1; }}
     }}
 
     /* Ultra-Smooth Ambient Laser Scanner */
@@ -252,9 +250,7 @@ st.markdown(
         top: 0; left: 0; right: 0; 
         height: 2px;
         background: linear-gradient(90deg, transparent 0%, {primary_color}66 25%, {primary_color} 50%, {primary_color}66 75%, transparent 100%);
-        box-shadow: 
-            0 0 15px 2px {primary_color}44,
-            0 0 35px 6px {glow_rgba};
+        box-shadow: 0 0 15px 2px {primary_color}44, 0 0 35px 6px {glow_rgba};
         filter: blur(0.5px);
         animation: smoothLaserSweep 9s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
         pointer-events: none;
@@ -421,7 +417,7 @@ with header_container:
             unsafe_allow_html=True,
         )
         st.markdown(
-            "<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Autonomous AI Email Threat Detection, Deep OSINT & SOAR Incident Response Platform</p>",
+            "<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Autonomous AI Email Threat Detection, Deep OSINT, STIX 2.1 & Knowledge Graph Engine</p>",
             unsafe_allow_html=True,
         )
     with col2:
@@ -487,10 +483,8 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
                     const unlock = () => {{
                         audio.play();
                         window.parent.document.removeEventListener('click', unlock);
-                        document.removeEventListener('click', unlock);
                     }};
                     window.parent.document.addEventListener('click', unlock, {{ once: true }});
-                    document.addEventListener('click', unlock, {{ once: true }});
                 }});
             }}
         }} else if ('speechSynthesis' in window) {{
@@ -542,7 +536,7 @@ def build_pdf_buffer(results_data):
 
     story.append(Paragraph("SYNOVA CYBERSECURITY INCIDENT REPORT", title_style))
     story.append(
-        Paragraph("<b>Autonomous Email Threat Intelligence, OSINT & SOAR Playbook</b>", body_style)
+        Paragraph("<b>Autonomous Email Threat Intelligence, Deep OSINT & SOAR Playbook</b>", body_style)
     )
     story.append(Spacer(1, 10))
 
@@ -622,7 +616,7 @@ with content_container:
                     </span>
                 </div>
                 <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level email attack vectors. Ingest payloads via file drop, raw MIME streaming, or direct cloud IMAP mailbox handshake to execute real-time AI triage, deep Shodan/AbuseIPDB reconnaissance, and automated SOAR firewall containment.
+                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level email attack vectors. Ingest payloads via safe file drop, raw MIME streaming, or direct cloud IMAP mailbox handshake to execute real-time AI triage, deep Shodan/AbuseIPDB reconnaissance, lookalike domain tracking, and automated SOAR containment.
                 </p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
@@ -632,10 +626,10 @@ with content_container:
                         2. SHODAN & ABUSEIPDB RECONNAISSANCE
                     </span>
                     <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
-                        3. DUAL-ENGINE AI COGNITIVE TRIAGE
+                        3. HOMOGLYPH SQUATTING RADAR
                     </span>
                     <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
-                        4. AUTOMATED SOAR MITIGATION & PDF
+                        4. STIX 2.1 & AUTO-YARA EXPORTER
                     </span>
                 </div>
             </div>
@@ -649,9 +643,9 @@ with content_container:
         with c2:
             st.metric(label="DEEP OSINT", value="SHODAN+ABUSE", delta="CVE Tracer")
         with c3:
-            st.metric(label="AI BRAIN", value="GEMINI", delta="Heuristics")
+            st.metric(label="SIEM EXPORTER", value="STIX 2.1", delta="YARA Native")
         with c4:
-            st.metric(label="SOAR DEFENSE", value="ACTIVE", delta="IPTables/DNS")
+            st.metric(label="AI COPILOT", value="ACTIVE", delta="L3 Terminal")
 
     else:
         dash_col1, dash_col2 = st.columns([1.2, 3])
@@ -690,6 +684,16 @@ with content_container:
                 mime="application/pdf",
                 use_container_width=True,
             )
+
+        # Lookalike & Homoglyph Alert Banner
+        typos = results.get("typosquatting", [])
+        if typos:
+            for t in typos:
+                st.error(
+                    f"🚨 **HOMOGLYPH / LOOKALIKE SQUATTING DETECTED:** "
+                    f"Domain `{t['domain']}` is visually spoofing `{t['impersonated_target']}` "
+                    f"(Levenshtein Distance: {t['distance']} | Punycode: {t['is_punycode']} | Risk: {t['risk']})"
+                )
 
         ai_score_val = results["ai_analysis"].get("ai_score_num", score_num)
         heur_score_val = results["ai_analysis"].get("heuristic_score_num", score_num)
@@ -731,21 +735,130 @@ with content_container:
 
         st.divider()
 
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-            "🛡️ SOAR Response & Mitigations",
+        # --- 10 ENTERPRISE FORENSIC TABS ---
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
+            "🕸️ Threat Knowledge Graph",
+            "🤖 AI SOC Copilot",
+            "🛡️ SOAR & SIEM (STIX / YARA)",
             "⚡ Kill-Chain Simulator",
             "🌐 Attacker OSINT Infrastructure",
-            "🧩 Payload Deconstruction Matrix",
+            "🧩 Payload Matrix & Lookalike Radar",
             "🕒 Attack Timeline",
             "👁️ Defanged Preview",
             "🔗 Routing Hops & Geo Radar",
             "🔬 Raw Headers & Hex Dump",
         ])
 
+        # TAB 1: INTERACTIVE VIS.JS THREAT GRAPH
         with tab1:
-            st.subheader("⚡ Automated SOAR Playbook Execution")
-            ai_mitigations = results.get("ai_analysis", {}).get("mitigations", "No mitigations available.")
-            st.markdown(ai_mitigations)
+            st.subheader("🕸️ Autonomous Threat Entity Relationship Graph")
+            st.caption("Physics-based interactive graph mapping attacker origin node, relay path, perimeter firewall, and exfiltration C2 endpoints.")
+
+            origin_ip = results['metadata']['sender_ip']
+            sender = results['metadata']['from']
+            first_url = results['body_artifacts']['extracted_urls'][0] if results['body_artifacts']['extracted_urls'] else "No_Extracted_URL"
+            shodan_ports = str(results['metadata']['geo_data'].get('open_ports', []))
+
+            graph_html = f"""
+            <div id="synovaNetwork" style="width: 100%; height: 420px; background: rgba(5,8,15,0.95); border: 1px solid {primary_color}; border-radius: 8px;"></div>
+            <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+            <script type="text/javascript">
+                const nodes = new vis.DataSet([
+                    {{ id: 1, label: 'Attacker Origin\\n{origin_ip}', color: '#ff3355', shape: 'box', font: {{ color: '#fff', face: 'monospace' }} }},
+                    {{ id: 2, label: 'Spoofed Envelope\\n{sender[:22]}...', color: '#ffaa00', shape: 'ellipse', font: {{ color: '#fff' }} }},
+                    {{ id: 3, label: 'Perimeter SEG Gateway', color: '#00a8ff', shape: 'diamond', font: {{ color: '#fff' }} }},
+                    {{ id: 4, label: 'Phishing Endpoint\\n{first_url[:24]}...', color: '#ff0055', shape: 'triangle', font: {{ color: '#fff' }} }},
+                    {{ id: 5, label: 'Active Ports\\n{shodan_ports}', color: '#c084fc', shape: 'box', font: {{ color: '#fff' }} }}
+                ]);
+
+                const edges = new vis.DataSet([
+                    {{ from: 1, to: 2, label: 'Forged Identity', color: '#ffaa00', arrows: 'to' }},
+                    {{ from: 2, to: 3, label: 'SMTP Ingress', color: '#00a8ff', arrows: 'to' }},
+                    {{ from: 3, to: 4, label: 'Weaponized Lure', color: '#ff0055', arrows: 'to', dashes: true }},
+                    {{ from: 1, to: 5, label: 'Exposed Attack Surface', color: '#c084fc', arrows: 'to' }}
+                ]);
+
+                const container = document.getElementById('synovaNetwork');
+                const data = {{ nodes: nodes, edges: edges }};
+                const options = {{
+                    physics: {{ stabilization: true, barnesHut: {{ springLength: 120 }} }},
+                    edges: {{ font: {{ color: '#94a3b8', size: 10, strokeWidth: 0 }} }}
+                }};
+                new vis.Network(container, data, options);
+            </script>
+            """
+            st.components.v1.html(graph_html, height=440)
+
+        # TAB 2: AI SOC COPILOT
+        with tab2:
+            st.subheader("🤖 SYNOVA Autonomous SOC Copilot (Tier-3 Assistant)")
+            st.caption("Chat live with the L3 Forensic AI investigating this exact artifact.")
+
+            quick_col1, quick_col2, quick_col3 = st.columns(3)
+            quick_prompt = None
+            if quick_col1.button("🚨 Draft Snort / Suricata Rule"):
+                quick_prompt = "Generate a production-ready Snort or Suricata rule detecting this exact attacker IP and suspicious URL patterns."
+            if quick_col2.button("📋 Write Executive Advisory"):
+                quick_prompt = "Draft a formal 3-paragraph executive security incident advisory to warn employees about this specific attack campaign."
+            if quick_col3.button("🔍 Explain Attacker TTPs"):
+                quick_prompt = "Analyze the MITRE ATT&CK TTPs and open ports of this attacker. What is their likely next post-exploitation step?"
+
+            for msg in st.session_state.copilot_history:
+                with st.chat_message(msg["role"]):
+                    st.markdown(msg["content"])
+
+            user_query = st.chat_input("Ask SYNOVA Copilot about this incident...") or quick_prompt
+            if user_query:
+                st.session_state.copilot_history.append({"role": "user", "content": user_query})
+                with st.chat_message("user"):
+                    st.markdown(user_query)
+
+                with st.chat_message("assistant"):
+                    with st.spinner("Analyzing threat context..."):
+                        if api_key:
+                            try:
+                                genai.configure(api_key=api_key)
+                                copilot_model = genai.GenerativeModel("gemini-2.5-flash")
+                                copilot_ctx = f"""
+                                You are the SYNOVA Autonomous SOC Copilot assisting an incident handler.
+                                Incident Context:
+                                - Threat Score: {results['ai_analysis']['score']}
+                                - Sender: {results['metadata']['from']}
+                                - Origin IP: {results['metadata']['sender_ip']} ({results['metadata']['geo_data'].get('ip_type')})
+                                - Open Ports: {results['metadata']['geo_data'].get('open_ports')}
+                                - URLs: {results['body_artifacts']['extracted_urls'][:4]}
+                                - Typo-squatting alerts: {results.get('typosquatting', [])}
+                                - Executive Analysis: {results['ai_analysis']['analysis']}
+
+                                User Query: {user_query}
+                                Answer with elite SOC analyst precision, practical commands, or structured briefings.
+                                """
+                                reply_text = copilot_model.generate_content(copilot_ctx).text
+                            except Exception as e:
+                                reply_text = f"Copilot Engine Offline: {str(e)}"
+                        else:
+                            reply_text = "⚠️ Gemini API key not detected. Please configure GEMINI_API_KEY in Streamlit Secrets."
+                        st.markdown(reply_text)
+                        st.session_state.copilot_history.append({"role": "assistant", "content": reply_text})
+
+        # TAB 3: SOAR & SIEM EXPORTER (STIX 2.1 & YARA)
+        with tab3:
+            st.subheader("🛡️ Enterprise SOAR & SIEM Threat Signature Compilers")
+            soar_c1, soar_c2 = st.columns(2)
+            with soar_c1:
+                st.markdown("#### 📜 OASIS STIX 2.1 Machine-Readable Feed")
+                st.caption("Standardized threat intelligence format ready for Splunk ES, Microsoft Sentinel, and QRadar.")
+                stix_content = results.get("stix_bundle", "{}")
+                st.code(stix_content, language="json")
+                st.download_button("📥 Download STIX 2.1 JSON", data=stix_content, file_name="synova_stix21.json", mime="application/json", use_container_width=True)
+
+            with soar_c2:
+                st.markdown("#### 🎯 Compiled YARA Detection Signature")
+                st.caption("Auto-generated YARA rule compiled against extracted envelope headers and artifacts.")
+                yara_content = results.get("yara_rule", "// No YARA rule compiled")
+                st.code(yara_content, language="c")
+                st.download_button("📥 Download YARA Rule (.yar)", data=yara_content, file_name="synova_detect.yar", mime="text/plain", use_container_width=True)
+
             st.divider()
             col_soar1, col_soar2 = st.columns(2)
             with col_soar1:
@@ -777,7 +890,8 @@ Please isolate the compromised host immediately.
                         language="text",
                     )
 
-        with tab2:
+        # TAB 4: KILL-CHAIN SIMULATOR
+        with tab4:
             st.subheader("⚡ Adversary Kill-Chain Simulation (Impact Comparison)")
             sim_mode = st.radio(
                 "Select Incident Scenario:",
@@ -806,7 +920,8 @@ Please isolate the compromised host immediately.
                 🛡️ **Mitigation Outcome:** **100% Data Exfiltration Prevented | Zero Endpoint Footprint**
                 """)
 
-        with tab3:
+        # TAB 5: ATTACKER OSINT INFRASTRUCTURE
+        with tab5:
             st.subheader("🌐 Deep Attacker Infrastructure Profiling (Shodan & AbuseIPDB)")
             osint_data = results["metadata"].get("geo_data", {})
             oc1, oc2, oc3 = st.columns(3)
@@ -827,7 +942,8 @@ Please isolate the compromised host immediately.
             else:
                 st.info("ℹ️ No publicly cataloged CVE vulnerabilities tagged to this host IP.")
 
-        with tab4:
+        # TAB 6: PAYLOAD DECONSTRUCTION & TYPO-SQUATTING RADAR
+        with tab6:
             st.subheader("🧩 Multi-Layer Forensic Deconstruction Matrix")
             from_str = html.escape(str(results["metadata"]["from"]))
             subj_str = html.escape(str(results["metadata"]["subject"]))
@@ -863,7 +979,15 @@ Please isolate the compromised host immediately.
                 unsafe_allow_html=True,
             )
 
-        with tab5:
+            st.divider()
+            st.subheader("🎯 Homograph & Lookalike Squatting Radar")
+            if typos:
+                st.table(typos)
+            else:
+                st.success("✅ Zero visual lookalike or Punycode homograph domains detected.")
+
+        # TAB 7: THREAT CHRONOLOGY
+        with tab7:
             st.subheader("🕒 Threat Execution & Detection Chronology")
             date_stamp = html.escape(str(results["metadata"]["date"]))
             origin_ip = html.escape(str(results["metadata"]["sender_ip"]))
@@ -893,7 +1017,8 @@ Please isolate the compromised host immediately.
                 unsafe_allow_html=True,
             )
 
-        with tab6:
+        # TAB 8: DEFANGED HTML SANDBOX
+        with tab8:
             st.subheader("👁️ Pre-Scan Defanged HTML Sandbox Preview")
             raw_body_text = str(results["body_artifacts"]["raw_body"] or "")
             safe_preview = html.escape(raw_body_text)
@@ -917,7 +1042,8 @@ Please isolate the compromised host immediately.
                 unsafe_allow_html=True,
             )
 
-        with tab7:
+        # TAB 9: GEOLOCATION & HOPS
+        with tab9:
             st.subheader("📡 Visual Node-to-Node SMTP Hop Chain")
             hops = results.get("routing_hops", [])
             if hops:
@@ -981,7 +1107,8 @@ Please isolate the compromised host immediately.
                 st.markdown(f"**City:** {city}")
                 st.markdown(f"**ISP / ASN:** {isp}")
 
-        with tab8:
+        # TAB 10: RAW ENVELOPE & HEX DUMP
+        with tab10:
             st.subheader("🔬 Raw RFC-822 Email Headers & Hex Stream Inspector")
             st.markdown("**Raw Envelope Headers:**")
             st.json(results.get("raw_headers", {}))
