@@ -36,12 +36,13 @@ backend_gmail_pwd = st.secrets.get("GMAIL_PASSWORD", st.secrets.get("IMAP_PASSWO
 
 eleven_client = ElevenLabs(api_key=elevenlabs_api_key) if elevenlabs_api_key else None
 
-# --- STATE CONTROLLERS ---
+# --- STATE CONTROLLERS (PERSISTENT MEMORY) ---
 if "replay" in st.query_params:
     st.query_params.clear()
     st.session_state.intro_done = False
     st.session_state.last_played_audio_hash = None
     st.session_state.citadel_active = False
+    st.session_state.results = None
 
 if "intro_done" not in st.session_state:
     st.session_state.intro_done = False
@@ -54,6 +55,12 @@ if "copilot_history" not in st.session_state:
 
 if "citadel_active" not in st.session_state:
     st.session_state.citadel_active = False
+
+if "results" not in st.session_state:
+    st.session_state.results = None
+
+if "selected_vector" not in st.session_state:
+    st.session_state.selected_vector = "EMAIL"
 
 # --- BUILT-IN MULTI-CHANNEL SAMPLE THREAT PAYLOADS ---
 SAMPLE_QUISHING_APT = b"""Received: from relay1.transparent-relay.top (185.220.101.5) by mx.defense-gateway.in;
@@ -216,7 +223,6 @@ glow_rgba = "rgba(0, 240, 255, 0.18)"
 bg_glow = "rgba(0, 240, 255, 0.22)"
 badge_text = "OMNICHANNEL RADAR ACTIVE"
 score_num = 0
-results = None
 pulse_duration = "5.0s"
 voice_briefing = "Welcome to Synova Omnichannel Threat Intelligence Matrix. Quantum-safe defense engines are online."
 
@@ -272,8 +278,9 @@ with ingestion_container:
                         engine = EmailIngestionEngine.from_imap(
                             "imap.gmail.com", target_gmail, backend_gmail_pwd, api_key=api_key, abuse_key=abuse_key
                         )
-                        results = engine.parse_email()
-                        selected_vector = "EMAIL"
+                        st.session_state.results = engine.parse_email()
+                        st.session_state.selected_vector = "EMAIL"
+                        st.rerun()
                     except Exception:
                         raw_payload_bytes = SAMPLE_QUISHING_APT
                         selected_vector = "EMAIL"
@@ -317,10 +324,15 @@ with ingestion_container:
                 raw_payload_bytes = raw_stream_text.encode("utf-8")
                 selected_vector = "EMAIL"
 
-    if raw_payload_bytes and not results:
+    # Persistent Storage of Analysis Results
+    if raw_payload_bytes:
         with st.spinner(f"Executing In-Memory Forensics, Quantum Lattice Proofs & AI Triage for {selected_vector}..."):
             engine = EmailIngestionEngine(raw_payload_bytes, api_key=api_key, abuse_key=abuse_key, vector_type=selected_vector)
-            results = engine.parse_email()
+            st.session_state.results = engine.parse_email()
+            st.session_state.selected_vector = selected_vector
+            st.rerun()
+
+results = st.session_state.results
 
 # --- STEP 4: DYNAMIC THREAT STATE EVALUATION ---
 if results is not None:
@@ -518,7 +530,6 @@ st.markdown(
         min-width: 220px;
     }}
 
-    /* Touch & Mobile Responsive Rules */
     @media only screen and (max-width: 768px) {{
         .hud-ticker {{ flex-direction: column; gap: 4px; align-items: flex-start; font-size: 10px; }}
         div[data-testid="stTabs"] button[role="tab"] {{ font-size: 10px !important; padding: 6px 10px !important; }}
@@ -531,20 +542,21 @@ st.markdown(
 
 # --- STEP 6: RENDER TOP HEADER & LIVE HUD TELEMETRY STRIP (WITH IST TIME) ---
 with header_container:
-    col1, col2 = st.columns([3.2, 1.8])
+    col1, col2 = st.columns([3.0, 2.0])
     with col1:
         st.markdown(f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Omnichannel XDR</span></h1>", unsafe_allow_html=True)
         st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Autonomous AI Cyber Defense: NIST Post-Quantum Lattice Proof, 3D WebGL Globe & Citadel EDR</p>", unsafe_allow_html=True)
     with col2:
-        st.markdown(
-            f"""
-            <div style='display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 8px;'>
-                <span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span>
-                <a href='?replay=1' target='_self' class='replay-badge'>🔁 REPLAY PROTOCOL</a>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        top_btn_col1, top_btn_col2 = st.columns(2)
+        with top_btn_col1:
+            if results is not None:
+                if st.button("🔄 New Investigation", use_container_width=True):
+                    st.session_state.results = None
+                    st.rerun()
+            else:
+                st.markdown(f"<span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span>", unsafe_allow_html=True)
+        with top_btn_col2:
+            st.markdown("<a href='?replay=1' target='_self' class='replay-badge' style='width: 100%; text-align: center;'>🔁 REPLAY PROTOCOL</a>", unsafe_allow_html=True)
 
 with ticker_container:
     curr_time_ist = datetime.now(IST_TZ).strftime('%Y-%m-%d %H:%M:%S IST')
@@ -593,6 +605,7 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
         if (window.parent.__synovaLastAudio === audioId) return;
         window.parent.__synovaLastAudio = audioId;
 
+        // Emergency WebAudio Siren Generator
         if (playSiren) {{
             try {{
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
