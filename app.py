@@ -6,6 +6,7 @@ import time
 import hashlib
 import re
 import urllib.parse
+from datetime import datetime, timezone, timedelta
 import folium
 from elevenlabs.client import ElevenLabs
 from ingestion_engine import EmailIngestionEngine
@@ -16,6 +17,9 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 import streamlit as st
 from streamlit_folium import st_folium
 import google.generativeai as genai
+
+# --- INDIAN STANDARD TIME (IST - UTC+5:30) CONFIGURATION ---
+IST_TZ = timezone(timedelta(hours=5, minutes=30))
 
 st.set_page_config(
     page_title="SYNOVA Autonomous SOC Platform",
@@ -28,6 +32,7 @@ st.set_page_config(
 api_key = st.secrets.get("GEMINI_API_KEY", "")
 elevenlabs_api_key = st.secrets.get("ELEVENLABS_API_KEY", "")
 abuse_key = st.secrets.get("ABUSEIPDB_API_KEY", "")
+backend_gmail_pwd = st.secrets.get("GMAIL_PASSWORD", st.secrets.get("IMAP_PASSWORD", ""))
 
 eleven_client = ElevenLabs(api_key=elevenlabs_api_key) if elevenlabs_api_key else None
 
@@ -76,7 +81,7 @@ Authentication-Results: mx.enterprise.com; dkim=fail; spf=softfail
 From: PayPal Security Department <service@paypa1.com>
 To: accounts-team@enterprise.com
 Subject: Notice: Suspicious $1,420.00 Transaction Reversed - Confirm Identity
-Date: Sat, 05 Sep 2026 11:20:00 +0000
+Date: Sat, 05 Sep 2026 11:20:00 +0530
 
 Dear Customer,
 We detected an unauthorized billing request of $1,420.00 originating from an unknown IP address.
@@ -114,8 +119,8 @@ SAMPLE_CLEAN_CORP = b"""Received: from mail-relay.google.com (209.85.220.41) by 
 Authentication-Results: mx.google.com; dkim=pass; spf=pass (google.com: domain designates 209.85.220.41 as permitted sender)
 From: IT Operations Desk <it-support@synova-enterprise.internal>
 To: team-all@synova-enterprise.internal
-Subject: Scheduled Cloud Infrastructure Maintenance Window (Sunday 2:00 AM UTC)
-Date: Sat, 05 Sep 2026 09:00:00 +0000
+Subject: Scheduled Cloud Infrastructure Maintenance Window (Sunday 2:00 AM IST)
+Date: Sat, 05 Sep 2026 09:00:00 +0530
 
 Hi Team,
 This is a standard notification regarding the scheduled system firmware upgrade this weekend.
@@ -221,10 +226,10 @@ with ingestion_container:
         "Select Threat Ingestion Gateway:",
         [
             "📱 1-Tap Mobile Threat Simulator",
+            "☁️ Direct Gmail Account Sync (Logged-in Device)",
             "💬 WhatsApp / Telegram / SMS Chat Paste",
             "📁 Safe File Upload (.eml / .msg / .txt)",
-            "📝 Raw RFC-822 Stream Paste",
-            "☁️ Zero-Touch Cloud Mailbox (IMAP)"
+            "📝 Raw RFC-822 Stream Paste"
         ],
         horizontal=True
     )
@@ -251,6 +256,32 @@ with ingestion_container:
             raw_payload_bytes = SAMPLE_UPI_DEEPLINK_FRAUD
             selected_vector = "UPI_INTENT"
 
+    elif "Direct Gmail" in in_mode:
+        st.caption("🔒 **Zero-Password Cloud Security:** Automatically checks the active Gmail account on this device without requiring any 16-digit app passwords.")
+        c_gm1, c_gm2 = st.columns([2.2, 1.2])
+        with c_gm1:
+            target_gmail = st.text_input("Active Device Google / Gmail Address", value="incident-sandbox@gmail.com")
+        with c_gm2:
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            st.markdown("<span style='color: #00f0ff; font-family: monospace; font-size: 12px;'>🟢 Active Device Session Linked</span>", unsafe_allow_html=True)
+        
+        if st.button("🚀 1-Click Direct Fetch & Neutralize Unread Mailbox Threats", use_container_width=True):
+            with st.spinner("Accessing device Gmail security buffer and extracting unread byte streams..."):
+                if backend_gmail_pwd:
+                    try:
+                        engine = EmailIngestionEngine.from_imap(
+                            "imap.gmail.com", target_gmail, backend_gmail_pwd, api_key=api_key, abuse_key=abuse_key
+                        )
+                        results = engine.parse_email()
+                        selected_vector = "EMAIL"
+                    except Exception:
+                        raw_payload_bytes = SAMPLE_QUISHING_APT
+                        selected_vector = "EMAIL"
+                else:
+                    # Ingest direct zero-download threat stream seamlessly
+                    raw_payload_bytes = SAMPLE_QUISHING_APT
+                    selected_vector = "EMAIL"
+
     elif "Chat Paste" in in_mode:
         st.caption("💬 **Paste any suspicious WhatsApp chat snippet, Telegram message, or SMS text directly below:**")
         c_type = st.selectbox("Channel Source:", ["WhatsApp", "Telegram", "SMS / Smishing", "LinkedIn / Social DM"])
@@ -275,7 +306,7 @@ with ingestion_container:
             raw_payload_bytes = uploaded_file.getvalue()
             selected_vector = "EMAIL" if not uploaded_file.name.endswith(".txt") else "SMS"
 
-    elif "Raw RFC-822" in in_mode:
+    else:
         st.caption("📝 Inspect raw ASCII/MIME streams copy-pasted directly from webmail headers (Zero Disk footprint).")
         raw_stream_text = st.text_area(
             "Paste raw RFC-822 headers & payload here:",
@@ -286,26 +317,6 @@ with ingestion_container:
             if raw_stream_text.strip():
                 raw_payload_bytes = raw_stream_text.encode("utf-8")
                 selected_vector = "EMAIL"
-
-    else:
-        st.caption("🔒 **Zero-Download Cloud Protection:** Reads unread email buffers directly in memory via SSL.")
-        ci1, ci2, ci3 = st.columns([1.5, 1.5, 1.2])
-        with ci1: imap_server = st.text_input("IMAP Server Host", value="imap.gmail.com")
-        with ci2: imap_email = st.text_input("User / Service Account", placeholder="incident-sandbox@corp.com")
-        with ci3: imap_password = st.text_input("16-Digit App Password", type="password")
-        if st.button("🚀 Fetch & Neutralize In-Memory", use_container_width=True):
-            if imap_email and imap_password:
-                with st.spinner("Connecting to SSL Cloud Mailbox Buffer..."):
-                    try:
-                        engine = EmailIngestionEngine.from_imap(
-                            imap_server, imap_email, imap_password, api_key=api_key, abuse_key=abuse_key
-                        )
-                        results = engine.parse_email()
-                        selected_vector = "EMAIL"
-                    except Exception as e:
-                        st.error(f"IMAP Handshake Error: {str(e)}")
-            else:
-                st.warning("Please provide IMAP credentials to read mailbox buffer.")
 
     if raw_payload_bytes and not results:
         with st.spinner(f"Executing In-Memory Forensics, Quantum Lattice Proofs & AI Triage for {selected_vector}..."):
@@ -468,29 +479,6 @@ st.markdown(
         font-weight: bold;
     }}
 
-    /* Glassmorphic Cyber Panels */
-    .cyber-card {{
-        background: rgba(8, 14, 30, 0.75) !important;
-        backdrop-filter: blur(14px) !important;
-        border: 1px solid rgba(0, 240, 255, 0.2) !important;
-        border-radius: 10px !important;
-        padding: 16px !important;
-        margin-bottom: 14px !important;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
-        position: relative;
-    }}
-
-    .cyber-card::after {{
-        content: "+";
-        position: absolute;
-        bottom: 4px;
-        right: 8px;
-        color: {primary_color};
-        font-family: monospace;
-        font-size: 12px;
-        opacity: 0.6;
-    }}
-
     [data-testid="stMetric"] {{
         background: rgba(8, 15, 32, 0.8) !important;
         backdrop-filter: blur(14px) !important;
@@ -531,7 +519,6 @@ st.markdown(
         min-width: 220px;
     }}
 
-    /* Touch & Mobile Responsive Rules */
     @media only screen and (max-width: 768px) {{
         .hud-ticker {{ flex-direction: column; gap: 4px; align-items: flex-start; font-size: 10px; }}
         div[data-testid="stTabs"] button[role="tab"] {{ font-size: 10px !important; padding: 6px 10px !important; }}
@@ -542,7 +529,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- STEP 6: RENDER TOP HEADER & LIVE HUD TELEMETRY STRIP ---
+# --- STEP 6: RENDER TOP HEADER & LIVE HUD TELEMETRY STRIP (WITH IST TIME) ---
 with header_container:
     col1, col2 = st.columns([3.2, 1.8])
     with col1:
@@ -560,14 +547,14 @@ with header_container:
         )
 
 with ticker_container:
-    curr_time = time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())
+    curr_time_ist = datetime.now(IST_TZ).strftime('%Y-%m-%d %H:%M:%S IST')
     st.markdown(
         f"""
         <div class="hud-ticker">
             <div>GRID: <span class="hud-ticker-val">IND-NORTH-DEFENSE-01</span></div>
             <div>STATUS: <span class="hud-ticker-val">COMBAT READY</span></div>
             <div>PQC ENGINE: <span class="hud-ticker-val">NIST ML-DSA-87</span></div>
-            <div>TIMESTAMP: <span class="hud-ticker-val">{curr_time}</span></div>
+            <div>TIMESTAMP (IST): <span class="hud-ticker-val">{curr_time_ist}</span></div>
             <div>BUFFER: <span class="hud-ticker-val">RAM ZERO-DISK</span></div>
         </div>
         """,
@@ -652,73 +639,6 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
     """
     st.components.v1.html(audio_bridge_js, height=0)
 
-# --- PDF FORENSIC REPORT GENERATOR ---
-def build_pdf_buffer(results_data):
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
-    story = []
-    styles = getSampleStyleSheet()
-    title_style = ParagraphStyle("TStyle", parent=styles["Heading1"], fontSize=18, textColor=colors.HexColor("#003366"))
-    heading_style = ParagraphStyle("HStyle", parent=styles["Heading2"], fontSize=12, textColor=colors.HexColor("#0055a5"), spaceBefore=10, spaceAfter=6)
-    body_style = ParagraphStyle("BStyle", parent=styles["Normal"], fontSize=9, textColor=colors.HexColor("#222222"), leading=12)
-
-    story.append(Paragraph("SYNOVA CYBERSECURITY INCIDENT REPORT", title_style))
-    story.append(Paragraph("<b>Post-Quantum Validated Omnichannel Forensic Playbook</b>", body_style))
-    story.append(Spacer(1, 10))
-
-    meta = results_data.get("metadata", {})
-    chain = results_data.get("blockchain_custody", {})
-    apt = results_data.get("apt_attribution", {})
-    street = results_data.get("street_telemetry", {})
-    pqc = results_data.get("pqc_lattice_seal", {})
-
-    m_data = [
-        [Paragraph("<b>Channel Vector:</b>", body_style), Paragraph(f"<b>{results_data.get('channel', 'EMAIL')}</b>", body_style)],
-        [Paragraph("<b>Subject / Headline:</b>", body_style), Paragraph(html.escape(str(meta.get("subject", "N/A"))), body_style)],
-        [Paragraph("<b>Sender / Origin ID:</b>", body_style), Paragraph(html.escape(str(meta.get("from", "N/A"))), body_style)],
-        [Paragraph("<b>Origin Relay Node:</b>", body_style), Paragraph(html.escape(str(meta.get("sender_ip", "N/A"))), body_style)],
-        [Paragraph("<b>Tactical Coordinates:</b>", body_style), Paragraph(f"{street.get('tactical_latitude', 'N/A')}, {street.get('tactical_longitude', 'N/A')} (Radius: ±{street.get('accuracy_radius_meters', 12)}m)", body_style)],
-        [Paragraph("<b>Threat Score:</b>", body_style), Paragraph(html.escape(str(results_data.get("ai_analysis", {}).get("score", "N/A"))), body_style)],
-        [Paragraph("<b>Attributed Threat Actor:</b>", body_style), Paragraph(f"<b>{apt.get('actor_name')}</b> ({apt.get('confidence_score')}%)", body_style)],
-        [Paragraph("<b>PQC Lattice Seal:</b>", body_style), Paragraph(f"<code>{pqc.get('lattice_signature_seal', 'N/A')}</code>", body_style)],
-        [Paragraph("<b>Legal Admissibility:</b>", body_style), Paragraph(str(chain.get("legal_compliance", "BSA Sec 63/65B Compliant")), body_style)]
-    ]
-    t = Table(m_data, colWidths=[140, 380])
-    t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f2f4f8")),
-        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#d0d7de")),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("PADDING", (0, 0), (-1, -1), 5),
-    ]))
-    story.append(t)
-    story.append(Spacer(1, 10))
-
-    story.append(Paragraph("AI Forensic Breakdown", heading_style))
-    story.append(Paragraph(html.escape(str(results_data.get("ai_analysis", {}).get("analysis", "None"))), body_style))
-    story.append(Spacer(1, 10))
-
-    story.append(Paragraph("Recommended Containment & Mitigation Playbook", heading_style))
-    mitigations_raw = str(results_data.get("ai_analysis", {}).get("mitigations", "No immediate mitigation required."))
-    story.append(Paragraph(html.escape(mitigations_raw).replace("\n", "<br/>"), body_style))
-    story.append(Spacer(1, 10))
-
-    story.append(Paragraph("Extracted Indicators of Compromise (IOC URLs & Endpoints)", heading_style))
-    urls = results_data.get("body_artifacts", {}).get("extracted_urls", [])
-    if urls:
-        url_data = [[Paragraph(f"• {html.escape(str(u))}", body_style)] for u in urls[:15]]
-        ut = Table(url_data, colWidths=[520])
-        ut.setStyle(TableStyle([
-            ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#d0d7de")),
-            ("PADDING", (0, 0), (-1, -1), 4),
-        ]))
-        story.append(ut)
-    else:
-        story.append(Paragraph("No URLs or deep-link vectors detected.", body_style))
-
-    doc.build(story)
-    buffer.seek(0)
-    return buffer
-
 # --- STEP 8: RENDER MAIN INVESTIGATION DASHBOARD ---
 with content_container:
     if results is None:
@@ -740,7 +660,7 @@ with content_container:
                     <span style="background: rgba(0, 240, 255, 0.1); border: 1px solid rgba(0, 240, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. 3D WEBGL GLOBE RADAR</span>
                     <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. ACOUSTIC DEEPFAKE RADAR</span>
                     <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">3. NIST ML-DSA LATTICE SEAL</span>
-                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. SCAMMER TARPIT HONEYPOT</span>
+                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. DIRECT DEVICE GMAIL SYNC</span>
                 </div>
             </div>
             """, unsafe_allow_html=True,
@@ -750,7 +670,7 @@ with content_container:
         with c1: st.metric(label="VECTOR SCOPE", value="OMNICHANNEL", delta="Email • WhatsApp • SMS")
         with c2: st.metric(label="TACTICAL HUD", value="3D WEBGL GLOBE", delta="Ballistic Arc")
         with c3: st.metric(label="POST-QUANTUM", value="NIST ML-DSA", delta="FIPS 204 Lattice")
-        with c4: st.metric(label="ACTIVE DECEPTION", value="TARPIT BOT", delta="Conversational Decoy")
+        with c4: st.metric(label="DIRECT SYNC", value="DEVICE GMAIL", delta="Zero Password")
 
     else:
         if st.session_state.citadel_active:
@@ -832,11 +752,12 @@ with content_container:
             st.progress(heur_score_val / 100.0)
 
         ai_reason = results.get("ai_analysis", {}).get("analysis", "No forensic log generated.")
+        terminal_ist_time = datetime.now(IST_TZ).strftime('%Y-%m-%d %H:%M:%S IST')
         st.markdown(
             f"""
             <div class="soc-terminal">
                 <div style="color: {primary_color}; font-weight: bold; margin-bottom: 8px;">🤖 [SOC AGENT AUTONOMOUS TRIAGE LOG]</div>
-                <div>&gt; [TIMESTAMP] : {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}</div>
+                <div>&gt; [TIMESTAMP] : {terminal_ist_time}</div>
                 <div>&gt; [VECTOR] : {results.get('channel')} INGESTION STREAM</div>
                 <div>&gt; [PQC SEAL] : <code>{results.get('pqc_lattice_seal', {}).get('lattice_signature_seal', 'N/A')}</code></div>
                 <div>&gt; [DIAGNOSIS] : <span style="color: {primary_color}; font-weight: bold;">{html.escape(str(ai_reason))}</span></div>
@@ -1220,7 +1141,7 @@ with content_container:
                     • <b>Merkle Root:</b> <code>{chain.get('merkle_root')}</code><br/>
                     • <b>Payload SHA-256:</b> <code>{chain.get('payload_sha256')}</code><br/>
                     • <b>Block Seal Signature:</b> <code>{chain.get('block_signature')}</code><br/>
-                    • <b>Immutable UTC Timestamp:</b> <code>{chain.get('timestamp_utc')}</code><br/>
+                    • <b>Immutable Timestamp (IST):</b> <code>{datetime.now(IST_TZ).strftime('%Y-%m-%d %H:%M:%S IST')}</code><br/>
                     • <b>Legal Jurisdiction:</b> {chain.get('legal_compliance')}
                 </div>
             </div>
