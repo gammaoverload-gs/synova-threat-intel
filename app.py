@@ -36,6 +36,7 @@ if "replay" in st.query_params:
     st.query_params.clear()
     st.session_state.intro_done = False
     st.session_state.last_played_audio_hash = None
+    st.session_state.citadel_active = False
 
 if "intro_done" not in st.session_state:
     st.session_state.intro_done = False
@@ -45,6 +46,9 @@ if "last_played_audio_hash" not in st.session_state:
 
 if "copilot_history" not in st.session_state:
     st.session_state.copilot_history = []
+
+if "citadel_active" not in st.session_state:
+    st.session_state.citadel_active = False
 
 # --- BUILT-IN MULTI-CHANNEL SAMPLE THREAT PAYLOADS ---
 SAMPLE_QUISHING_APT = b"""Received: from relay1.transparent-relay.top (185.220.101.5) by mx.defense-gateway.in;
@@ -320,13 +324,20 @@ if results is not None:
     ip_type = str(results["metadata"]["geo_data"].get("ip_type", "Residential ISP"))
     channel_name = results.get("channel", "EMAIL")
 
-    if score_num >= 70:
+    if st.session_state.citadel_active:
+        primary_color = "#ff1133"
+        glow_rgba = "rgba(255, 17, 51, 0.45)"
+        bg_glow = "rgba(255, 17, 51, 0.35)"
+        badge_text = "🚨 CITADEL HOST LOCKDOWN ENGAGED"
+        pulse_duration = "0.45s"
+        voice_briefing = "Citadel Protocol active. Host network air-gapped. Identity tokens revoked. Directory system frozen in immutable read-only mode."
+    elif score_num >= 70:
         primary_color = "#ff3355"
         glow_rgba = "rgba(255, 51, 85, 0.35)"
         bg_glow = "rgba(255, 51, 85, 0.30)"
         badge_text = f"CRITICAL {channel_name} THREAT"
         pulse_duration = "0.65s"
-        voice_briefing = f"Alert. High-risk attack vector isolated on {channel_name} channel. Origin anchored at {origin_city}, {origin_country}. Automated counter-strike containment playbooks are active."
+        voice_briefing = f"Alert. High-risk attack vector isolated on {channel_name} channel. Origin anchored at {origin_city}, {origin_country}. Automated self-preservation playbooks are staged."
     elif score_num >= 40:
         primary_color = "#ffaa00"
         glow_rgba = "rgba(255, 170, 0, 0.25)"
@@ -367,7 +378,6 @@ st.markdown(
         100% {{ filter: drop-shadow(0 0 25px {primary_color}) drop-shadow(0 0 45px {primary_color}66); opacity: 1; }}
     }}
 
-    /* Ultra-Smooth Ambient Laser Scanner */
     .stApp::before {{
         content: ""; position: fixed; top: 0; left: 0; right: 0; height: 2px;
         background: linear-gradient(90deg, transparent 0%, {primary_color}66 25%, {primary_color} 50%, {primary_color}66 75%, transparent 100%);
@@ -440,23 +450,11 @@ st.markdown(
         border-radius: 8px; padding: 10px 14px; margin: 6px; min-width: 220px;
     }}
 
-    .timeline-item {{
-        position: relative; padding-left: 24px; border-left: 2px solid {primary_color}; margin-bottom: 14px;
-    }}
-    .timeline-dot {{
-        position: absolute; left: -6px; top: 2px; width: 10px; height: 10px;
-        background: {primary_color}; border-radius: 50%; box-shadow: 0 0 8px {primary_color};
+    .citadel-card {{
+        background: rgba(20, 8, 12, 0.9); border: 1px solid #ff1133;
+        border-left: 4px solid #ff1133; border-radius: 8px; padding: 14px; margin-bottom: 12px;
     }}
 
-    .layer-card {{
-        background: rgba(10, 18, 32, 0.85); border: 1px solid {primary_color}; border-radius: 8px;
-        padding: 12px 16px; margin-bottom: 10px;
-    }}
-    .layer-title {{
-        color: {primary_color}; font-size: 13px; font-weight: bold; font-family: monospace; margin-bottom: 4px; text-transform: uppercase;
-    }}
-
-    /* Mobile & Tablet Responsiveness */
     @media only screen and (max-width: 768px) {{
         .stApp {{ background-size: 100% 100%, 100% 100%, 25px 25px, 25px 25px !important; }}
         h1 {{ font-size: 20px !important; }}
@@ -477,7 +475,7 @@ with header_container:
     col1, col2 = st.columns([3.2, 1.8])
     with col1:
         st.markdown(f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Omnichannel XDR</span></h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Blockchain Merkle Custody, Nation-State Attribution, Deep OSINT, STIX 2.1 & Threat Graph Engine</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Blockchain Merkle Custody, Autonomous Citadel Lockdown, Deep OSINT & Threat Graph Engine</p>", unsafe_allow_html=True)
     with col2:
         st.markdown(
             f"""
@@ -490,8 +488,8 @@ with header_container:
         )
     st.divider()
 
-# --- STEP 7: DEDICATED SINGLE-DISPATCH AUDIO ENGINE ---
-current_audio_hash = hashlib.md5(voice_briefing.encode('utf-8')).hexdigest()
+# --- STEP 7: DEDICATED SINGLE-DISPATCH AUDIO ENGINE & PANIC SIREN ---
+current_audio_hash = hashlib.md5((voice_briefing + str(st.session_state.citadel_active)).encode('utf-8')).hexdigest()
 
 if st.session_state.last_played_audio_hash != current_audio_hash:
     st.session_state.last_played_audio_hash = current_audio_hash
@@ -509,22 +507,39 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
         except Exception:
             audio_b64_payload = ""
 
+    play_siren_js = "true" if st.session_state.citadel_active else "false"
+
     audio_bridge_js = f"""
     <script>
     (function() {{
         const b64Data = "{audio_b64_payload}";
         const textMsg = "{voice_briefing}";
         const audioId = "{current_audio_hash}";
+        const playSiren = {play_siren_js};
 
         if (window.parent.__synovaLastAudio === audioId) return;
         window.parent.__synovaLastAudio = audioId;
 
-        if ('speechSynthesis' in window) {{
-            window.speechSynthesis.cancel();
+        // Emergency WebAudio Siren Generator
+        if (playSiren) {{
+            try {{
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(350, audioCtx.currentTime + 0.35);
+                osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.7);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 1.2);
+            }} catch(e) {{}}
         }}
-        if (window.parent && window.parent.speechSynthesis) {{
-            window.parent.speechSynthesis.cancel();
-        }}
+
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        if (window.parent && window.parent.speechSynthesis) window.parent.speechSynthesis.cancel();
 
         if (b64Data && b64Data.length > 50) {{
             if (window.parent.__currentSynovaAudio) {{
@@ -534,14 +549,10 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
             const audio = new Audio("data:audio/mp3;base64," + b64Data);
             audio.volume = 0.95;
             window.parent.__currentSynovaAudio = audio;
-            
             const playPromise = audio.play();
             if (playPromise !== undefined) {{
                 playPromise.catch(() => {{
-                    const unlock = () => {{
-                        audio.play();
-                        window.parent.document.removeEventListener('click', unlock);
-                    }};
+                    const unlock = () => {{ audio.play(); window.parent.document.removeEventListener('click', unlock); }};
                     window.parent.document.addEventListener('click', unlock, {{ once: true }});
                 }});
             }}
@@ -567,10 +578,9 @@ def build_pdf_buffer(results_data):
     body_style = ParagraphStyle("BStyle", parent=styles["Normal"], fontSize=9, textColor=colors.HexColor("#222222"), leading=12)
 
     story.append(Paragraph("SYNOVA CYBERSECURITY INCIDENT REPORT", title_style))
-    story.append(Paragraph("<b>Autonomous Omnichannel Threat Intelligence, OSINT & SOAR Playbook</b>", body_style))
+    story.append(Paragraph("<b>Autonomous Omnichannel Threat Intelligence & Citadel Defense Playbook</b>", body_style))
     story.append(Spacer(1, 10))
 
-    story.append(Paragraph("Incident Envelope & Origin Reconnaissance", heading_style))
     meta = results_data.get("metadata", {})
     chain = results_data.get("blockchain_custody", {})
     apt = results_data.get("apt_attribution", {})
@@ -635,13 +645,13 @@ with content_container:
                     </span>
                 </div>
                 <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level attack vectors across <b>Email, WhatsApp, SMS Smishing, Telegram, and Social Media DMs</b>. Ingest payloads via 1-tap mobile simulators, safe file drop (.eml/.txt), raw MIME streaming, or direct cloud IMAP mailbox handshake to execute real-time AI triage, deep Shodan/AbuseIPDB reconnaissance, lookalike domain tracking, Quishing optical decoding, and cryptographic blockchain evidence anchoring.
+                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize attack vectors across <b>Email, WhatsApp, SMS Smishing, Telegram, and Social Media DMs</b>. Ingest payloads via 1-tap mobile simulators, safe file drop (.eml/.txt), raw MIME streaming, or direct cloud IMAP mailbox handshake to execute real-time AI triage, deep Shodan/AbuseIPDB reconnaissance, lookalike domain tracking, Quishing optical decoding, and cryptographic blockchain evidence anchoring.
                 </p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. OMNICHANNEL VECTOR INGESTION</span>
+                    <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. OMNICHANNEL INGESTION</span>
                     <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. APT THREAT ACTOR ATTRIBUTION</span>
                     <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">3. BLOCKCHAIN MERKLE PROOF ANCHOR</span>
-                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. ACTIVE CANARY COUNTER-STRIKE</span>
+                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. AUTONOMOUS CITADEL LOCKDOWN</span>
                 </div>
             </div>
             """, unsafe_allow_html=True,
@@ -651,9 +661,17 @@ with content_container:
         with c1: st.metric(label="VECTOR SCOPE", value="OMNICHANNEL", delta="Email • WhatsApp • SMS")
         with c2: st.metric(label="FINANCIAL DEFENSE", value="UPI DEFANGER", delta="Intent Trap Killer")
         with c3: st.metric(label="THEME MATCH", value="BLOCKCHAIN", delta="BSA Sec 63/65B Proof")
-        with c4: st.metric(label="AI COPILOT", value="ACTIVE", delta="Tier-3 Terminal")
+        with c4: st.metric(label="ENDPOINT DEFENSE", value="CITADEL LOCK", delta="Self-Healing Quarantine")
 
     else:
+        # CITADEL EMERGENCY ALERT BANNER
+        if st.session_state.citadel_active:
+            st.error(
+                "🚨 **CITADEL EMERGENCY LOCKDOWN ENGAGED:** Host network is completely air-gapped. "
+                "Cloud identity refresh tokens have been revoked. Sensitive storage directories are frozen in immutable read-only state. "
+                "Unauthorized child process trees neutralized."
+            )
+
         dash_col1, dash_col2 = st.columns([1.2, 3])
 
         with dash_col1:
@@ -753,6 +771,7 @@ with content_container:
 
         # --- 12 ENTERPRISE FORENSIC TABS ---
         tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.tabs([
+            "🛡️ Citadel: Self-Preservation & EDR",
             "🕸️ Threat Knowledge Graph",
             "📱 Omnichannel Exploit Radar",
             "🎯 Nation-State APT Attribution",
@@ -764,13 +783,65 @@ with content_container:
             "📱 Quishing & WormGPT Radar",
             "🌐 Attacker OSINT Infrastructure",
             "⚡ Kill-Chain Simulator",
-            "🔬 Raw Envelope & Hex Dump",
         ])
 
-        # TAB 1: VIS.JS THREAT GRAPH
+        # TAB 1: CITADEL AUTONOMOUS SELF-DEFENSE (HOT ADVANCEMENT)
         with tab1:
+            st.subheader("🛡️ Citadel Autonomous Self-Preservation & Host Lockdown Engine")
+            st.caption("Zero-retaliation, ethical endpoint defense: air-gaps host network, revokes identity tokens, and freezes filesystem in immutable read-only state.")
+
+            citadel_data = results.get("citadel_lockdown", {})
+            
+            c_btn_col1, c_btn_col2 = st.columns([2, 1])
+            with c_btn_col1:
+                if not st.session_state.citadel_active:
+                    if st.button("🚨 TRIGGER EMERGENCY CITADEL LOCKDOWN (AIR-GAP HOST)", use_container_width=True):
+                        st.session_state.citadel_active = True
+                        st.rerun()
+                else:
+                    if st.button("🟢 DISARM CITADEL & RESTORE HOST ENVIRONMENT", use_container_width=True):
+                        st.session_state.citadel_active = False
+                        st.rerun()
+            with c_btn_col2:
+                status_color = "#ff1133" if st.session_state.citadel_active else "#00ffcc"
+                status_label = "QUARANTINED & FROZEN" if st.session_state.citadel_active else "MONITORING / ARMED"
+                st.markdown(f"<div style='border: 1px solid {status_color}; padding: 8px 12px; border-radius: 8px; text-align: center; color: {status_color}; font-family: monospace; font-weight: bold;'>STATE: {status_label}</div>", unsafe_allow_html=True)
+
+            st.divider()
+
+            cp1, cp2 = st.columns(2)
+            with cp1:
+                st.markdown("#### 🔌 Protocol 1: Network Air-Gap & Quarantine")
+                st.caption("Instantly severs all outbound C2 connections while preserving encrypted SOC tunnel.")
+                os_sel = st.selectbox("Host Platform:", ["Windows (PowerShell / Defender)", "Linux (iptables)"], key="citadel_os")
+                if "Windows" in os_sel:
+                    st.code(citadel_data.get("air_gap_windows", "# Windows Air-Gap Script"), language="powershell")
+                else:
+                    st.code(citadel_data.get("air_gap_linux", "# Linux Air-Gap Script"), language="bash")
+
+                st.markdown("#### 🔒 Protocol 2: Anti-Ransomware Directory Freeze")
+                st.caption("Applies deny write/append ACL attributes to user folders to make files immutable.")
+                if "Windows" in os_sel:
+                    st.code(citadel_data.get("ransomware_shield_windows", "# Windows ACL Freeze"), language="powershell")
+                else:
+                    st.code(citadel_data.get("ransomware_shield_linux", "# Linux chattr +i"), language="bash")
+
+            with cp2:
+                st.markdown("#### 🔑 Protocol 3: Identity & Cloud SSO Invalidation")
+                st.caption("Revokes active OAuth refresh tokens via Microsoft Graph / Okta APIs.")
+                st.code(citadel_data.get("identity_kill", "# Identity Revocation API"), language="bash")
+
+                st.markdown("#### ⚔️ Protocol 4: Process Slasher")
+                st.caption("Kills unauthorized script/shell child processes spawned by message clients.")
+                st.code(citadel_data.get("process_slasher", "# Process Slasher"), language="powershell")
+
+                st.markdown("#### 📡 Protocol 5: Admin SOS Webhook Dispatch")
+                st.caption("Real-time payload transmitted to central CERT-In / SOC gateway.")
+                st.code(json.dumps(citadel_data.get("sos_webhook_payload", {}), indent=2), language="json")
+
+        # TAB 2: VIS.JS THREAT GRAPH
+        with tab2:
             st.subheader("🕸️ Autonomous Threat Entity Relationship Graph")
-            st.caption("Physics-based interactive graph mapping attacker origin node, relay path, perimeter firewall, and exfiltration C2 endpoints.")
             origin_ip = results['metadata']['sender_ip']
             sender = results['metadata']['from']
             first_url = results['body_artifacts']['extracted_urls'][0] if results['body_artifacts']['extracted_urls'] else "No_Extracted_URL"
@@ -804,8 +875,8 @@ with content_container:
             """
             st.components.v1.html(graph_html, height=400)
 
-        # TAB 2: OMNICHANNEL EXPLOIT RADAR
-        with tab2:
+        # TAB 3: OMNICHANNEL EXPLOIT RADAR
+        with tab3:
             st.subheader("📱 Omnichannel Social Engineering & Exploit Radar")
             st.caption("Specialized inspection for WhatsApp Digital Arrests, Android APK droppers, and UPI Intent exploits.")
             if omni_threats:
@@ -814,8 +885,8 @@ with content_container:
             else:
                 st.success("✅ Zero active UPI deep-links, APK droppers, or Digital Arrest patterns detected.")
 
-        # TAB 3: NATION-STATE APT ATTRIBUTION
-        with tab3:
+        # TAB 4: NATION-STATE APT ATTRIBUTION
+        with tab4:
             st.subheader("🎯 Nation-State APT Adversary Attribution Radar")
             st.caption("Heuristic fingerprinting matches IOCs, operational lures, and infrastructure against known cyber warfare actors.")
             apt = results.get("apt_attribution", {})
@@ -833,8 +904,8 @@ with content_container:
             </div>
             """, unsafe_allow_html=True)
 
-        # TAB 4: BLOCKCHAIN CUSTODY & SMART CONTRACT
-        with tab4:
+        # TAB 5: BLOCKCHAIN CUSTODY & SMART CONTRACT
+        with tab5:
             st.subheader("⛓️ Cryptographic Chain-of-Custody & Solidity Smart Contract")
             st.caption("Immutable Merkle tree proofs compliant with Bharatiya Sakshya Adhiniyam Sec 63/65B.")
             chain = results.get("blockchain_custody", {})
@@ -860,8 +931,8 @@ with content_container:
             st.code(results.get("smart_contract_code", "// Solidity Code"), language="solidity")
             st.download_button("📥 Download Solidity Evidence Contract (.sol)", data=results.get("smart_contract_code", ""), file_name="SynovaRegistry.sol", mime="text/plain")
 
-        # TAB 5: AI SOC COPILOT
-        with tab5:
+        # TAB 6: AI SOC COPILOT
+        with tab6:
             st.subheader("🤖 SYNOVA Autonomous SOC Copilot (Tier-3 Assistant)")
             st.caption("Chat live with the L3 Forensic AI investigating this exact artifact.")
 
@@ -915,8 +986,8 @@ with content_container:
                         st.markdown(reply_text)
                         st.session_state.copilot_history.append({"role": "assistant", "content": reply_text})
 
-        # TAB 6: ACTIVE DEFENSE - CANARY TRAP
-        with tab6:
+        # TAB 7: ACTIVE DEFENSE - CANARY TRAP
+        with tab7:
             st.subheader("💣 Active Defense: Autonomous Honeytoken Canary Counter-Strike")
             st.caption("Deploys synthetic poisoned credentials into the adversary's harvesting portal to track their real origin IP upon exfiltration.")
             canary = results.get("canary_trap", {})
@@ -937,8 +1008,8 @@ Beacon Callback: {canary.get('synthetic_beacon')}
                 if st.button("🚀 Trigger Honeytoken Counter-Strike Lure", use_container_width=True):
                     st.success(f"✅ Honeytoken `{canary.get('canary_token')}` successfully staged. Tracking beacon active on CERT-In / SOC gateway.")
 
-        # TAB 7: IN-MEMORY SCRIPT & SHELLCODE DE-OBFUSCATOR
-        with tab7:
+        # TAB 8: IN-MEMORY SCRIPT & SHELLCODE DE-OBFUSCATOR
+        with tab8:
             st.subheader("🧬 In-Memory Recursive Base64 & PowerShell De-Obfuscator")
             st.caption("Unpacks obfuscated Unicode UTF-16LE scripts, base64 payloads, and hidden command-line execution stubs without running code.")
             deob_list = results.get("deobfuscated_payloads", [])
@@ -948,8 +1019,8 @@ Beacon Callback: {canary.get('synthetic_beacon')}
                     st.caption(f"Raw Obfuscated Fragment: `{item['raw_obfuscated']}`")
                 st.code(item['deobfuscated_code'], language="powershell" if "PowerShell" in item['type'] else "text")
 
-        # TAB 8: IDENTITY & PERIMETER SOAR
-        with tab8:
+        # TAB 9: IDENTITY & PERIMETER SOAR
+        with tab9:
             st.subheader("🛡️ Enterprise SOAR: Zero-Trust Identity & Perimeter Isolation")
             victim_recipient = results['metadata'].get('to', 'victim@enterprise.com')
             sender_ip = results['metadata']['sender_ip']
@@ -986,8 +1057,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
             with exp2:
                 st.download_button("📥 Export Compiled YARA Signature", data=results.get("yara_rule", "// No YARA"), file_name="synova_detect.yar", mime="text/plain", use_container_width=True)
 
-        # TAB 9: QUISHING & WORMGPT STEALTH RADAR
-        with tab9:
+        # TAB 10: QUISHING & WORMGPT STEALTH RADAR
+        with tab10:
             st.subheader("📱 Quishing (QR Phishing) & Adversarial LLM Stealth Radar")
             q_col, w_col = st.columns(2)
             with q_col:
@@ -1011,8 +1082,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
                 else:
                     st.success("✅ Human linguistic variation detected. Low synthetic lure likelihood.")
 
-        # TAB 10: ATTACKER OSINT INFRASTRUCTURE
-        with tab10:
+        # TAB 11: ATTACKER OSINT INFRASTRUCTURE
+        with tab11:
             st.subheader("🌐 Deep Infrastructure Profiling (Shodan & AbuseIPDB)")
             osint_data = results["metadata"].get("geo_data", {})
             oc1, oc2, oc3 = st.columns(3)
@@ -1033,8 +1104,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
             else:
                 st.info("ℹ️ No publicly cataloged CVE vulnerabilities tagged to this host IP.")
 
-        # TAB 11: KILL-CHAIN SIMULATOR
-        with tab11:
+        # TAB 12: KILL-CHAIN SIMULATOR
+        with tab12:
             st.subheader("⚡ Adversary Kill-Chain Simulation (Impact Comparison)")
             sim_mode = st.radio(
                 "Select Incident Scenario:",
@@ -1058,14 +1129,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
                 **✅ SYNOVA Autonomous Containment Flow:**
                 1. **Ingress:** Zero-disk stream parsing inspects raw text in memory without touching disk.
                 2. **AI Triage:** Gemini LLM identifies extortion urgency cues, UPI deep-links, and domain spoofing in **180ms**.
-                3. **Neutralization:** DNS sinkhole, Honeytoken injection, and carrier block staged.
+                3. **Neutralization:** Host air-gapped, honeytoken injected, and carrier blocks staged.
                 4. **Quarantine:** Payload neutralized, Merkle proof anchored onto blockchain ledger.
                 
                 🛡️ **Mitigation Outcome:** **100% Data Exfiltration Prevented | Zero Endpoint Footprint**
                 """)
-
-        # TAB 12: RAW ENVELOPE & HEX DUMP
-        with tab12:
-            st.subheader("🔬 Raw Communication Stream & First 512-Bytes Hex Inspector")
-            st.json(results.get("raw_headers", {}))
-            st.code(results.get("raw_hex_preview", ""), language="text")
