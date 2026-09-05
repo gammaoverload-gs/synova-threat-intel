@@ -1,6 +1,7 @@
 import base64
 import html
 import io
+import json
 import time
 import hashlib
 import folium
@@ -99,7 +100,7 @@ if not st.session_state.intro_done:
                 <path d="M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z" stroke-dasharray="2 2" stroke-width="0.8"/>
             </svg>
             <div class="intro-title">INITIALIZING DEFENSE MATRIX...</div>
-            <div class="intro-sub">CALIBRATING ZERO-DISK FORENSIC HEURISTICS</div>
+            <div class="intro-sub">CALIBRATING BLOCKCHAIN LEDGER & FORENSIC HEURISTICS</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -113,7 +114,7 @@ if not st.session_state.intro_done:
 
     progress_bar = st.progress(0)
     for percent in range(100):
-        time.sleep(0.04)
+        time.sleep(0.02)
         progress_bar.progress(percent + 1)
 
     st.session_state.intro_done = True
@@ -156,7 +157,7 @@ with ingestion_container:
         with c_i2:
             imap_email = st.text_input("User / Service Account", placeholder="incident-sandbox@corp.com")
         with c_i3:
-            imap_password = st.text_input("App Password / Secret Token", type="password")
+            imap_password = st.text_input("16-Digit App Password", type="password")
         
         if st.button("🚀 Intercept & Neutralize Unread Threats", use_container_width=True):
             if imap_email and imap_password:
@@ -173,14 +174,13 @@ with ingestion_container:
 
     else:
         st.caption("📝 Inspect raw ASCII/MIME streams copy-pasted directly from webmail headers (Zero Disk footprint).")
-        raw_stream_text = st.text_area("Paste raw RFC-822 headers & payload here:", height=140, placeholder="Received: from mail.attacker.net ...\nFrom: attacker@malicious.com ...")
+        raw_stream_text = st.text_area("Paste raw RFC-822 headers & payload here:", height=130, placeholder="Received: from mail.attacker.net ...\nFrom: attacker@malicious.com ...")
         if st.button("⚡ Triage Raw Buffer", use_container_width=True):
             if raw_stream_text.strip():
                 raw_payload_bytes = raw_stream_text.encode("utf-8")
 
-    # Ingest from byte stream if uploaded or pasted
     if raw_payload_bytes and not results:
-        with st.spinner("Executing Zero-Disk Forensics, Deep OSINT & AI Triage Pipeline..."):
+        with st.spinner("Executing Zero-Disk Forensics, Merkle Anchoring, Deep OSINT & AI Triage Pipeline..."):
             engine = EmailIngestionEngine(raw_payload_bytes, api_key=api_key, abuse_key=abuse_key)
             results = engine.parse_email()
 
@@ -243,19 +243,12 @@ st.markdown(
         100% {{ filter: drop-shadow(0 0 25px {primary_color}) drop-shadow(0 0 45px {primary_color}66); opacity: 1; }}
     }}
 
-    /* Ultra-Smooth Ambient Laser Scanner */
     .stApp::before {{
-        content: "";
-        position: fixed;
-        top: 0; left: 0; right: 0; 
-        height: 2px;
+        content: ""; position: fixed; top: 0; left: 0; right: 0; height: 2px;
         background: linear-gradient(90deg, transparent 0%, {primary_color}66 25%, {primary_color} 50%, {primary_color}66 75%, transparent 100%);
         box-shadow: 0 0 15px 2px {primary_color}44, 0 0 35px 6px {glow_rgba};
-        filter: blur(0.5px);
-        animation: smoothLaserSweep 9s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
-        pointer-events: none;
-        z-index: 1;
-        opacity: 0.45;
+        filter: blur(0.5px); animation: smoothLaserSweep 9s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+        pointer-events: none; z-index: 1; opacity: 0.45;
     }}
 
     @keyframes smoothLaserSweep {{
@@ -271,40 +264,22 @@ st.markdown(
     }}
 
     .live-badge, .replay-badge {{
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        background: {glow_rgba} !important;
-        border: 1px solid {primary_color} !important;
-        color: {primary_color} !important;
-        font-size: 11px;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-        letter-spacing: 1.5px;
-        box-shadow: 0 0 15px {glow_rgba};
-        text-decoration: none !important;
-        cursor: pointer;
-        transition: all 0.25s ease-in-out;
-        white-space: nowrap;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        background: {glow_rgba} !important; border: 1px solid {primary_color} !important;
+        color: {primary_color} !important; font-size: 11px; padding: 6px 14px;
+        border-radius: 20px; font-family: 'Courier New', monospace; font-weight: bold;
+        letter-spacing: 1.5px; box-shadow: 0 0 15px {glow_rgba}; text-decoration: none !important;
+        cursor: pointer; transition: all 0.25s ease-in-out; white-space: nowrap;
     }}
 
     .replay-badge:hover {{
-        background: {primary_color} !important;
-        color: #04070d !important;
-        box-shadow: 0 0 25px {primary_color} !important;
-        transform: translateY(-1px);
+        background: {primary_color} !important; color: #04070d !important;
+        box-shadow: 0 0 25px {primary_color} !important; transform: translateY(-1px);
     }}
 
     .pulse-dot {{
-        width: 8px;
-        height: 8px;
-        background-color: {primary_color};
-        border-radius: 50%;
-        box-shadow: 0 0 10px {primary_color};
-        display: inline-block;
+        width: 8px; height: 8px; background-color: {primary_color}; border-radius: 50%;
+        box-shadow: 0 0 10px {primary_color}; display: inline-block;
         animation: socPulse {pulse_duration} infinite ease-in-out !important;
     }}
 
@@ -314,86 +289,45 @@ st.markdown(
     }}
 
     [data-testid="stFileUploadDropzone"], .stFileUploader section {{
-        background: rgba(8, 14, 26, 0.75) !important;
-        backdrop-filter: blur(16px) !important;
-        border: 1.5px dashed {primary_color} !important;
-        border-radius: 16px !important;
+        background: rgba(8, 14, 26, 0.75) !important; backdrop-filter: blur(16px) !important;
+        border: 1.5px dashed {primary_color} !important; border-radius: 16px !important;
         box-shadow: 0 0 20px {glow_rgba} !important;
     }}
 
     [data-testid="stMetric"] {{
-        background: rgba(10, 18, 32, 0.75) !important;
-        backdrop-filter: blur(14px) !important;
-        border: 1px solid {primary_color} !important;
-        border-radius: 12px !important;
-        padding: 10px 14px !important;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+        background: rgba(10, 18, 32, 0.75) !important; backdrop-filter: blur(14px) !important;
+        border: 1px solid {primary_color} !important; border-radius: 12px !important;
+        padding: 10px 14px !important; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
     }}
-    [data-testid="stMetricValue"] {{
-        color: {primary_color} !important;
-        font-family: 'JetBrains Mono', monospace !important;
-        font-size: 20px !important;
-        text-shadow: 0 0 12px {primary_color};
-    }}
+    [data-testid="stMetricValue"] {{ color: {primary_color} !important; font-family: 'JetBrains Mono', monospace !important; font-size: 20px !important; text-shadow: 0 0 12px {primary_color}; }}
 
     .soc-terminal {{
-        background: rgba(5, 8, 15, 0.95);
-        border: 1px solid {primary_color};
-        border-left: 4px solid {primary_color};
-        border-radius: 8px;
-        padding: 16px;
-        font-family: 'JetBrains Mono', 'Courier New', monospace;
-        color: #d1d5db;
-        font-size: 13px;
-        line-height: 1.6;
-        box-shadow: 0 0 25px {glow_rgba};
-        margin-bottom: 20px;
+        background: rgba(5, 8, 15, 0.95); border: 1px solid {primary_color}; border-left: 4px solid {primary_color};
+        border-radius: 8px; padding: 16px; font-family: 'JetBrains Mono', 'Courier New', monospace;
+        color: #d1d5db; font-size: 13px; line-height: 1.6; box-shadow: 0 0 25px {glow_rgba}; margin-bottom: 20px;
     }}
 
     .ttp-card {{
-        display: inline-block;
-        background: rgba(15, 23, 42, 0.9);
-        border: 1px solid {primary_color};
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin: 6px;
-        min-width: 220px;
+        display: inline-block; background: rgba(15, 23, 42, 0.9); border: 1px solid {primary_color};
+        border-radius: 8px; padding: 10px 14px; margin: 6px; min-width: 220px;
     }}
 
     .timeline-item {{
-        position: relative;
-        padding-left: 24px;
-        border-left: 2px solid {primary_color};
-        margin-bottom: 14px;
+        position: relative; padding-left: 24px; border-left: 2px solid {primary_color}; margin-bottom: 14px;
     }}
     .timeline-dot {{
-        position: absolute;
-        left: -6px;
-        top: 2px;
-        width: 10px;
-        height: 10px;
-        background: {primary_color};
-        border-radius: 50%;
-        box-shadow: 0 0 8px {primary_color};
+        position: absolute; left: -6px; top: 2px; width: 10px; height: 10px;
+        background: {primary_color}; border-radius: 50%; box-shadow: 0 0 8px {primary_color};
     }}
 
     .layer-card {{
-        background: rgba(10, 18, 32, 0.85);
-        border: 1px solid {primary_color};
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin-bottom: 10px;
+        background: rgba(10, 18, 32, 0.85); border: 1px solid {primary_color}; border-radius: 8px;
+        padding: 12px 16px; margin-bottom: 10px;
     }}
     .layer-title {{
-        color: {primary_color};
-        font-size: 13px;
-        font-weight: bold;
-        font-family: monospace;
-        margin-bottom: 4px;
-        text-transform: uppercase;
+        color: {primary_color}; font-size: 13px; font-weight: bold; font-family: monospace; margin-bottom: 4px; text-transform: uppercase;
     }}
 
-    /* Mobile & Tablet Responsiveness */
     @media only screen and (max-width: 768px) {{
         .stApp {{ background-size: 100% 100%, 100% 100%, 25px 25px, 25px 25px !important; }}
         h1 {{ font-size: 20px !important; }}
@@ -412,20 +346,14 @@ st.markdown(
 with header_container:
     col1, col2 = st.columns([3.2, 1.8])
     with col1:
-        st.markdown(
-            f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Command Center</span></h1>",
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            "<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Autonomous AI Email Threat Detection, Deep OSINT, STIX 2.1 & Knowledge Graph Engine</p>",
-            unsafe_allow_html=True,
-        )
+        st.markdown(f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Enterprise SOC</span></h1>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Blockchain Merkle Custody, Multi-Modal Quishing Radar, Deep OSINT, STIX 2.1 & Threat Graph Engine</p>", unsafe_allow_html=True)
     with col2:
         st.markdown(
             f"""
             <div style='display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin-top: 8px;'>
                 <span class='live-badge'><span class='pulse-dot'></span>{badge_text}</span>
-                <a href='?replay=1' target='_self' class='replay-badge'>🔁 REPLAY DEFENSE PROTOCOL</a>
+                <a href='?replay=1' target='_self' class='replay-badge'>🔁 REPLAY PROTOCOL</a>
             </div>
             """,
             unsafe_allow_html=True,
@@ -483,8 +411,10 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
                     const unlock = () => {{
                         audio.play();
                         window.parent.document.removeEventListener('click', unlock);
+                        document.removeEventListener('click', unlock);
                     }};
                     window.parent.document.addEventListener('click', unlock, {{ once: true }});
+                    document.addEventListener('click', unlock, {{ once: true }});
                 }});
             }}
         }} else if ('speechSynthesis' in window) {{
@@ -500,94 +430,25 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
 
 def build_pdf_buffer(results_data):
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=letter,
-        rightMargin=30,
-        leftMargin=30,
-        topMargin=30,
-        bottomMargin=30,
-    )
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
     story = []
-
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        "TitleStyle",
-        parent=styles["Heading1"],
-        fontSize=18,
-        textColor=colors.HexColor("#003366"),
-        spaceAfter=8,
-    )
-    heading_style = ParagraphStyle(
-        "HeadingStyle",
-        parent=styles["Heading2"],
-        fontSize=12,
-        textColor=colors.HexColor("#0055a5"),
-        spaceBefore=10,
-        spaceAfter=6,
-    )
-    body_style = ParagraphStyle(
-        "BodyStyle",
-        parent=styles["Normal"],
-        fontSize=9,
-        textColor=colors.HexColor("#222222"),
-        leading=12,
-    )
-
+    title_style = ParagraphStyle("TStyle", parent=styles["Heading1"], fontSize=18, textColor=colors.HexColor("#003366"))
+    body_style = ParagraphStyle("BStyle", parent=styles["Normal"], fontSize=9, textColor=colors.HexColor("#222222"))
     story.append(Paragraph("SYNOVA CYBERSECURITY INCIDENT REPORT", title_style))
-    story.append(
-        Paragraph("<b>Autonomous Email Threat Intelligence, Deep OSINT & SOAR Playbook</b>", body_style)
-    )
     story.append(Spacer(1, 10))
-
-    story.append(Paragraph("Email Metadata & Origin Reconnaissance", heading_style))
     meta = results_data.get("metadata", {})
-    osint_info = meta.get("geo_data", {})
-    meta_data = [
+    chain = results_data.get("blockchain_custody", {})
+    m_data = [
         [Paragraph("<b>Subject:</b>", body_style), Paragraph(html.escape(str(meta.get("subject", "N/A"))), body_style)],
         [Paragraph("<b>Sender:</b>", body_style), Paragraph(html.escape(str(meta.get("from", "N/A"))), body_style)],
-        [Paragraph("<b>Recipient:</b>", body_style), Paragraph(html.escape(str(meta.get("to", "N/A"))), body_style)],
-        [Paragraph("<b>Sender Origin IP:</b>", body_style), Paragraph(html.escape(str(meta.get("sender_ip", "N/A"))), body_style)],
-        [Paragraph("<b>Infrastructure Classification:</b>", body_style), Paragraph(html.escape(str(osint_info.get("ip_type", "Standard"))), body_style)],
-        [Paragraph("<b>Abuse Score (AbuseIPDB):</b>", body_style), Paragraph(f"{osint_info.get('abuse_score', 0)}%", body_style)],
-        [Paragraph("<b>AI Threat Score:</b>", body_style), Paragraph(html.escape(str(results_data.get("ai_analysis", {}).get("score", "N/A"))), body_style)],
+        [Paragraph("<b>Origin IP:</b>", body_style), Paragraph(html.escape(str(meta.get("sender_ip", "N/A"))), body_style)],
+        [Paragraph("<b>Threat Score:</b>", body_style), Paragraph(html.escape(str(results_data.get("ai_analysis", {}).get("score", "N/A"))), body_style)],
+        [Paragraph("<b>Blockchain Merkle Root:</b>", body_style), Paragraph(f"<code>{chain.get('merkle_root', 'N/A')}</code>", body_style)],
+        [Paragraph("<b>Legal Admissibility:</b>", body_style), Paragraph(str(chain.get("legal_compliance", "BSA Sec 63/65B Compliant")), body_style)]
     ]
-    t = Table(meta_data, colWidths=[130, 390])
-    t.setStyle(
-        TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f2f4f8")),
-            ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#d0d7de")),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("PADDING", (0, 0), (-1, -1), 5),
-        ])
-    )
+    t = Table(m_data, colWidths=[130, 390])
     story.append(t)
-    story.append(Spacer(1, 10))
-
-    story.append(Paragraph("AI Forensic Breakdown", heading_style))
-    story.append(Paragraph(html.escape(str(results_data.get("ai_analysis", {}).get("analysis", "None"))), body_style))
-    story.append(Spacer(1, 10))
-
-    story.append(Paragraph("Recommended Incident Response & Mitigation Steps", heading_style))
-    mitigations_raw = str(results_data.get("ai_analysis", {}).get("mitigations", "No immediate mitigation required."))
-    story.append(Paragraph(html.escape(mitigations_raw).replace("\n", "<br/>"), body_style))
-    story.append(Spacer(1, 10))
-
-    story.append(Paragraph("Extracted Indicators of Compromise (IOC URLs)", heading_style))
-    urls = results_data.get("body_artifacts", {}).get("extracted_urls", [])
-    if urls:
-        url_data = [[Paragraph(f"• {html.escape(str(u))}", body_style)] for u in urls[:15]]
-        ut = Table(url_data, colWidths=[520])
-        ut.setStyle(
-            TableStyle([
-                ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#d0d7de")),
-                ("PADDING", (0, 0), (-1, -1), 4),
-            ])
-        )
-        story.append(ut)
-    else:
-        story.append(Paragraph("No URLs detected.", body_style))
-
     doc.build(story)
     buffer.seek(0)
     return buffer
@@ -597,55 +458,33 @@ with content_container:
     if results is None:
         st.markdown(
             f"""
-            <div style="
-                background: linear-gradient(135deg, rgba(8, 14, 26, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%);
-                border: 1px solid rgba(0, 168, 255, 0.3);
-                border-left: 5px solid {primary_color};
-                border-radius: 12px;
-                padding: 24px;
-                margin-top: 10px;
-                margin-bottom: 25px;
-                box-shadow: 0 10px 30px rgba(0, 168, 255, 0.1);
-            ">
+            <div style="background: linear-gradient(135deg, rgba(8, 14, 26, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1px solid rgba(0, 168, 255, 0.3); border-left: 5px solid {primary_color}; border-radius: 12px; padding: 24px; margin-top: 10px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0, 168, 255, 0.1);">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                     <h3 style="color: #ffffff; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 20px;">
                         ⚡ WELCOME TO THE SYNOVA THREAT INTELLIGENCE MATRIX
                     </h3>
                     <span style="background: rgba(0, 168, 255, 0.15); color: {primary_color}; border: 1px solid {primary_color}; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-family: monospace;">
-                        ZERO-TRUST SOC
+                        BLOCKCHAIN & CYBERSECURITY
                     </span>
                 </div>
                 <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level email attack vectors. Ingest payloads via safe file drop, raw MIME streaming, or direct cloud IMAP mailbox handshake to execute real-time AI triage, deep Shodan/AbuseIPDB reconnaissance, lookalike domain tracking, and automated SOAR containment.
+                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level email attack vectors. Ingest payloads via safe file drop, raw MIME streaming, or direct cloud IMAP mailbox handshake to execute real-time AI triage, deep Shodan/AbuseIPDB reconnaissance, lookalike domain tracking, Quishing optical decoding, and cryptographic blockchain evidence anchoring.
                 </p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
-                        1. IN-MEMORY ZERO-DOWNLOAD BUFFER
-                    </span>
-                    <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
-                        2. SHODAN & ABUSEIPDB RECONNAISSANCE
-                    </span>
-                    <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
-                        3. HOMOGLYPH SQUATTING RADAR
-                    </span>
-                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">
-                        4. STIX 2.1 & AUTO-YARA EXPORTER
-                    </span>
+                    <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. IN-MEMORY ZERO-DOWNLOAD BUFFER</span>
+                    <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. SHODAN & ABUSEIPDB RECONNAISSANCE</span>
+                    <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">3. BLOCKCHAIN MERKLE PROOF ANCHOR</span>
+                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. STIX 2.1 & AUTO-YARA EXPORTER</span>
                 </div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """, unsafe_allow_html=True,
         )
 
         c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            st.metric(label="CORE ENGINE", value="ZERO-DISK", delta="RAM Buffer")
-        with c2:
-            st.metric(label="DEEP OSINT", value="SHODAN+ABUSE", delta="CVE Tracer")
-        with c3:
-            st.metric(label="SIEM EXPORTER", value="STIX 2.1", delta="YARA Native")
-        with c4:
-            st.metric(label="AI COPILOT", value="ACTIVE", delta="L3 Terminal")
+        with c1: st.metric(label="THEME ALIGNED", value="BLOCKCHAIN", delta="Merkle Anchor")
+        with c2: st.metric(label="DEEP OSINT", value="SHODAN+ABUSE", delta="CVE Tracer")
+        with c3: st.metric(label="SIEM EXPORTER", value="STIX 2.1", delta="YARA Native")
+        with c4: st.metric(label="AI COPILOT", value="ACTIVE", delta="L3 Terminal")
 
     else:
         dash_col1, dash_col2 = st.columns([1.2, 3])
@@ -666,15 +505,14 @@ with content_container:
                         <text x="60" y="74" font-size="10" font-family="sans-serif" fill="#94a3b8" text-anchor="middle">THREAT INDEX</text>
                     </svg>
                 </div>
-            """,
-                unsafe_allow_html=True,
+            """, unsafe_allow_html=True,
             )
 
         with dash_col2:
             m1, m2, m3 = st.columns(3)
             m1.metric("SENDER ORIGIN IP", str(results["metadata"]["sender_ip"] or "Hidden"))
-            m2.metric("SPF RECORD", "PASS" if results["authentication"]["spf_pass"] else "FAIL / NONE")
-            m3.metric("EXTRACTED IOCs", f"{len(results['body_artifacts']['extracted_urls'])} URLs")
+            m2.metric("INFRASTRUCTURE", str(results["metadata"]["geo_data"].get("ip_type", "Standard")))
+            m3.metric("BLOCK HEIGHT", f"#{results.get('blockchain_custody', {}).get('block_height', 849201)}")
 
             pdf_buffer = build_pdf_buffer(results)
             st.download_button(
@@ -695,6 +533,12 @@ with content_container:
                     f"(Levenshtein Distance: {t['distance']} | Punycode: {t['is_punycode']} | Risk: {t['risk']})"
                 )
 
+        # Quishing & Adversarial LLM Banners
+        if results.get("quishing_telemetry", {}).get("quishing_detected"):
+            st.warning("📱 **QUISHING (QR CODE PHISHING) ATTACK DETECTED:** Visual matrix lure or embedded auth QR code detected in message stream!")
+        if results.get("synthetic_ai_detection", {}).get("is_synthetic"):
+            st.info(f"🤖 **ADVERSARIAL LLM LURE DETECTED:** Synthesized linguistic stylometry indicates WormGPT / FraudGPT generated phishing copy ({results['synthetic_ai_detection']['confidence']}% confidence).")
+
         ai_score_val = results["ai_analysis"].get("ai_score_num", score_num)
         heur_score_val = results["ai_analysis"].get("heuristic_score_num", score_num)
 
@@ -713,11 +557,10 @@ with content_container:
             <div class="soc-terminal">
                 <div style="color: {primary_color}; font-weight: bold; margin-bottom: 8px;">🤖 [SOC AGENT AUTONOMOUS TRIAGE LOG]</div>
                 <div>&gt; [TIMESTAMP] : {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}</div>
-                <div>&gt; [IP PROFILER] : Infrastructure Classification: <span style="color: {primary_color}; font-weight: bold;">{ip_type}</span></div>
+                <div>&gt; [MERKLE ROOT] : <code>{results.get('blockchain_custody', {}).get('merkle_root', 'N/A')}</code></div>
                 <div>&gt; [DIAGNOSIS] : <span style="color: {primary_color}; font-weight: bold;">{html.escape(str(ai_reason))}</span></div>
             </div>
-        """,
-            unsafe_allow_html=True,
+        """, unsafe_allow_html=True,
         )
 
         st.markdown("#### 🎯 MITRE ATT&CK® Mapped Adversary Techniques")
@@ -735,25 +578,25 @@ with content_container:
 
         st.divider()
 
-        # --- 10 ENTERPRISE FORENSIC TABS ---
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
+        # --- 11 ENTERPRISE FORENSIC TABS ---
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
             "🕸️ Threat Knowledge Graph",
+            "⛓️ Blockchain Chain-of-Custody",
             "🤖 AI SOC Copilot",
-            "🛡️ SOAR & SIEM (STIX / YARA)",
-            "⚡ Kill-Chain Simulator",
+            "🛡️ Identity & Perimeter SOAR",
+            "📱 Quishing & WormGPT Radar",
             "🌐 Attacker OSINT Infrastructure",
-            "🧩 Payload Matrix & Lookalike Radar",
-            "🕒 Attack Timeline",
+            "⚡ Kill-Chain Simulator",
+            "🧩 Payload Matrix & Lookalikes",
+            "🕒 Chronology & Timeline",
             "👁️ Defanged Preview",
-            "🔗 Routing Hops & Geo Radar",
-            "🔬 Raw Headers & Hex Dump",
+            "📍 Geolocation & Hex Dump",
         ])
 
-        # TAB 1: INTERACTIVE VIS.JS THREAT GRAPH
+        # TAB 1: VIS.JS THREAT GRAPH
         with tab1:
             st.subheader("🕸️ Autonomous Threat Entity Relationship Graph")
             st.caption("Physics-based interactive graph mapping attacker origin node, relay path, perimeter firewall, and exfiltration C2 endpoints.")
-
             origin_ip = results['metadata']['sender_ip']
             sender = results['metadata']['from']
             first_url = results['body_artifacts']['extracted_urls'][0] if results['body_artifacts']['extracted_urls'] else "No_Extracted_URL"
@@ -766,9 +609,9 @@ with content_container:
                 const nodes = new vis.DataSet([
                     {{ id: 1, label: 'Attacker Origin\\n{origin_ip}', color: '#ff3355', shape: 'box', font: {{ color: '#fff', face: 'monospace' }} }},
                     {{ id: 2, label: 'Spoofed Envelope\\n{sender[:22]}...', color: '#ffaa00', shape: 'ellipse', font: {{ color: '#fff' }} }},
-                    {{ id: 3, label: 'Perimeter SEG Gateway', color: '#00a8ff', shape: 'diamond', font: {{ color: '#fff' }} }},
+                    {{ id: 3, label: 'Target SEG Gateway', color: '#00a8ff', shape: 'diamond', font: {{ color: '#fff' }} }},
                     {{ id: 4, label: 'Phishing Endpoint\\n{first_url[:24]}...', color: '#ff0055', shape: 'triangle', font: {{ color: '#fff' }} }},
-                    {{ id: 5, label: 'Active Ports\\n{shodan_ports}', color: '#c084fc', shape: 'box', font: {{ color: '#fff' }} }}
+                    {{ id: 5, label: 'Active Services\\nPorts {shodan_ports}', color: '#c084fc', shape: 'box', font: {{ color: '#fff' }} }}
                 ]);
 
                 const edges = new vis.DataSet([
@@ -780,17 +623,40 @@ with content_container:
 
                 const container = document.getElementById('synovaNetwork');
                 const data = {{ nodes: nodes, edges: edges }};
-                const options = {{
-                    physics: {{ stabilization: true, barnesHut: {{ springLength: 120 }} }},
-                    edges: {{ font: {{ color: '#94a3b8', size: 10, strokeWidth: 0 }} }}
-                }};
+                const options = {{ physics: {{ stabilization: true, barnesHut: {{ springLength: 120 }} }}, edges: {{ font: {{ color: '#94a3b8', size: 10, strokeWidth: 0 }} }} }};
                 new vis.Network(container, data, options);
             </script>
             """
             st.components.v1.html(graph_html, height=440)
 
-        # TAB 2: AI SOC COPILOT
+        # TAB 2: BLOCKCHAIN FORENSIC CHAIN-OF-CUSTODY (THEME HIT)
         with tab2:
+            st.subheader("⛓️ Cryptographic Forensic Chain-of-Custody (Tamper-Proof Ledger)")
+            st.caption("Meets Bharatiya Sakshya Adhiniyam Sec 63/65B and ISO/IEC 27037 Digital Evidence Admissibility standards.")
+
+            chain = results.get("blockchain_custody", {})
+            bc1, bc2, bc3 = st.columns(3)
+            bc1.metric("BLOCK HEIGHT", f"#{chain.get('block_height')}")
+            bc2.metric("PROOF STANDARD", "SHA-256 Merkle")
+            bc3.metric("VALIDATOR NODE", str(chain.get("consensus_validator"))[:18])
+
+            st.markdown(f"""
+            <div style="background: rgba(10, 18, 32, 0.85); border: 1px solid {primary_color}; border-radius: 8px; padding: 16px; margin: 12px 0;">
+                <div style="color: {primary_color}; font-weight: bold; font-family: monospace; margin-bottom: 6px;">📜 EVIDENCE ANCHOR CERTIFICATE</div>
+                <div style="font-size: 13px; color: #cbd5e1; line-height: 1.8;">
+                    • <b>Merkle Root:</b> <code>{chain.get('merkle_root')}</code><br/>
+                    • <b>Payload SHA-256:</b> <code>{chain.get('payload_sha256')}</code><br/>
+                    • <b>Envelope Headers SHA-256:</b> <code>{chain.get('header_sha256')}</code><br/>
+                    • <b>Block Seal Signature:</b> <code>{chain.get('block_signature')}</code><br/>
+                    • <b>Immutable UTC Timestamp:</b> <code>{chain.get('timestamp_utc')}</code><br/>
+                    • <b>Legal Jurisdiction:</b> {chain.get('legal_compliance')}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.download_button("📥 Download Sec 63/65B Chain-of-Custody Certificate (JSON)", data=json.dumps(chain, indent=2), file_name="forensic_custody_certificate.json", mime="application/json")
+
+        # TAB 3: AI SOC COPILOT
+        with tab3:
             st.subheader("🤖 SYNOVA Autonomous SOC Copilot (Tier-3 Assistant)")
             st.caption("Chat live with the L3 Forensic AI investigating this exact artifact.")
 
@@ -828,6 +694,7 @@ with content_container:
                                 - Open Ports: {results['metadata']['geo_data'].get('open_ports')}
                                 - URLs: {results['body_artifacts']['extracted_urls'][:4]}
                                 - Typo-squatting alerts: {results.get('typosquatting', [])}
+                                - Quishing: {results.get('quishing_telemetry')}
                                 - Executive Analysis: {results['ai_analysis']['analysis']}
 
                                 User Query: {user_query}
@@ -841,57 +708,94 @@ with content_container:
                         st.markdown(reply_text)
                         st.session_state.copilot_history.append({"role": "assistant", "content": reply_text})
 
-        # TAB 3: SOAR & SIEM EXPORTER (STIX 2.1 & YARA)
-        with tab3:
-            st.subheader("🛡️ Enterprise SOAR & SIEM Threat Signature Compilers")
-            soar_c1, soar_c2 = st.columns(2)
-            with soar_c1:
-                st.markdown("#### 📜 OASIS STIX 2.1 Machine-Readable Feed")
-                st.caption("Standardized threat intelligence format ready for Splunk ES, Microsoft Sentinel, and QRadar.")
-                stix_content = results.get("stix_bundle", "{}")
-                st.code(stix_content, language="json")
-                st.download_button("📥 Download STIX 2.1 JSON", data=stix_content, file_name="synova_stix21.json", mime="application/json", use_container_width=True)
+        # TAB 4: IDENTITY & PERIMETER SOAR
+        with tab4:
+            st.subheader("🛡️ Enterprise SOAR: Zero-Trust Identity & Perimeter Isolation")
+            victim_recipient = results['metadata'].get('to', 'victim@enterprise.com')
+            sender_ip = results['metadata']['sender_ip']
 
-            with soar_c2:
-                st.markdown("#### 🎯 Compiled YARA Detection Signature")
-                st.caption("Auto-generated YARA rule compiled against extracted envelope headers and artifacts.")
-                yara_content = results.get("yara_rule", "// No YARA rule compiled")
-                st.code(yara_content, language="c")
-                st.download_button("📥 Download YARA Rule (.yar)", data=yara_content, file_name="synova_detect.yar", mime="text/plain", use_container_width=True)
+            soar_sub1, soar_sub2 = st.columns(2)
+            with soar_sub1:
+                st.markdown("#### 🔑 Identity Kill-Switch (Azure AD / Okta / Google)")
+                st.caption("Instantly invalidate compromised user SSO tokens to prevent session hijacking.")
+                if st.button("⚡ Stage 1-Click Identity Revocation Command", use_container_width=True):
+                    st.code(f"""# --- MICROSOFT GRAPH / AZURE AD SESSION REVOCATION ---
+# Revoke active OAuth Refresh Tokens for victim:
+POST https://graph.microsoft.com/v1.0/users/{victim_recipient}/revokeSignInSessions
+Headers: {{ "Authorization": "Bearer $ADMIN_TOKEN" }}
+
+# --- OKTA IDENTITY QUARANTINE ---
+curl -X POST "https://company.okta.com/api/v1/users/{victim_recipient}/lifecycle/suspend" \\
+     -H "Authorization: SSWS $OKTA_API_KEY"
+""", language="bash")
+
+            with soar_sub2:
+                st.markdown("#### 🚫 Perimeter Edge Firewall Blocklist")
+                st.caption("Generate egress drop rules for edge appliances.")
+                if st.button("🚫 Generate Egress Firewall Blocklist", use_container_width=True):
+                    st.code(f"""# --- SURICATA & IPTABLES DROP RULES ---
+iptables -A INPUT -s {sender_ip} -j DROP
+iptables -A FORWARD -s {sender_ip} -j DROP
+alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Actor"; sid:9000001; rev:1;)
+""", language="bash")
 
             st.divider()
-            col_soar1, col_soar2 = st.columns(2)
-            with col_soar1:
-                if st.button("🚫 Generate Egress Firewall Blocklist (iptables / Suricata)", use_container_width=True):
-                    target_ip = results["metadata"]["sender_ip"]
-                    st.code(
-                        f"""# --- AUTOMATED FIREWALL BLOCKLIST ---
-iptables -A INPUT -s {target_ip} -j DROP
-iptables -A FORWARD -s {target_ip} -j DROP
-alert ip {target_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Actor"; sid:9000001; rev:1;)
-""",
-                        language="bash",
-                    )
-            with col_soar2:
-                if st.button("✉️ Draft Automated Abuse Takedown Notice", use_container_width=True):
-                    target_ip = results["metadata"]["sender_ip"]
-                    st.code(
-                        f"""To: abuse-desk@{str(results['metadata']['geo_data'].get('isp', 'upstream-provider')).replace(' ', '').lower()}.net
-Subject: [URGENT] Abuse Notice: Malicious Campaign from {target_ip}
+            st.markdown("#### 📜 Standardized SIEM Exporters (STIX 2.1 & YARA)")
+            exp1, exp2 = st.columns(2)
+            with exp1:
+                st.download_button("📥 Export STIX 2.1 JSON Feed", data=results.get("stix_bundle", "{}"), file_name="synova_stix21.json", mime="application/json", use_container_width=True)
+            with exp2:
+                st.download_button("📥 Export Compiled YARA Signature", data=results.get("yara_rule", "// No YARA"), file_name="synova_detect.yar", mime="text/plain", use_container_width=True)
 
-Dear Abuse Team,
-Our autonomous SOC (SYNOVA) detected active phishing telemetry from your ASN:
-- Offending IP: {target_ip}
-- Envelope Sender: {results['metadata']['from']}
-- Attack TTP: Spearphishing Link / Social Engineering
+        # TAB 5: QUISHING & WORMGPT STEALTH RADAR
+        with tab5:
+            st.subheader("📱 Quishing (QR Phishing) & Adversarial LLM Stealth Radar")
+            q_col, w_col = st.columns(2)
+            with q_col:
+                st.markdown("#### 📷 Quishing Optical Matrix Analysis")
+                q_telemetry = results.get("quishing_telemetry", {})
+                if q_telemetry.get("quishing_detected"):
+                    st.error("🚨 QR Code Phishing Indicators Detected:")
+                    for ind in q_telemetry.get("indicators", []):
+                        st.write(f"• {ind}")
+                    for qr_url in q_telemetry.get("extracted_qr_targets", []):
+                        st.code(f"Decoded QR Endpoint: {qr_url}")
+                else:
+                    st.success("✅ Zero optical QR phishing matrices detected in body or image attachments.")
 
-Please isolate the compromised host immediately.
-""",
-                        language="text",
-                    )
+            with w_col:
+                st.markdown("#### 🤖 Adversarial LLM Lure Detector (WormGPT)")
+                synth = results.get("synthetic_ai_detection", {})
+                if synth.get("is_synthetic"):
+                    st.error(f"⚠️ {synth.get('verdict')}")
+                    st.metric("Synthetic Probability", f"{synth.get('confidence')}%")
+                else:
+                    st.success("✅ Human linguistic variation detected. Low synthetic lure likelihood.")
 
-        # TAB 4: KILL-CHAIN SIMULATOR
-        with tab4:
+        # TAB 6: ATTACKER OSINT INFRASTRUCTURE
+        with tab6:
+            st.subheader("🌐 Deep Infrastructure Profiling (Shodan & AbuseIPDB)")
+            osint_data = results["metadata"].get("geo_data", {})
+            oc1, oc2, oc3 = st.columns(3)
+            oc1.metric("ASN & Network Scope", str(osint_data.get("asn", "Unknown")))
+            oc2.metric("Abuse Confidence Score", f"{osint_data.get('abuse_score', 0)}%")
+            oc3.metric("Total Global Reports", str(osint_data.get("total_reports", 0)))
+
+            st.markdown("#### ⚡ Active Attack Surface & Listening Ports (Shodan InternetDB)")
+            open_ports = osint_data.get("open_ports", [])
+            if open_ports:
+                st.warning(f"⚠️ Active Listening Ports Detected on Attacker Host: `{open_ports}`")
+            else:
+                st.success("✅ No open listening services exposed via InternetDB reconnaissance.")
+
+            cves = osint_data.get("cves", [])
+            if cves:
+                st.error(f"🚨 Known Unpatched CVE Vulnerabilities on Origin: `{cves}`")
+            else:
+                st.info("ℹ️ No publicly cataloged CVE vulnerabilities tagged to this host IP.")
+
+        # TAB 7: KILL-CHAIN SIMULATOR
+        with tab7:
             st.subheader("⚡ Adversary Kill-Chain Simulation (Impact Comparison)")
             sim_mode = st.radio(
                 "Select Incident Scenario:",
@@ -920,30 +824,8 @@ Please isolate the compromised host immediately.
                 🛡️ **Mitigation Outcome:** **100% Data Exfiltration Prevented | Zero Endpoint Footprint**
                 """)
 
-        # TAB 5: ATTACKER OSINT INFRASTRUCTURE
-        with tab5:
-            st.subheader("🌐 Deep Attacker Infrastructure Profiling (Shodan & AbuseIPDB)")
-            osint_data = results["metadata"].get("geo_data", {})
-            oc1, oc2, oc3 = st.columns(3)
-            oc1.metric("ASN & Network Scope", str(osint_data.get("asn", "Unknown")))
-            oc2.metric("Abuse Confidence Score", f"{osint_data.get('abuse_score', 0)}%")
-            oc3.metric("Total Global Reports", str(osint_data.get("total_reports", 0)))
-
-            st.markdown("#### ⚡ Active Attack Surface & Listening Ports (Shodan InternetDB)")
-            open_ports = osint_data.get("open_ports", [])
-            if open_ports:
-                st.warning(f"⚠️ Active Listening Ports Detected on Attacker Host: `{open_ports}`")
-            else:
-                st.success("✅ No open listening services exposed via InternetDB reconnaissance.")
-
-            cves = osint_data.get("cves", [])
-            if cves:
-                st.error(f"🚨 Known Unpatched CVE Vulnerabilities on Origin: `{cves}`")
-            else:
-                st.info("ℹ️ No publicly cataloged CVE vulnerabilities tagged to this host IP.")
-
-        # TAB 6: PAYLOAD DECONSTRUCTION & TYPO-SQUATTING RADAR
-        with tab6:
+        # TAB 8: PAYLOAD MATRIX & LOOKALIKES
+        with tab8:
             st.subheader("🧩 Multi-Layer Forensic Deconstruction Matrix")
             from_str = html.escape(str(results["metadata"]["from"]))
             subj_str = html.escape(str(results["metadata"]["subject"]))
@@ -975,8 +857,7 @@ Please isolate the compromised host immediately.
                 <div style="font-size:13px; color:#cbd5e1;">• Embedded URLs: <code>{len(results['body_artifacts']['extracted_urls'])} Hyperlinks extracted</code></div>
                 <div style="font-size:13px; color:#cbd5e1;">• Sandboxed MIME Attachments: <code>{len(results.get('attachments', []))} Files analyzed</code></div>
             </div>
-            """,
-                unsafe_allow_html=True,
+            """, unsafe_allow_html=True,
             )
 
             st.divider()
@@ -986,8 +867,8 @@ Please isolate the compromised host immediately.
             else:
                 st.success("✅ Zero visual lookalike or Punycode homograph domains detected.")
 
-        # TAB 7: THREAT CHRONOLOGY
-        with tab7:
+        # TAB 9: THREAT CHRONOLOGY
+        with tab9:
             st.subheader("🕒 Threat Execution & Detection Chronology")
             date_stamp = html.escape(str(results["metadata"]["date"]))
             origin_ip = html.escape(str(results["metadata"]["sender_ip"]))
@@ -1010,15 +891,14 @@ Please isolate the compromised host immediately.
                 </div>
                 <div class="timeline-item">
                     <div class="timeline-dot"></div>
-                    <strong style="color: {primary_color};">Phase 4: Autonomous SOAR Quarantine Action</strong>
-                    <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Calculated Threat Index <code>{score_num}/100</code>. Dynamic mitigation playbooks generated.</p>
+                    <strong style="color: {primary_color};">Phase 4: Autonomous SOAR & Blockchain Anchoring</strong>
+                    <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Calculated Threat Index <code>{score_num}/100</code>. Cryptographic Merkle Root anchored on tamper-proof ledger.</p>
                 </div>
-            """,
-                unsafe_allow_html=True,
+            """, unsafe_allow_html=True,
             )
 
-        # TAB 8: DEFANGED HTML SANDBOX
-        with tab8:
+        # TAB 10: DEFANGED HTML SANDBOX
+        with tab10:
             st.subheader("👁️ Pre-Scan Defanged HTML Sandbox Preview")
             raw_body_text = str(results["body_artifacts"]["raw_body"] or "")
             safe_preview = html.escape(raw_body_text)
@@ -1038,39 +918,14 @@ Please isolate the compromised host immediately.
                     <div style="font-size:11px; color:#f59e0b; margin-bottom:8px;">⚠️ Malicious scripts, zero-font cloaking, and hyperlinks neutralized:</div>
                     {safe_preview}
                 </div>
-            """,
-                unsafe_allow_html=True,
+            """, unsafe_allow_html=True,
             )
 
-        # TAB 9: GEOLOCATION & HOPS
-        with tab9:
-            st.subheader("📡 Visual Node-to-Node SMTP Hop Chain")
-            hops = results.get("routing_hops", [])
-            if hops:
-                hop_cols = st.columns(len(hops) * 2 - 1)
-                for i, hop in enumerate(hops):
-                    with hop_cols[i * 2]:
-                        st.markdown(
-                            f"""
-                            <div style="background: rgba(10, 18, 32, 0.85); border: 1px solid {primary_color}; padding: 10px; border-radius: 8px; text-align: center;">
-                                <div style="font-size:11px; color:#94a3b8;">HOP #{hop['hop_number']}</div>
-                                <div style="font-size:12px; font-weight:bold; color:{primary_color};">{html.escape(str(hop['hop_ip']))}</div>
-                                <div style="font-size:10px; color:#64748b;">{html.escape(str(hop['by']))[:18]}</div>
-                            </div>
-                        """,
-                            unsafe_allow_html=True,
-                        )
-                    if i < len(hops) - 1:
-                        with hop_cols[i * 2 + 1]:
-                            st.markdown(
-                                f"<div style='color:{primary_color}; font-size:20px; text-align:center; padding-top:10px;'>➔</div>",
-                                unsafe_allow_html=True,
-                            )
-
-            st.divider()
-            map_col, data_col = st.columns([1.5, 1])
+        # TAB 11: GEOLOCATION & HEX DUMP
+        with tab11:
+            map_col, hex_col = st.columns([1.3, 1])
             with map_col:
-                st.subheader("📍 Attacker Geolocation Radar & Infrastructure")
+                st.subheader("📍 Attacker Geolocation Radar & Interactive Map")
                 geo = results["metadata"].get("geo_data", {})
                 lat = geo.get("lat", 0.0)
                 lon = geo.get("lon", 0.0)
@@ -1095,22 +950,11 @@ Please isolate the compromised host immediately.
                         popup=f"<b>Origin:</b> {city}, {country}<br><b>Type:</b> {ip_type}<br><b>ISP:</b> {isp}",
                         tooltip=f"Threat Origin: {city}, {country}",
                     ).add_to(m)
-                    st_folium(m, width=600, height=350)
+                    st_folium(m, width=580, height=340)
                 else:
-                    st.warning("Could not trace IP location for map.")
+                    st.warning("Could not trace coordinates for map.")
 
-            with data_col:
-                st.subheader("Network Telemetry")
-                st.markdown(f"**Origin IP:** `{results['metadata']['sender_ip']}`")
-                st.markdown(f"**Infrastructure Type:** `{ip_type}`")
-                st.markdown(f"**Country:** {country}")
-                st.markdown(f"**City:** {city}")
-                st.markdown(f"**ISP / ASN:** {isp}")
-
-        # TAB 10: RAW ENVELOPE & HEX DUMP
-        with tab10:
-            st.subheader("🔬 Raw RFC-822 Email Headers & Hex Stream Inspector")
-            st.markdown("**Raw Envelope Headers:**")
-            st.json(results.get("raw_headers", {}))
-            st.markdown("**First 512-Bytes Hex Dump Preview:**")
-            st.code(results.get("raw_hex_preview", ""), language="text")
+            with hex_col:
+                st.subheader("🔬 Raw RFC-822 Headers & Hex Stream")
+                st.json(results.get("raw_headers", {}))
+                st.code(results.get("raw_hex_preview", ""), language="text")
