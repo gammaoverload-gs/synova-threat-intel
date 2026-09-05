@@ -1,5 +1,3 @@
-import email
-from email import policy
 import hashlib
 import imaplib
 import ipaddress
@@ -10,7 +8,7 @@ import requests
 
 
 class EmailIngestionEngine:
-    def __init__(self, raw_bytes: bytes, api_key: str = None, abuse_key: str = None):
+    def __init__(self, raw_bytes, api_key=None, abuse_key=None, **kwargs):
         self.raw_bytes = raw_bytes
         self.api_key = api_key
         self.abuse_key = abuse_key
@@ -19,15 +17,10 @@ class EmailIngestionEngine:
 
     @classmethod
     def from_imap(cls, host: str, user: str, password: str, api_key: str = None, abuse_key: str = None):
-        """
-        Zero-Touch / No-Download Interceptor:
-        Mailbox se seedha RAM memory buffer me raw email stream fetch karta hai bina disk par save kiye.
-        """
+        """Zero-Touch Cloud Mailbox Ingestion directly into memory buffer"""
         mail = imaplib.IMAP4_SSL(host)
         mail.login(user, password)
         mail.select("INBOX")
-
-        # Prioritize unseen/unread threats first
         _, search_data = mail.search(None, "UNSEEN")
         ids = search_data[0].split()
         if not ids:
@@ -36,13 +29,12 @@ class EmailIngestionEngine:
 
         if not ids:
             mail.logout()
-            raise ValueError("No email records found in target inbox.")
+            raise ValueError("No emails found in mailbox.")
 
         latest_id = ids[-1]
         _, data = mail.fetch(latest_id, "(RFC822)")
         raw_msg = data[0][1]
         mail.logout()
-
         return cls(raw_msg, api_key=api_key, abuse_key=abuse_key)
 
     def parse_email(self):
@@ -72,8 +64,8 @@ class EmailIngestionEngine:
         if not ip_str or ip_str in ["Hidden/Unknown", "127.0.0.1", "0.0.0.0"]:
             return False
         try:
-            ip_obj = ipaddress.ip_address(ip_str.strip())
-            return not (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved or ip_obj.is_link_local)
+            ip = ipaddress.ip_address(ip_str.strip())
+            return not (ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_link_local)
         except ValueError:
             return False
 
@@ -106,15 +98,9 @@ class EmailIngestionEngine:
             return ", ".join(formatted) if formatted else "Unknown"
         return str(addr)
 
-    def _get_deep_osint_profile(self, ip: str):
-        """
-        Deep OSINT Triad:
-        1. IP-API: Coordinates, ISP, Proxy/Hosting check
-        2. Shodan InternetDB: Exposed listening ports & Known CVEs
-        3. AbuseIPDB: Malicious reputation confidence score
-        """
+    def _get_geolocation(self, ip):
         if not self._is_public_ip(ip):
-            ip = "185.220.101.5"  # Standard known threat relay fallback for test env
+            ip = "185.220.101.5"  # Fallback known threat node
 
         osint = {
             "country": "Unknown",
@@ -124,7 +110,7 @@ class EmailIngestionEngine:
             "isp": "Unknown",
             "org": "Unknown",
             "asn": "Unknown",
-            "ip_type": "Residential / Commercial ISP",
+            "ip_type": "Residential / Corporate ISP",
             "abuse_score": 0,
             "total_reports": 0,
             "open_ports": [],
@@ -132,10 +118,10 @@ class EmailIngestionEngine:
             "ip": ip,
         }
 
-        # 1. IP-API Reconnaissance
+        # 1. IP-API Lookups
         try:
             r = requests.get(
-                f"http://ip-api.com/json/{ip}?fields=status,country,city,lat,lon,isp,org,as,query,hosting,proxy",
+                f"http://ip-api.com/json/{ip}?fields=status,country,city,lat,lon,isp,org,as,query,proxy,hosting",
                 timeout=4,
             ).json()
             if r.get("status") == "success":
@@ -148,17 +134,17 @@ class EmailIngestionEngine:
                 osint["asn"] = r.get("as", "Unknown")
                 osint["ip"] = r.get("query", ip)
 
-                combined_str = f"{osint['isp']} {osint['org']} {osint['asn']}".lower()
-                if r.get("proxy") or any(k in combined_str for k in ["tor", "exit", "onion"]):
-                    osint["ip_type"] = "⚠️ Tor Exit Relay Node / Proxy Gateway"
-                elif r.get("hosting") or any(k in combined_str for k in ["aws", "amazon", "hetzner", "ovh", "digitalocean", "linode"]):
-                    osint["ip_type"] = "☁️ Bulletproof Cloud VPS / C2 Datacenter"
-                elif any(k in combined_str for k in ["vpn", "m247", "nordvpn", "expressvpn", "proton"]):
-                    osint["ip_type"] = "🛡️ Commercial Anonymizer VPN"
+                combined = f"{osint['isp']} {osint['org']} {osint['asn']}".lower()
+                if r.get("proxy") or any(k in combined for k in ["tor", "exit", "onion"]):
+                    osint["ip_type"] = "⚠️ Tor Exit Relay Node (High Anonymity)"
+                elif r.get("hosting") or any(k in combined for k in ["digitalocean", "aws", "amazon", "hetzner", "ovh", "linode"]):
+                    osint["ip_type"] = "☁️ Cloud Datacenter / Bulletproof Host"
+                elif any(k in combined for k in ["vpn", "proxy", "m247", "nordvpn", "expressvpn", "proton"]):
+                    osint["ip_type"] = "🛡️ Commercial VPN / Proxy Gateway"
         except Exception:
             pass
 
-        # 2. Shodan InternetDB (Free live reconnaissance without API token)
+        # 2. Shodan InternetDB (Free ports & vulnerabilities scan)
         try:
             s_res = requests.get(f"https://internetdb.shodan.io/{ip}", timeout=3.5).json()
             if "ports" in s_res:
@@ -169,7 +155,7 @@ class EmailIngestionEngine:
         except Exception:
             pass
 
-        # 3. AbuseIPDB Threat Reputation API (Optional API Token)
+        # 3. AbuseIPDB Reputation API
         if self.abuse_key:
             try:
                 headers = {"Key": self.abuse_key, "Accept": "application/json"}
@@ -189,8 +175,6 @@ class EmailIngestionEngine:
 
     def _extract_metadata(self):
         sender_ip = "Hidden/Unknown"
-
-        # Hop tracing from parsed Received headers
         if self.parsed_mail.received:
             for hop in self.parsed_mail.received:
                 hop_ip = hop.get("hop_ip")
@@ -202,24 +186,22 @@ class EmailIngestionEngine:
                 if self._is_public_ip(first_hop):
                     sender_ip = first_hop
 
-        # Regex fallback on raw headers if parser missed it
         if sender_ip == "Hidden/Unknown":
-            candidates = re.findall(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b", str(self.parsed_mail.headers))
-            for c in candidates:
-                if self._is_public_ip(c):
-                    sender_ip = c
+            ip_candidates = re.findall(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b", str(self.parsed_mail.headers))
+            for candidate in ip_candidates:
+                if self._is_public_ip(candidate):
+                    sender_ip = candidate
                     break
 
-        geo_osint = self._get_deep_osint_profile(sender_ip)
-
+        geo_data = self._get_geolocation(sender_ip)
         return {
             "message_id": str(self.parsed_mail.message_id or "N/A"),
             "subject": str(self.parsed_mail.subject or "No Subject"),
             "from": self._format_address(self.parsed_mail.from_),
             "to": self._format_address(self.parsed_mail.to),
             "date": str(self.parsed_mail.date or "N/A"),
-            "sender_ip": geo_osint.get("ip", sender_ip),
-            "geo_data": geo_osint,
+            "sender_ip": geo_data.get("ip", sender_ip),
+            "geo_data": geo_data,
         }
 
     def _extract_auth_results(self):
@@ -265,7 +247,7 @@ class EmailIngestionEngine:
             file_hash = hashlib.sha256(raw_att_bytes).hexdigest()
             status = "Clean / Verified"
             if len(file_hash) > 0 and int(file_hash[0], 16) > 9:
-                status = "Suspicious Payload (High Entropy)"
+                status = "Suspicious Payload"
 
             attachments.append({
                 "filename": att.get("filename", "Unknown_Payload"),
@@ -283,7 +265,7 @@ class EmailIngestionEngine:
                 "id": "T1566.002",
                 "name": "Spearphishing Link",
                 "tactic": "Initial Access",
-                "desc": "Adversary delivered malicious hyperlink for credential harvesting.",
+                "desc": "Adversary delivered hyperlink to harvest credentials.",
             })
 
         if any(w in text_lower for w in ["urgent", "immediately", "suspended", "password", "verify", "action required"]):
@@ -291,7 +273,7 @@ class EmailIngestionEngine:
                 "id": "T1204.001",
                 "name": "User Execution: Malicious Link",
                 "tactic": "Execution",
-                "desc": "Leverages urgency/panic cues to force user execution.",
+                "desc": "Relies on social engineering panic cues.",
             })
 
         if not auth.get("spf_pass", False) or not auth.get("dmarc_pass", False):
@@ -299,7 +281,7 @@ class EmailIngestionEngine:
                 "id": "T1589.002",
                 "name": "Gather Victim Identity: Email Spoofing",
                 "tactic": "Reconnaissance",
-                "desc": "Failed SPF/DMARC alignment confirms forged sender envelope.",
+                "desc": "Failed domain authentication indicates unauthorized envelope origin.",
             })
 
         if attachments and any("Suspicious" in att.get("sandbox_status", "") for att in attachments):
@@ -307,7 +289,7 @@ class EmailIngestionEngine:
                 "id": "T1566.001",
                 "name": "Spearphishing Attachment",
                 "tactic": "Initial Access",
-                "desc": "Binary artifact sandboxing flagged high-entropy executable or weaponized document.",
+                "desc": "Adversary embedded high-entropy artifact.",
             })
 
         if not ttps:
@@ -315,7 +297,7 @@ class EmailIngestionEngine:
                 "id": "T1598",
                 "name": "Phishing for Information (Heuristic Clean)",
                 "tactic": "Informational",
-                "desc": "No active weaponized exploitation patterns detected.",
+                "desc": "No high-confidence adversary behavioral patterns identified.",
             })
 
         return ttps
@@ -336,41 +318,29 @@ class EmailIngestionEngine:
         else:
             heuristic_score = 12
 
-        # OSINT risk elevation
-        osint_meta = self.forensic_data.get("metadata", {}).get("geo_data", {})
-        if osint_meta.get("abuse_score", 0) > 25:
-            heuristic_score = min(98, heuristic_score + 20)
-        if "Tor" in str(osint_meta.get("ip_type", "")):
-            heuristic_score = min(98, heuristic_score + 25)
-
         if not text or len(text.strip()) == 0:
             return {
                 "score": "0/100",
                 "ai_score_num": 0,
                 "heuristic_score_num": 0,
-                "analysis": "No email body text extracted for cognitive evaluation.",
-                "mitigations": "- Log artifact metadata in SIEM.\n- No emergency containment required.",
+                "analysis": "No body text found to analyze.",
+                "mitigations": "- Log event in SIEM.\n- No triage required.",
             }
 
         if self.api_key:
             try:
                 genai.configure(api_key=self.api_key)
                 model = genai.GenerativeModel("gemini-2.5-flash")
-                prompt = f"""You are an elite Security Operations Center (SOC) Tier-3 incident handler.
-Analyze this email body alongside threat intel for phishing, spoofing, urgency cues, or credential harvesting.
-
-Sender IP: {osint_meta.get('ip', 'Unknown')}
-Infrastructure: {osint_meta.get('ip_type', 'Standard')}
-Abuse Confidence: {osint_meta.get('abuse_score', 0)}%
-Open Ports: {osint_meta.get('open_ports', [])}
+                prompt = f"""You are an elite Security Operations Center (SOC) Tier-3 incident handler. 
+Analyze this email body for phishing, domain spoofing, urgency cues, or credential harvesting.
 
 Format your entire output exactly like this:
 Score: [number]/100
 Analysis: [2-3 concise forensic sentences explaining the attack vector and indicators]
 Mitigations:
-- [Remediation Step 1: Specific Edge Firewall or DNS Sinkhole command]
-- [Remediation Step 2: DMARC / Mail gateway policy quarantine action]
-- [Remediation Step 3: SOC user session isolation]
+- [Remediation Step 1: Specific Firewall block or DNS Sinkhole action]
+- [Remediation Step 2: Mail server/DMARC policy action]
+- [Remediation Step 3: User credential revocation or SOC alert]
 
 Email Body:
 {text[:2500]}
@@ -379,7 +349,7 @@ Email Body:
                 result_text = response.text.strip()
                 score_val = 75
                 analysis = result_text
-                mitigations = "- Isolate edge endpoints.\n- Inject sender IP into perimeter blocklist."
+                mitigations = "- Isolate endpoints.\n- Add suspicious domains to blocklist."
 
                 if "Score:" in result_text and "Analysis:" in result_text:
                     parts = result_text.split("Analysis:")
@@ -408,10 +378,10 @@ Email Body:
             "score": f"{heuristic_score}/100",
             "ai_score_num": heuristic_score,
             "heuristic_score_num": heuristic_score,
-            "analysis": f"Static Heuristic & OSINT engine detected {len(matches)} urgency triggers with an infrastructure classification of {osint_meta.get('ip_type', 'Standard')}.",
+            "analysis": f"Static Heuristic engine identified {len(matches)} suspicious threat cues ({', '.join(matches[:4]) if matches else 'None'}).",
             "mitigations": (
-                "- Deploy Egress Firewall block on origin IP.\n- Quarantine active mailbox session.\n- Add offending domain to edge sinkhole."
-                if heuristic_score >= 50
+                "- Deploy Egress Firewall block on embedded endpoints.\n- Revoke user session tokens.\n- Quarantine at SEG."
+                if heuristic_score >= 60
                 else "- Routine logging in SIEM."
             ),
         }
