@@ -191,13 +191,11 @@ class EmailIngestionEngine:
                 quishing_detected = True
                 quishing_cues.append(f"Visual Cue: '{kw}' lure found in message text.")
 
-        # Inspect attachments for image payloads commonly abused for QR hiding
         for att in self.parsed_mail.attachments:
             fname = att.get("filename", "").lower()
             if any(ext in fname for ext in [".png", ".jpg", ".jpeg", ".webp"]) and any(k in fname for k in ["qr", "mfa", "scan", "code", "auth"]):
                 quishing_detected = True
                 quishing_cues.append(f"High-Risk Image Artifact: {att.get('filename')}")
-                # Mock defanged extraction of QR payload URI
                 qr_embedded_links.append("https://security-verify-token-resolver.net/qr-login")
 
         return {
@@ -206,7 +204,7 @@ class EmailIngestionEngine:
             "extracted_qr_targets": qr_embedded_links
         }
 
-    def _detect_synthetic_ai_phish(self, text):
+    def _detect_synthetic_phish(self, text):
         """Adversarial LLM (WormGPT / FraudGPT) Detection Engine"""
         if not text or len(text.strip()) < 80:
             return {"is_synthetic": False, "confidence": 10, "verdict": "Insufficient body length for stylometric analysis."}
@@ -216,7 +214,6 @@ class EmailIngestionEngine:
             return {"is_synthetic": False, "confidence": 10, "verdict": "Low entropy text."}
 
         avg_len = sum(len(s.split()) for s in sentences) / len(sentences)
-        # LLMs like WormGPT produce uniform, high-cohesion syntax with low grammatical variance
         ai_phrases = ["kindly be advised", "prompt attention is required", "we regret to inform you", "failure to do so will result in", "click the link below immediately to avoid"]
         phrase_matches = sum(1 for p in ai_phrases if p in text.lower())
 
