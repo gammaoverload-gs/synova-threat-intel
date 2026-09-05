@@ -148,7 +148,7 @@ with ingestion_container:
 
     raw_payload_bytes = None
 
-        if "1-Tap" in in_mode:
+    if "1-Tap" in in_mode:
         st.caption("📲 **Mobile-Friendly Testing:** No .eml download required on mobile. Tap any sample vector below for instant in-memory triage:")
         s_col1, s_col2, s_col3 = st.columns(3)
         if s_col1.button("🚨 Test 1: Quishing & APT36 Lure", use_container_width=True):
@@ -183,7 +183,7 @@ with ingestion_container:
         st.caption("🔒 **Zero-Download Security:** Inspects email directly inside memory RAM buffer without downloading weaponized binaries onto your phone.")
         ci1, ci2, ci3 = st.columns([1.5, 1.5, 1.2])
         with ci1: imap_server = st.text_input("IMAP Server Host", value="imap.gmail.com")
-        with ci2: imap_email = st.text_input("User / Service Account", placeholder="incident-sandbox@corp.com")
+        with ci2: imap_user = st.text_input("User / Service Account", placeholder="incident-sandbox@corp.com")
         with ci3: imap_password = st.text_input("16-Digit App Password", type="password")
         
         if st.button("🚀 Intercept & Neutralize Unread Threats", use_container_width=True):
@@ -191,7 +191,7 @@ with ingestion_container:
                 with st.spinner("Connecting to SSL Cloud Mailbox Buffer..."):
                     try:
                         engine = EmailIngestionEngine.from_imap(
-                            imap_server, imap_email, imap_password, api_key=api_key, abuse_key=abuse_key
+                            imap_server, imap_user, imap_password, api_key=api_key, abuse_key=abuse_key
                         )
                         results = engine.parse_email()
                     except Exception as e:
