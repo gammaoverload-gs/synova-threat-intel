@@ -21,10 +21,8 @@ api_key = st.secrets.get("GEMINI_API_KEY", "")
 elevenlabs_api_key = st.secrets.get("ELEVENLABS_API_KEY", "")
 abuse_key = st.secrets.get("ABUSEIPDB_API_KEY", "")
 
-# Initialize ElevenLabs Client
 eleven_client = ElevenLabs(api_key=elevenlabs_api_key) if elevenlabs_api_key else None
 
-# --- SESSION CONTROLLERS ---
 if "replay" in st.query_params:
     st.query_params.clear()
     st.session_state.intro_done = False
@@ -39,7 +37,7 @@ if "last_played_audio_hash" not in st.session_state:
 if "copilot_history" not in st.session_state:
     st.session_state.copilot_history = []
 
-# --- STEP 1: INITIAL PROTECTION LOADING SCREEN ---
+# --- INTRO PROTECTION LOADING SCREEN ---
 if not st.session_state.intro_done:
     st.markdown(
         """
@@ -174,7 +172,7 @@ with ingestion_container:
 
     else:
         st.caption("📝 Inspect raw ASCII/MIME streams copy-pasted directly from webmail headers (Zero Disk footprint).")
-        raw_stream_text = st.text_area("Paste raw RFC-822 headers & payload here:", height=130, placeholder="Received: from mail.attacker.net ...\nFrom: attacker@malicious.com ...")
+        raw_stream_text = st.text_area("Paste raw RFC-822 headers & payload here:", height=140, placeholder="Received: from mail.attacker.net ...\nFrom: attacker@malicious.com ...")
         if st.button("⚡ Triage Raw Buffer", use_container_width=True):
             if raw_stream_text.strip():
                 raw_payload_bytes = raw_stream_text.encode("utf-8")
@@ -347,7 +345,7 @@ with header_container:
     col1, col2 = st.columns([3.2, 1.8])
     with col1:
         st.markdown(f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Enterprise SOC</span></h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Blockchain Merkle Custody, Multi-Modal Quishing Radar, Deep OSINT, STIX 2.1 & Threat Graph Engine</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Blockchain Merkle Custody, Nation-State Attribution, Deep OSINT, STIX 2.1 & Threat Graph Engine</p>", unsafe_allow_html=True)
     with col2:
         st.markdown(
             f"""
@@ -411,10 +409,8 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
                     const unlock = () => {{
                         audio.play();
                         window.parent.document.removeEventListener('click', unlock);
-                        document.removeEventListener('click', unlock);
                     }};
                     window.parent.document.addEventListener('click', unlock, {{ once: true }});
-                    document.addEventListener('click', unlock, {{ once: true }});
                 }});
             }}
         }} else if ('speechSynthesis' in window) {{
@@ -439,11 +435,13 @@ def build_pdf_buffer(results_data):
     story.append(Spacer(1, 10))
     meta = results_data.get("metadata", {})
     chain = results_data.get("blockchain_custody", {})
+    apt = results_data.get("apt_attribution", {})
     m_data = [
         [Paragraph("<b>Subject:</b>", body_style), Paragraph(html.escape(str(meta.get("subject", "N/A"))), body_style)],
         [Paragraph("<b>Sender:</b>", body_style), Paragraph(html.escape(str(meta.get("from", "N/A"))), body_style)],
         [Paragraph("<b>Origin IP:</b>", body_style), Paragraph(html.escape(str(meta.get("sender_ip", "N/A"))), body_style)],
         [Paragraph("<b>Threat Score:</b>", body_style), Paragraph(html.escape(str(results_data.get("ai_analysis", {}).get("score", "N/A"))), body_style)],
+        [Paragraph("<b>APT Actor Attribution:</b>", body_style), Paragraph(f"<b>{apt.get('actor_name')}</b> ({apt.get('confidence_score')}%)", body_style)],
         [Paragraph("<b>Blockchain Merkle Root:</b>", body_style), Paragraph(f"<code>{chain.get('merkle_root', 'N/A')}</code>", body_style)],
         [Paragraph("<b>Legal Admissibility:</b>", body_style), Paragraph(str(chain.get("legal_compliance", "BSA Sec 63/65B Compliant")), body_style)]
     ]
@@ -461,7 +459,7 @@ with content_container:
             <div style="background: linear-gradient(135deg, rgba(8, 14, 26, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1px solid rgba(0, 168, 255, 0.3); border-left: 5px solid {primary_color}; border-radius: 12px; padding: 24px; margin-top: 10px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0, 168, 255, 0.1);">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                     <h3 style="color: #ffffff; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 20px;">
-                        ⚡ WELCOME TO THE SYNOVA THREAT INTELLIGENCE MATRIX
+                        ⚡ WELCOME TO THE SYNOVA ENTERPRISE DEFENSE MATRIX
                     </h3>
                     <span style="background: rgba(0, 168, 255, 0.15); color: {primary_color}; border: 1px solid {primary_color}; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-family: monospace;">
                         BLOCKCHAIN & CYBERSECURITY
@@ -472,9 +470,9 @@ with content_container:
                 </p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. IN-MEMORY ZERO-DOWNLOAD BUFFER</span>
-                    <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. SHODAN & ABUSEIPDB RECONNAISSANCE</span>
+                    <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. APT THREAT ACTOR RADAR</span>
                     <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">3. BLOCKCHAIN MERKLE PROOF ANCHOR</span>
-                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. STIX 2.1 & AUTO-YARA EXPORTER</span>
+                    <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. ACTIVE CANARY COUNTER-STRIKE</span>
                 </div>
             </div>
             """, unsafe_allow_html=True,
@@ -578,19 +576,20 @@ with content_container:
 
         st.divider()
 
-        # --- 11 ENTERPRISE FORENSIC TABS ---
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
+        # --- 12 ENTERPRISE FORENSIC TABS ---
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.tabs([
             "🕸️ Threat Knowledge Graph",
-            "⛓️ Blockchain Chain-of-Custody",
+            "🎯 Nation-State APT Attribution",
+            "⛓️ Blockchain Custody & Smart Contract",
             "🤖 AI SOC Copilot",
+            "💣 Active Defense: Canary Trap",
+            "🧬 In-Memory De-Obfuscator",
             "🛡️ Identity & Perimeter SOAR",
             "📱 Quishing & WormGPT Radar",
             "🌐 Attacker OSINT Infrastructure",
             "⚡ Kill-Chain Simulator",
-            "🧩 Payload Matrix & Lookalikes",
-            "🕒 Chronology & Timeline",
             "👁️ Defanged Preview",
-            "📍 Geolocation & Hex Dump",
+            "🔬 Raw Headers & Hex Dump",
         ])
 
         # TAB 1: VIS.JS THREAT GRAPH
@@ -629,11 +628,29 @@ with content_container:
             """
             st.components.v1.html(graph_html, height=440)
 
-        # TAB 2: BLOCKCHAIN FORENSIC CHAIN-OF-CUSTODY (THEME HIT)
+        # TAB 2: NATION-STATE APT ATTRIBUTION (NEW ADVANCEMENT 1)
         with tab2:
-            st.subheader("⛓️ Cryptographic Forensic Chain-of-Custody (Tamper-Proof Ledger)")
-            st.caption("Meets Bharatiya Sakshya Adhiniyam Sec 63/65B and ISO/IEC 27037 Digital Evidence Admissibility standards.")
+            st.subheader("🎯 Nation-State APT Adversary Attribution Radar")
+            st.caption("Heuristic fingerprinting matches IOCs, operational lures, and infrastructure against known cyber warfare actors.")
+            apt = results.get("apt_attribution", {})
+            ac1, ac2, ac3 = st.columns(3)
+            ac1.metric("ATTRIBUTED ACTOR", str(apt.get("actor_name")))
+            ac2.metric("OPERATIONAL CONFIDENCE", f"{apt.get('confidence_score')}%")
+            ac3.metric("GEOPOLITICAL ORIGIN", str(apt.get("origin_region")))
 
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid {primary_color}; border-radius: 8px; padding: 16px; margin: 12px 0;">
+                <div style="color: {primary_color}; font-weight: bold; font-family: monospace;">📋 CAMPAIGN INTELLIGENCE BRIEFING</div>
+                <div style="color: #cbd5e1; font-size: 13px; margin-top: 6px;">{apt.get('analysis')}</div>
+                <div style="color: #94a3b8; font-size: 12px; margin-top: 8px;"><b>Targeted Critical Sectors:</b> {apt.get('target_sector')}</div>
+                <div style="color: #94a3b8; font-size: 12px;"><b>Attributed Threat TTPs:</b> <code>{", ".join(apt.get('ttp_signatures', []))}</code></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # TAB 3: BLOCKCHAIN CUSTODY & SMART CONTRACT (NEW ADVANCEMENT 4)
+        with tab3:
+            st.subheader("⛓️ Cryptographic Chain-of-Custody & Solidity Smart Contract")
+            st.caption("Immutable Merkle tree proofs compliant with Bharatiya Sakshya Adhiniyam Sec 63/65B.")
             chain = results.get("blockchain_custody", {})
             bc1, bc2, bc3 = st.columns(3)
             bc1.metric("BLOCK HEIGHT", f"#{chain.get('block_height')}")
@@ -653,10 +670,13 @@ with content_container:
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            st.download_button("📥 Download Sec 63/65B Chain-of-Custody Certificate (JSON)", data=json.dumps(chain, indent=2), file_name="forensic_custody_certificate.json", mime="application/json")
 
-        # TAB 3: AI SOC COPILOT
-        with tab3:
+            st.markdown("#### 📜 Solidity Smart Contract On-Chain Verification Code")
+            st.code(results.get("smart_contract_code", "// Solidity Code"), language="solidity")
+            st.download_button("📥 Download Solidity Evidence Contract (.sol)", data=results.get("smart_contract_code", ""), file_name="SynovaRegistry.sol", mime="text/plain")
+
+        # TAB 4: AI SOC COPILOT
+        with tab4:
             st.subheader("🤖 SYNOVA Autonomous SOC Copilot (Tier-3 Assistant)")
             st.caption("Chat live with the L3 Forensic AI investigating this exact artifact.")
 
@@ -695,6 +715,7 @@ with content_container:
                                 - URLs: {results['body_artifacts']['extracted_urls'][:4]}
                                 - Typo-squatting alerts: {results.get('typosquatting', [])}
                                 - Quishing: {results.get('quishing_telemetry')}
+                                - APT Actor: {results.get('apt_attribution')}
                                 - Executive Analysis: {results['ai_analysis']['analysis']}
 
                                 User Query: {user_query}
@@ -708,8 +729,41 @@ with content_container:
                         st.markdown(reply_text)
                         st.session_state.copilot_history.append({"role": "assistant", "content": reply_text})
 
-        # TAB 4: IDENTITY & PERIMETER SOAR
-        with tab4:
+        # TAB 5: ACTIVE DEFENSE - CANARY TRAP (NEW ADVANCEMENT 3)
+        with tab5:
+            st.subheader("💣 Active Defense: Autonomous Honeytoken Canary Counter-Strike")
+            st.caption("Deploys synthetic poisoned credentials into the adversary's harvesting portal to track their real origin IP upon exfiltration.")
+            canary = results.get("canary_trap", {})
+            st.info(f"Target Phishing Infrastructure Endpoint: `{canary.get('target_phish_portal')}`")
+
+            can1, can2 = st.columns(2)
+            with can1:
+                st.markdown("#### 🎯 Generated Synthetic Canary Credential")
+                st.code(f"""User: {canary.get('canary_user')}
+Password: {canary.get('poison_payload', {}).get('password')}
+Tracking Token: {canary.get('canary_token')}
+Beacon Callback: {canary.get('synthetic_beacon')}
+""", language="text")
+
+            with can2:
+                st.markdown("#### ⚡ Launch Autonomous Counter-Strike Injection")
+                st.caption("Sends honeytoken payload to adversary form to unmask their real, non-VPN IP.")
+                if st.button("🚀 Trigger Honeytoken Counter-Strike Lure", use_container_width=True):
+                    st.success(f"✅ Honeytoken `{canary.get('canary_token')}` successfully staged. Tracking beacon active on CERT-In / SOC gateway.")
+
+        # TAB 6: IN-MEMORY SCRIPT & SHELLCODE DE-OBFUSCATOR (NEW ADVANCEMENT 2)
+        with tab6:
+            st.subheader("🧬 In-Memory Recursive Base64 & PowerShell De-Obfuscator")
+            st.caption("Unpacks obfuscated Unicode UTF-16LE scripts, base64 payloads, and hidden command-line execution stubs without running code.")
+            deob_list = results.get("deobfuscated_payloads", [])
+            for item in deob_list:
+                st.markdown(f"**Payload Classification:** `{item['type']}`")
+                if item['raw_obfuscated'] != "None":
+                    st.caption(f"Raw Obfuscated Fragment: `{item['raw_obfuscated']}`")
+                st.code(item['deobfuscated_code'], language="powershell" if "PowerShell" in item['type'] else "text")
+
+        # TAB 7: IDENTITY & PERIMETER SOAR
+        with tab7:
             st.subheader("🛡️ Enterprise SOAR: Zero-Trust Identity & Perimeter Isolation")
             victim_recipient = results['metadata'].get('to', 'victim@enterprise.com')
             sender_ip = results['metadata']['sender_ip']
@@ -720,7 +774,6 @@ with content_container:
                 st.caption("Instantly invalidate compromised user SSO tokens to prevent session hijacking.")
                 if st.button("⚡ Stage 1-Click Identity Revocation Command", use_container_width=True):
                     st.code(f"""# --- MICROSOFT GRAPH / AZURE AD SESSION REVOCATION ---
-# Revoke active OAuth Refresh Tokens for victim:
 POST https://graph.microsoft.com/v1.0/users/{victim_recipient}/revokeSignInSessions
 Headers: {{ "Authorization": "Bearer $ADMIN_TOKEN" }}
 
@@ -747,8 +800,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
             with exp2:
                 st.download_button("📥 Export Compiled YARA Signature", data=results.get("yara_rule", "// No YARA"), file_name="synova_detect.yar", mime="text/plain", use_container_width=True)
 
-        # TAB 5: QUISHING & WORMGPT STEALTH RADAR
-        with tab5:
+        # TAB 8: QUISHING & WORMGPT STEALTH RADAR
+        with tab8:
             st.subheader("📱 Quishing (QR Phishing) & Adversarial LLM Stealth Radar")
             q_col, w_col = st.columns(2)
             with q_col:
@@ -772,8 +825,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
                 else:
                     st.success("✅ Human linguistic variation detected. Low synthetic lure likelihood.")
 
-        # TAB 6: ATTACKER OSINT INFRASTRUCTURE
-        with tab6:
+        # TAB 9: ATTACKER OSINT INFRASTRUCTURE
+        with tab9:
             st.subheader("🌐 Deep Infrastructure Profiling (Shodan & AbuseIPDB)")
             osint_data = results["metadata"].get("geo_data", {})
             oc1, oc2, oc3 = st.columns(3)
@@ -794,8 +847,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
             else:
                 st.info("ℹ️ No publicly cataloged CVE vulnerabilities tagged to this host IP.")
 
-        # TAB 7: KILL-CHAIN SIMULATOR
-        with tab7:
+        # TAB 10: KILL-CHAIN SIMULATOR
+        with tab10:
             st.subheader("⚡ Adversary Kill-Chain Simulation (Impact Comparison)")
             sim_mode = st.radio(
                 "Select Incident Scenario:",
@@ -818,87 +871,14 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
                 **✅ SYNOVA Autonomous Containment Flow:**
                 1. **Ingress:** Zero-disk MIME parsing inspects raw RFC-822 stream in memory.
                 2. **AI Triage:** Gemini LLM detects urgency cues and domain spoofing in **180ms**.
-                3. **Neutralization:** DNS sinkhole and IP firewall block rule auto-staged across edge gateways.
+                3. **Neutralization:** DNS sinkhole, Honeytoken injection, and IP firewall block staged.
                 4. **Quarantine:** Email neutralized and converted to defanged forensic preview.
                 
                 🛡️ **Mitigation Outcome:** **100% Data Exfiltration Prevented | Zero Endpoint Footprint**
                 """)
 
-        # TAB 8: PAYLOAD MATRIX & LOOKALIKES
-        with tab8:
-            st.subheader("🧩 Multi-Layer Forensic Deconstruction Matrix")
-            from_str = html.escape(str(results["metadata"]["from"]))
-            subj_str = html.escape(str(results["metadata"]["subject"]))
-
-            st.markdown(
-                f"""
-            <div class="layer-card">
-                <div class="layer-title">Layer 1: Envelope & Identity Layer</div>
-                <div style="font-size:13px; color:#cbd5e1;">• From: <code>{from_str}</code></div>
-                <div style="font-size:13px; color:#cbd5e1;">• Subject: <code>{subj_str}</code></div>
-                <div style="font-size:13px; color:#cbd5e1;">• DMARC/SPF Alignment: <code>{"ALIGNED" if results['authentication']['spf_pass'] else "DISAVOWED / UNVERIFIED"}</code></div>
-            </div>
-            
-            <div class="layer-card">
-                <div class="layer-title">Layer 2: Transport & Routing Layer</div>
-                <div style="font-size:13px; color:#cbd5e1;">• Origin Relay Node: <code>{html.escape(str(results['metadata']['sender_ip']))}</code></div>
-                <div style="font-size:13px; color:#cbd5e1;">• Geo Anchor & Type: <code>{origin_city}, {origin_country} [{ip_type}]</code></div>
-                <div style="font-size:13px; color:#cbd5e1;">• Total Intermediate Relay Hops: <code>{len(results.get('routing_hops', []))}</code></div>
-            </div>
-
-            <div class="layer-card">
-                <div class="layer-title">Layer 3: Cognitive & Psychological Vector</div>
-                <div style="font-size:13px; color:#cbd5e1;">• Adversary Cues: <code>Urgency Cues / Social Engineering Pressure Tactics</code></div>
-                <div style="font-size:13px; color:#cbd5e1;">• Behavioral Tactic: <code>Initial Access (MITRE ATT&CK T1566)</code></div>
-            </div>
-
-            <div class="layer-card">
-                <div class="layer-title">Layer 4: Binary & Artifact Payload</div>
-                <div style="font-size:13px; color:#cbd5e1;">• Embedded URLs: <code>{len(results['body_artifacts']['extracted_urls'])} Hyperlinks extracted</code></div>
-                <div style="font-size:13px; color:#cbd5e1;">• Sandboxed MIME Attachments: <code>{len(results.get('attachments', []))} Files analyzed</code></div>
-            </div>
-            """, unsafe_allow_html=True,
-            )
-
-            st.divider()
-            st.subheader("🎯 Homograph & Lookalike Squatting Radar")
-            if typos:
-                st.table(typos)
-            else:
-                st.success("✅ Zero visual lookalike or Punycode homograph domains detected.")
-
-        # TAB 9: THREAT CHRONOLOGY
-        with tab9:
-            st.subheader("🕒 Threat Execution & Detection Chronology")
-            date_stamp = html.escape(str(results["metadata"]["date"]))
-            origin_ip = html.escape(str(results["metadata"]["sender_ip"]))
-            st.markdown(
-                f"""
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <strong style="color: {primary_color};">Phase 1: Ingress Transmission [{date_stamp}]</strong>
-                    <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Threat packet initiated from Origin Node <code>{origin_ip}</code> ({origin_city}, {origin_country}) classified as <code>{ip_type}</code>.</p>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <strong style="color: {primary_color};">Phase 2: Gateway Relay & Auth Check</strong>
-                    <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">MIME stream processed by MX gateway. SPF Status: <code>{"PASS" if results['authentication']['spf_pass'] else "FAILED/UNVERIFIED"}</code>.</p>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <strong style="color: {primary_color};">Phase 3: Payload Extraction & Deep OSINT Recon</strong>
-                    <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Extracted {len(results['body_artifacts']['extracted_urls'])} URLs, queried Shodan InternetDB for open ports, and evaluated MIME attachments.</p>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <strong style="color: {primary_color};">Phase 4: Autonomous SOAR & Blockchain Anchoring</strong>
-                    <p style="color:#94a3b8; font-size:13px; margin:2px 0 0 0;">Calculated Threat Index <code>{score_num}/100</code>. Cryptographic Merkle Root anchored on tamper-proof ledger.</p>
-                </div>
-            """, unsafe_allow_html=True,
-            )
-
-        # TAB 10: DEFANGED HTML SANDBOX
-        with tab10:
+        # TAB 11: DEFANGED HTML SANDBOX
+        with tab11:
             st.subheader("👁️ Pre-Scan Defanged HTML Sandbox Preview")
             raw_body_text = str(results["body_artifacts"]["raw_body"] or "")
             safe_preview = html.escape(raw_body_text)
@@ -921,40 +901,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
             """, unsafe_allow_html=True,
             )
 
-        # TAB 11: GEOLOCATION & HEX DUMP
-        with tab11:
-            map_col, hex_col = st.columns([1.3, 1])
-            with map_col:
-                st.subheader("📍 Attacker Geolocation Radar & Interactive Map")
-                geo = results["metadata"].get("geo_data", {})
-                lat = geo.get("lat", 0.0)
-                lon = geo.get("lon", 0.0)
-                city = geo.get("city", "Unknown")
-                country = geo.get("country", "Unknown")
-                isp = geo.get("isp", "Unknown")
-
-                if lat != 0.0 and lon != 0.0:
-                    m = folium.Map(
-                        location=[lat, lon],
-                        zoom_start=4,
-                        tiles="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-                        attr="Esri",
-                    )
-                    folium.CircleMarker(
-                        location=[lat, lon],
-                        radius=10,
-                        color=primary_color,
-                        fill=True,
-                        fill_color=primary_color,
-                        fill_opacity=0.85,
-                        popup=f"<b>Origin:</b> {city}, {country}<br><b>Type:</b> {ip_type}<br><b>ISP:</b> {isp}",
-                        tooltip=f"Threat Origin: {city}, {country}",
-                    ).add_to(m)
-                    st_folium(m, width=580, height=340)
-                else:
-                    st.warning("Could not trace coordinates for map.")
-
-            with hex_col:
-                st.subheader("🔬 Raw RFC-822 Headers & Hex Stream")
-                st.json(results.get("raw_headers", {}))
-                st.code(results.get("raw_hex_preview", ""), language="text")
+        # TAB 12: RAW ENVELOPE & HEX DUMP
+        with tab12:
+            st.subheader("🔬 Raw RFC-822 Headers & First 512-Bytes Hex Stream")
+            st.json(results.get("raw_headers", {}))
+            st.code(results.get("raw_hex_preview", ""), language="text")
