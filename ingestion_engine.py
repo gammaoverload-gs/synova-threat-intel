@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 import base64
+from datetime import datetime, timezone
 import hashlib
 import imaplib
 import ipaddress
@@ -13,6 +13,7 @@ import requests
 
 
 def pure_levenshtein(s1: str, s2: str) -> int:
+    """Pure Python Levenshtein Distance for Zero-Dependency Lookalike Hunting."""
     if len(s1) < len(s2):
         return pure_levenshtein(s2, s1)
     if len(s2) == 0:
@@ -64,12 +65,13 @@ class EmailIngestionEngine:
         self.raw_bytes = raw_bytes
         self.api_key = api_key
         self.abuse_key = abuse_key
-        self.vector_type = vector_type  # "EMAIL", "WHATSAPP", "TELEGRAM", "SMS"
+        self.vector_type = vector_type
         self.parsed_mail = None
         self.forensic_data = {}
 
     @classmethod
     def from_imap(cls, host: str, user: str, password: str, api_key: str = None, abuse_key: str = None):
+        """Zero-Touch Cloud Mailbox Ingestion directly into memory buffer via SSL."""
         mail = imaplib.IMAP4_SSL(host)
         mail.login(user, password)
         mail.select("INBOX")
@@ -90,11 +92,10 @@ class EmailIngestionEngine:
         return cls(raw_msg, api_key=api_key, abuse_key=abuse_key, vector_type="EMAIL")
 
     def parse_email(self):
-        # Handle non-email raw chat / SMS text streams seamlessly
-        if self.vector_type in ["WHATSAPP", "TELEGRAM", "SMS"]:
+        """Unified parser processing RFC-822 MIME emails, WhatsApp chats, Telegram streams, and SMS."""
+        if self.vector_type in ["WHATSAPP", "TELEGRAM", "SMS", "UPI_INTENT", "CHAT"]:
             return self._parse_omnichannel_stream()
 
-        # Standard Email Stream
         try:
             self.parsed_mail = mailparser.parse_from_bytes(self.raw_bytes)
             raw_body_str = self.parsed_mail.body or ""
@@ -106,11 +107,10 @@ class EmailIngestionEngine:
         return self._assemble_forensic_pipeline(raw_body_str, headers_dict)
 
     def _parse_omnichannel_stream(self):
-        """Dedicated Parser for WhatsApp, Telegram, and SMS vectors"""
+        """Dedicated parser for non-RFC822 streams (WhatsApp, Telegram, SMS, UPI)."""
         raw_text = self.raw_bytes.decode("utf-8", errors="ignore")
         sender_id = "Unknown Mobile/Chat Handle"
 
-        # Try to extract phone numbers or usernames from chat header
         phone_match = re.search(r"(\+?[0-9]{1,3}[-.\s]?[0-9]{10})", raw_text)
         if phone_match:
             sender_id = phone_match.group(1)
@@ -127,6 +127,7 @@ class EmailIngestionEngine:
         return self._assemble_forensic_pipeline(raw_text, headers_dict, is_chat=True)
 
     def _assemble_forensic_pipeline(self, raw_body_str, headers_dict, is_chat=False):
+        """Core forensic analysis orchestrator."""
         self.forensic_data = {
             "channel": self.vector_type,
             "metadata": self._extract_metadata(headers_dict, raw_body_str, is_chat),
@@ -138,27 +139,32 @@ class EmailIngestionEngine:
             "raw_hex_preview": self._generate_hex_preview(self.raw_bytes[:512]),
         }
 
-        # 1. Lookalike & Typo-Squatting Hunter
+        # 1. Homoglyph & Lookalike Radar
         self.forensic_data["typosquatting"] = self._detect_typosquatting(
             self.forensic_data["body_artifacts"]["extracted_urls"],
             self.forensic_data["metadata"]["from"]
         )
 
-        # 2. Omnichannel Exploit Engines (UPI Deep-Links, APKs, Digital Arrest)
+        # 2. Omnichannel Exploit Engines (UPI Deep-Links, APK Droppers, Digital Arrest)
         self.forensic_data["omnichannel_threats"] = self._detect_omnichannel_threats(raw_body_str)
         self.forensic_data["quishing_telemetry"] = self._analyze_quishing_vectors(raw_body_str)
         self.forensic_data["synthetic_ai_detection"] = self._detect_synthetic_phish(raw_body_str)
         self.forensic_data["deobfuscated_payloads"] = self._deobfuscate_stream(raw_body_str)
 
-        # 3. Cognitive AI & Mitre TTPs
+        # 3. Cognitive AI & MITRE TTP Mapping
         self.forensic_data["ai_analysis"] = self._analyze_threat_with_ai(raw_body_str)
-        self.forensic_data["mitre_ttps"] = self._map_mitre_ttps(raw_body_str, self.forensic_data["authentication"], self.forensic_data["attachments"])
+        self.forensic_data["mitre_ttps"] = self._map_mitre_ttps(
+            raw_body_str, self.forensic_data["authentication"], self.forensic_data["attachments"]
+        )
 
-        # 4. Attribution & Active Defense
+        # 4. Attribution & Active Deception
         self.forensic_data["apt_attribution"] = self._fingerprint_apt_actor(raw_body_str)
         self.forensic_data["canary_trap"] = self._generate_canary_trap()
 
-        # 5. SIEM & Blockchain Ledgers
+        # 5. Citadel Autonomous Host & Identity Defense Protocols
+        self.forensic_data["citadel_lockdown"] = self._generate_citadel_protocols()
+
+        # 6. SIEM Exporters & Blockchain Ledger Anchors
         self.forensic_data["stix_bundle"] = self._generate_stix_bundle()
         self.forensic_data["yara_rule"] = self._generate_yara_rule()
         self.forensic_data["blockchain_custody"] = self._anchor_blockchain_block()
@@ -166,12 +172,69 @@ class EmailIngestionEngine:
 
         return self.forensic_data
 
+    def _generate_citadel_protocols(self):
+        """Generates OS-level self-preservation commands, ACL directory freezes, and zero-trust kill scripts."""
+        sender_ip = self.forensic_data.get("metadata", {}).get("sender_ip", "185.220.101.5")
+        victim_id = self.forensic_data.get("metadata", {}).get("to", "protected-endpoint@enterprise.internal")
+        incident_id = f"CITADEL-INC-{uuid.uuid4().hex[:6].upper()}"
+
+        return {
+            "incident_id": incident_id,
+            "air_gap_windows": f"""# === WINDOWS DEFENDER IMMEDIATE HOST AIR-GAP ===
+# 1. Cut all inbound/outbound external communication
+New-NetFirewallRule -DisplayName "SYNOVA_AIRGAP_BLOCK_ALL_OUT" -Direction Outbound -Action Block -Profile Any
+New-NetFirewallRule -DisplayName "SYNOVA_AIRGAP_BLOCK_ALL_IN" -Direction Inbound -Action Block -Profile Any
+
+# 2. Allow emergency encrypted tunnel to SOC Gateway only
+New-NetFirewallRule -DisplayName "SYNOVA_SOC_EMERGENCY_TUNNEL" -Direction Outbound -RemoteAddress "10.0.0.1" -Action Allow -Profile Any
+Write-Host "[!] Host isolated from external network. Secure SOC tunnel maintained."
+""",
+            "air_gap_linux": f"""# === LINUX IPTABLES TOTAL NETWORK QUARANTINE ===
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT DROP
+iptables -A OUTPUT -d 10.0.0.1 -j ACCEPT
+iptables -A INPUT -s 10.0.0.1 -j ACCEPT
+echo "[!] Linux host air-gapped. Only internal gateway 10.0.0.1 permitted."
+""",
+            "identity_kill": f"""# === AZURE AD / MICROSOFT GRAPH TOKEN INVALIDATION ===
+POST https://graph.microsoft.com/v1.0/users/{victim_id}/revokeSignInSessions
+Headers: {{ "Authorization": "Bearer $ADMIN_TOKEN" }}
+
+# === OKTA GLOBAL USER SUSPENSION ===
+curl -X POST "https://company.okta.com/api/v1/users/{victim_id}/lifecycle/suspend" \\
+     -H "Authorization: SSWS $OKTA_API_KEY"
+""",
+            "ransomware_shield_windows": """# === ANTI-RANSOMWARE DIRECTORY READ-ONLY LOCK (ACL) ===
+$paths = @("$HOME\\Documents", "$HOME\\Desktop", "$HOME\\Downloads")
+foreach ($p in $paths) {
+    icacls $p /deny "Everyone:(DE,WD,AD,WA)" /inheritance:r
+}
+Write-Host "[!] User directories locked in IMMUTABLE READ-ONLY state."
+""",
+            "ransomware_shield_linux": """# === LINUX IMMUTABLE BIT ENFORCEMENT ===
+chattr -R +i /home/$USER/Documents /home/$USER/Downloads
+echo "[!] Immutable flag set. No binary can modify or encrypt local user files."
+""",
+            "process_slasher": """# === TERMINATE ROGUE SHELL & SCRIPT PROCESSES ===
+Get-Process -Name "powershell", "cmd", "wscript", "cscript", "mshta" -ErrorAction SilentlyContinue | Stop-Process -Force
+Write-Host "[!] Unauthorized execution trees neutralized."
+""",
+            "sos_webhook_payload": {
+                "alert": "CRITICAL_SECURITY_BREACH_CONTAINED",
+                "incident_id": incident_id,
+                "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+                "channel": self.vector_type,
+                "status": "HOST_AIR_GAPPED_AND_IDENTITY_FROZEN",
+                "attacker_indicator": sender_ip
+            }
+        }
+
     def _detect_omnichannel_threats(self, text):
-        """Scans for UPI Exploits, APK Droppers, and Digital Arrest Patterns"""
+        """Scans for UPI Exploits, APK Droppers, and Digital Arrest Patterns."""
         threats_found = []
         upi_intents = re.findall(r"upi://pay\?[^\s<>\"']+", text)
         apk_links = [u for u in re.findall(r"https?://[^\s<>\"']+", text) if ".apk" in u.lower()]
-        
         lower_text = text.lower()
 
         # 1. UPI Deep-Link Intent Injection
@@ -236,9 +299,12 @@ class EmailIngestionEngine:
                 if isinstance(item, (tuple, list)):
                     name = str(item[0]) if len(item) > 0 and item[0] else ""
                     email = str(item[1]) if len(item) > 1 and item[1] else ""
-                    if name and email: formatted.append(f"{name} <{email}>")
-                    elif email: formatted.append(email)
-                    elif name: formatted.append(name)
+                    if name and email:
+                        formatted.append(f"{name} <{email}>")
+                    elif email:
+                        formatted.append(email)
+                    elif name:
+                        formatted.append(name)
                 else:
                     formatted.append(str(item))
             return ", ".join(formatted) if formatted else "Unknown"
@@ -251,7 +317,8 @@ class EmailIngestionEngine:
             try:
                 parsed = urllib.parse.urlparse(u)
                 netloc = parsed.netloc.split(":")[0].lower()
-                if netloc: domains_to_check.add(netloc)
+                if netloc:
+                    domains_to_check.add(netloc)
             except Exception:
                 pass
         sender_match = re.search(r"@([\w.-]+)", sender)
@@ -261,12 +328,15 @@ class EmailIngestionEngine:
         for domain in domains_to_check:
             is_punycode = "xn--" in domain
             for brand in self.TARGET_BRANDS:
-                if domain == brand: continue
+                if domain == brand:
+                    continue
                 dist = pure_levenshtein(domain, brand)
                 if dist in [1, 2] or (brand.split(".")[0] in domain and len(domain) < len(brand) + 12):
                     flagged_domains.append({
-                        "domain": domain, "impersonated_target": brand,
-                        "distance": dist, "is_punycode": is_punycode,
+                        "domain": domain,
+                        "impersonated_target": brand,
+                        "distance": dist,
+                        "is_punycode": is_punycode,
                         "risk": "CRITICAL LOOKALIKE" if dist <= 2 else "SUSPICIOUS IMPERSONATION"
                     })
                     break
@@ -291,7 +361,11 @@ class EmailIngestionEngine:
                     quishing_cues.append(f"High-Risk Image Artifact: {att.get('filename')}")
                     qr_embedded_links.append("https://security-verify-token-resolver.net/qr-login")
 
-        return {"quishing_detected": quishing_detected, "indicators": quishing_cues, "extracted_qr_targets": qr_embedded_links}
+        return {
+            "quishing_detected": quishing_detected,
+            "indicators": quishing_cues,
+            "extracted_qr_targets": qr_embedded_links
+        }
 
     def _detect_synthetic_phish(self, text):
         if not text or len(text.strip()) < 80:
@@ -308,7 +382,8 @@ class EmailIngestionEngine:
         is_synthetic = (avg_len > 14 and phrase_matches >= 2) or (phrase_matches >= 3)
         confidence = min(94, 45 + phrase_matches * 18) if is_synthetic else 22
         return {
-            "is_synthetic": is_synthetic, "confidence": confidence,
+            "is_synthetic": is_synthetic,
+            "confidence": confidence,
             "verdict": "High Probability of Synthetic Generative Lure (WormGPT/FraudGPT Pattern)" if is_synthetic else "Human Linguistic Variation Detected"
         }
 
@@ -321,18 +396,30 @@ class EmailIngestionEngine:
                 try:
                     utf16_str = decoded_bytes.decode("utf-16le")
                     if any(cmd in utf16_str.lower() for cmd in ["http", "downloadstring", "iex", "invoke", "webclient"]):
-                        findings.append({"type": "PowerShell Unicode Encoded Command", "raw_obfuscated": b64[:40] + "...", "deobfuscated_code": utf16_str.strip()})
+                        findings.append({
+                            "type": "PowerShell Unicode Encoded Command",
+                            "raw_obfuscated": b64[:40] + "...",
+                            "deobfuscated_code": utf16_str.strip()
+                        })
                         continue
                 except Exception:
                     pass
                 utf8_str = decoded_bytes.decode("utf-8", errors="ignore")
                 if any(c in utf8_str.lower() for c in ["http://", "https://", "curl", "bash", "cmd.exe", "powershell", "upi://"]):
-                    findings.append({"type": "Base64 Obfuscated Execution Stream", "raw_obfuscated": b64[:40] + "...", "deobfuscated_code": utf8_str.strip()})
+                    findings.append({
+                        "type": "Base64 Obfuscated Execution Stream",
+                        "raw_obfuscated": b64[:40] + "...",
+                        "deobfuscated_code": utf8_str.strip()
+                    })
             except Exception:
                 pass
 
         if not findings:
-            findings.append({"type": "Clean Binary Entropy", "raw_obfuscated": "None", "deobfuscated_code": "No obfuscated command strings or shellcode payloads identified."})
+            findings.append({
+                "type": "Clean Binary Entropy",
+                "raw_obfuscated": "None",
+                "deobfuscated_code": "No obfuscated command strings or shellcode payloads identified."
+            })
         return findings
 
     def _fingerprint_apt_actor(self, text):
@@ -350,15 +437,19 @@ class EmailIngestionEngine:
 
         if highest_score >= 40 and matched_actor:
             return {
-                "actor_name": matched_actor["name"], "origin_region": matched_actor["origin"],
-                "confidence_score": min(92, 50 + highest_score), "target_sector": matched_actor["target"],
+                "actor_name": matched_actor["name"],
+                "origin_region": matched_actor["origin"],
+                "confidence_score": min(92, 50 + highest_score),
+                "target_sector": matched_actor["target"],
                 "ttp_signatures": matched_actor["ttps"],
                 "analysis": f"Telemetry directly aligns with {matched_actor['name']} targeting {matched_actor['target']}."
             }
 
         return {
-            "actor_name": "Opportunistic Cybercrime Syndicate", "origin_region": "Distributed / Commercial VPN Proxy",
-            "confidence_score": 68, "target_sector": "General Citizens, Endpoints & Messaging Channels",
+            "actor_name": "Opportunistic Cybercrime Syndicate",
+            "origin_region": "Distributed / Commercial VPN Proxy",
+            "confidence_score": 68,
+            "target_sector": "General Citizens, Endpoints & Messaging Channels",
             "ttp_signatures": ["T1566.002", "T1204.001"],
             "analysis": "Commodity social engineering campaign without state-sponsored fingerprints."
         }
@@ -372,9 +463,15 @@ class EmailIngestionEngine:
             target_url = self.forensic_data["body_artifacts"]["extracted_urls"][0]
 
         return {
-            "canary_user": canary_user, "canary_token": canary_token,
-            "target_phish_portal": target_url, "synthetic_beacon": f"https://canarytokens.org/feedback?id={canary_id}",
-            "poison_payload": {"username": canary_user, "password": f"PassCode_{canary_id}!2026", "telemetry_trap": canary_token}
+            "canary_user": canary_user,
+            "canary_token": canary_token,
+            "target_phish_portal": target_url,
+            "synthetic_beacon": f"https://canarytokens.org/feedback?id={canary_id}",
+            "poison_payload": {
+                "username": canary_user,
+                "password": f"PassCode_{canary_id}!2026",
+                "telemetry_trap": canary_token
+            }
         }
 
     def _anchor_blockchain_block(self):
@@ -385,9 +482,12 @@ class EmailIngestionEngine:
         block_signature = hashlib.sha256(f"{block_height}{merkle_root}".encode()).hexdigest()
 
         return {
-            "block_height": block_height, "merkle_root": merkle_root,
-            "payload_sha256": payload_hash, "timestamp_utc": timestamp,
-            "consensus_validator": "SYNOVA-PoA-Consensus-Node-01", "block_signature": block_signature,
+            "block_height": block_height,
+            "merkle_root": merkle_root,
+            "payload_sha256": payload_hash,
+            "timestamp_utc": timestamp,
+            "consensus_validator": "SYNOVA-PoA-Consensus-Node-01",
+            "block_signature": block_signature,
             "legal_compliance": "Bharatiya Sakshya Adhiniyam Sec 63/65B Tamper-Proof Cryptographic Standard"
         }
 
@@ -396,6 +496,10 @@ class EmailIngestionEngine:
         return f"""// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+/**
+ * @title SYNOVA Forensic Evidence Anchor
+ * @notice Bharatiya Sakshya Adhiniyam Sec 63/65B Cryptographic Verification Contract
+ */
 contract SynovaForensicRegistry {{
     mapping(bytes32 => uint256) public verifiedIncidents;
     function anchorIncident(bytes32 _merkleRoot) external returns (bool) {{
@@ -500,7 +604,12 @@ contract SynovaForensicRegistry {{
 
     def _extract_auth_results(self, headers, is_chat):
         if is_chat:
-            return {"raw_auth_header": f"N/A ({self.vector_type} End-to-End Delivery)", "spf_pass": False, "dkim_pass": False, "dmarc_pass": False}
+            return {
+                "raw_auth_header": f"N/A ({self.vector_type} End-to-End Delivery)",
+                "spf_pass": False,
+                "dkim_pass": False,
+                "dmarc_pass": False
+            }
         auth_results = headers.get("Authentication-Results", "Not Found")
         return {
             "raw_auth_header": str(auth_results),
@@ -514,8 +623,10 @@ contract SynovaForensicRegistry {{
             hops = []
             for idx, hop in enumerate(self.parsed_mail.received):
                 hops.append({
-                    "hop_number": idx + 1, "hop_ip": hop.get("hop_ip", "Unknown/Relay"),
-                    "by": hop.get("by", "Internal Gateway"), "date": str(hop.get("date", "N/A")),
+                    "hop_number": idx + 1,
+                    "hop_ip": hop.get("hop_ip", "Unknown/Relay"),
+                    "by": hop.get("by", "Internal Gateway"),
+                    "date": str(hop.get("date", "N/A")),
                 })
             return hops
         return [{"hop_number": 1, "hop_ip": "185.220.101.5", "by": f"{self.vector_type} Cloud Gateway", "date": "Real-time"}]
@@ -536,7 +647,11 @@ contract SynovaForensicRegistry {{
                 status = "Clean / Verified"
                 if len(file_hash) > 0 and int(file_hash[0], 16) > 9:
                     status = "Suspicious Payload"
-                attachments.append({"filename": att.get("filename", "Unknown_Payload"), "sha256_hash": file_hash, "sandbox_status": status})
+                attachments.append({
+                    "filename": att.get("filename", "Unknown_Payload"),
+                    "sha256_hash": file_hash,
+                    "sandbox_status": status
+                })
         return attachments
 
     def _map_mitre_ttps(self, text, auth, attachments):
@@ -633,7 +748,7 @@ Output format exactly:
 Score: [number]/100
 Analysis: [2 concise forensic sentences explaining the attack vector and victim manipulation technique]
 Mitigations:
-- [Action 1: Immediate telecom/gateway blocking or UPI VPA freeze]
+- [Action 1: Immediate host air-gap or carrier/perimeter drop]
 - [Action 2: Device quarantine / APK removal / Session revocation]
 - [Action 3: CERT-In / National Cyber Crime Reporting advisory]
 
@@ -644,13 +759,14 @@ Payload:
                 result_text = response.text.strip()
                 score_val = 75
                 analysis = result_text
-                mitigations = "- Block sender number/handle on perimeter gateway.\n- Freeze associated UPI VPA."
+                mitigations = "- Engage Citadel Host Air-Gap.\n- Freeze associated UPI VPA and revoke active SSO sessions."
 
                 if "Score:" in result_text and "Analysis:" in result_text:
                     parts = result_text.split("Analysis:")
                     raw_s = parts[0].replace("Score:", "").strip()
                     digits = "".join([c for c in raw_s.split("/")[0] if c.isdigit()])
-                    if digits: score_val = int(digits)
+                    if digits:
+                        score_val = int(digits)
                     if "Mitigations:" in parts[1]:
                         sub_parts = parts[1].split("Mitigations:")
                         analysis = sub_parts[0].strip()
@@ -658,12 +774,20 @@ Payload:
                     else:
                         analysis = parts[1].strip()
 
-                return {"score": f"{score_val}/100", "ai_score_num": score_val, "heuristic_score_num": heuristic_score, "analysis": analysis, "mitigations": mitigations}
+                return {
+                    "score": f"{score_val}/100",
+                    "ai_score_num": score_val,
+                    "heuristic_score_num": heuristic_score,
+                    "analysis": analysis,
+                    "mitigations": mitigations
+                }
             except Exception:
                 pass
 
         return {
-            "score": f"{heuristic_score}/100", "ai_score_num": heuristic_score, "heuristic_score_num": heuristic_score,
+            "score": f"{heuristic_score}/100",
+            "ai_score_num": heuristic_score,
+            "heuristic_score_num": heuristic_score,
             "analysis": f"Static Omnichannel Engine detected {len(matches)} social engineering cues across {self.vector_type} vector.",
-            "mitigations": "- Block sender on carrier level.\n- Freeze associated UPI handles & add domain to DNS sinkhole."
+            "mitigations": "- Engage Citadel Host Air-Gap.\n- Block sender on carrier level and revoke active OAuth tokens."
         }
