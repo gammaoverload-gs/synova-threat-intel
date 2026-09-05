@@ -1,13 +1,41 @@
+from datetime import datetime, timezone
 import hashlib
 import imaplib
 import ipaddress
+import json
 import re
+import urllib.parse
+import uuid
 import google.generativeai as genai
 import mailparser
 import requests
 
 
+def pure_levenshtein(s1: str, s2: str) -> int:
+    """Pure Python Levenshtein Distance (Zero external dependencies needed)"""
+    if len(s1) < len(s2):
+        return pure_levenshtein(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+    prev = list(range(len(s2) + 1))
+    for i, c1 in enumerate(s1):
+        curr = [i + 1]
+        for j, c2 in enumerate(s2):
+            ins = prev[j + 1] + 1
+            dels = curr[j] + 1
+            subs = prev[j] + (c1 != c2)
+            curr.append(min(ins, dels, subs))
+        prev = curr
+    return prev[-1]
+
+
 class EmailIngestionEngine:
+    TARGET_BRANDS = [
+        "paypal.com", "google.com", "microsoft.com", "apple.com",
+        "amazon.com", "netflix.com", "onlinesbi.sbi", "hdfcbank.com",
+        "icicibank.com", "wellsfargo.com", "chase.com", "bankofamerica.com"
+    ]
+
     def __init__(self, raw_bytes, api_key=None, abuse_key=None, **kwargs):
         self.raw_bytes = raw_bytes
         self.api_key = api_key
@@ -51,6 +79,12 @@ class EmailIngestionEngine:
             "raw_hex_preview": self._generate_hex_preview(self.raw_bytes[:512]),
         }
 
+        # Feature 1: Homograph & Typo-Squatting Hunter
+        self.forensic_data["typosquatting"] = self._detect_typosquatting(
+            self.forensic_data["body_artifacts"]["extracted_urls"],
+            self.forensic_data["metadata"]["from"]
+        )
+
         self.forensic_data["ai_analysis"] = self._analyze_threat_with_ai(raw_body_str)
         self.forensic_data["mitre_ttps"] = self._map_mitre_ttps(
             raw_body_str,
@@ -58,14 +92,18 @@ class EmailIngestionEngine:
             self.forensic_data["attachments"],
         )
 
+        # Feature 2: STIX 2.1 & YARA Rules Compilers
+        self.forensic_data["stix_bundle"] = self._generate_stix_bundle()
+        self.forensic_data["yara_rule"] = self._generate_yara_rule()
+
         return self.forensic_data
 
     def _is_public_ip(self, ip_str: str) -> bool:
         if not ip_str or ip_str in ["Hidden/Unknown", "127.0.0.1", "0.0.0.0"]:
             return False
         try:
-            ip = ipaddress.ip_address(ip_str.strip())
-            return not (ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_link_local)
+            ip_obj = ipaddress.ip_address(ip_str.strip())
+            return not (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved or ip_obj.is_link_local)
         except ValueError:
             return False
 
@@ -98,32 +136,57 @@ class EmailIngestionEngine:
             return ", ".join(formatted) if formatted else "Unknown"
         return str(addr)
 
+    def _detect_typosquatting(self, urls, sender):
+        """Feature 1: Levenshtein distance & Punycode Homoglyph Hunter"""
+        flagged_domains = []
+        domains_to_check = set()
+
+        # Extract domains from URLs
+        for u in urls:
+            try:
+                parsed = urllib.parse.urlparse(u)
+                netloc = parsed.netloc.split(":")[0].lower()
+                if netloc:
+                    domains_to_check.add(netloc)
+            except Exception:
+                pass
+
+        # Extract domain from Sender
+        sender_match = re.search(r"@([\w.-]+)", sender)
+        if sender_match:
+            domains_to_check.add(sender_match.group(1).lower())
+
+        for domain in domains_to_check:
+            is_punycode = "xn--" in domain
+            for brand in self.TARGET_BRANDS:
+                if domain == brand:
+                    continue
+                dist = pure_levenshtein(domain, brand)
+                # Check for typo (1-2 char difference) or substring impersonation
+                if dist in [1, 2] or (brand.split(".")[0] in domain and len(domain) < len(brand) + 12):
+                    flagged_domains.append({
+                        "domain": domain,
+                        "impersonated_target": brand,
+                        "distance": dist,
+                        "is_punycode": is_punycode,
+                        "risk": "CRITICAL LOOKALIKE" if dist <= 2 else "SUSPICIOUS IMPERSONATION"
+                    })
+                    break
+        return flagged_domains
+
     def _get_geolocation(self, ip):
         if not self._is_public_ip(ip):
-            ip = "185.220.101.5"  # Fallback known threat node
+            ip = "185.220.101.5"
 
         osint = {
-            "country": "Unknown",
-            "city": "Unknown",
-            "lat": 0.0,
-            "lon": 0.0,
-            "isp": "Unknown",
-            "org": "Unknown",
-            "asn": "Unknown",
-            "ip_type": "Residential / Corporate ISP",
-            "abuse_score": 0,
-            "total_reports": 0,
-            "open_ports": [],
-            "cves": [],
-            "ip": ip,
+            "country": "Unknown", "city": "Unknown", "lat": 0.0, "lon": 0.0,
+            "isp": "Unknown", "org": "Unknown", "asn": "Unknown",
+            "ip_type": "Residential / Corporate ISP", "abuse_score": 0,
+            "total_reports": 0, "open_ports": [], "cves": [], "ip": ip,
         }
 
-        # 1. IP-API Lookups
         try:
-            r = requests.get(
-                f"http://ip-api.com/json/{ip}?fields=status,country,city,lat,lon,isp,org,as,query,proxy,hosting",
-                timeout=4,
-            ).json()
+            r = requests.get(f"http://ip-api.com/json/{ip}?fields=status,country,city,lat,lon,isp,org,as,query,proxy,hosting", timeout=3.5).json()
             if r.get("status") == "success":
                 osint["country"] = r.get("country", "Unknown")
                 osint["city"] = r.get("city", "Unknown")
@@ -144,9 +207,8 @@ class EmailIngestionEngine:
         except Exception:
             pass
 
-        # 2. Shodan InternetDB (Free ports & vulnerabilities scan)
         try:
-            s_res = requests.get(f"https://internetdb.shodan.io/{ip}", timeout=3.5).json()
+            s_res = requests.get(f"https://internetdb.shodan.io/{ip}", timeout=3.0).json()
             if "ports" in s_res:
                 osint["open_ports"] = s_res.get("ports", [])
                 osint["cves"] = s_res.get("vulns", [])
@@ -155,16 +217,10 @@ class EmailIngestionEngine:
         except Exception:
             pass
 
-        # 3. AbuseIPDB Reputation API
         if self.abuse_key:
             try:
                 headers = {"Key": self.abuse_key, "Accept": "application/json"}
-                ab_res = requests.get(
-                    "https://api.abuseipdb.com/api/v2/check",
-                    headers=headers,
-                    params={"ipAddress": ip, "maxAgeInDays": "90"},
-                    timeout=3.5,
-                ).json()
+                ab_res = requests.get("https://api.abuseipdb.com/api/v2/check", headers=headers, params={"ipAddress": ip, "maxAgeInDays": "90"}, timeout=3.0).json()
                 if "data" in ab_res:
                     osint["abuse_score"] = ab_res["data"].get("abuseConfidenceScore", 0)
                     osint["total_reports"] = ab_res["data"].get("totalReports", 0)
@@ -239,11 +295,7 @@ class EmailIngestionEngine:
         attachments = []
         for att in self.parsed_mail.attachments:
             payload = att.get("payload", b"")
-            if isinstance(payload, str):
-                raw_att_bytes = payload.encode("utf-8", errors="ignore")
-            else:
-                raw_att_bytes = bytes(payload)
-
+            raw_att_bytes = payload.encode("utf-8", errors="ignore") if isinstance(payload, str) else bytes(payload)
             file_hash = hashlib.sha256(raw_att_bytes).hexdigest()
             status = "Clean / Verified"
             if len(file_hash) > 0 and int(file_hash[0], 16) > 9:
@@ -259,48 +311,108 @@ class EmailIngestionEngine:
     def _map_mitre_ttps(self, text, auth, attachments):
         text_lower = text.lower()
         ttps = []
-
         if "http://" in text_lower or "https://" in text_lower:
             ttps.append({
-                "id": "T1566.002",
-                "name": "Spearphishing Link",
-                "tactic": "Initial Access",
-                "desc": "Adversary delivered hyperlink to harvest credentials.",
+                "id": "T1566.002", "name": "Spearphishing Link",
+                "tactic": "Initial Access", "desc": "Adversary delivered hyperlink to harvest credentials."
             })
-
         if any(w in text_lower for w in ["urgent", "immediately", "suspended", "password", "verify", "action required"]):
             ttps.append({
-                "id": "T1204.001",
-                "name": "User Execution: Malicious Link",
-                "tactic": "Execution",
-                "desc": "Relies on social engineering panic cues.",
+                "id": "T1204.001", "name": "User Execution: Malicious Link",
+                "tactic": "Execution", "desc": "Relies on social engineering panic cues."
             })
-
         if not auth.get("spf_pass", False) or not auth.get("dmarc_pass", False):
             ttps.append({
-                "id": "T1589.002",
-                "name": "Gather Victim Identity: Email Spoofing",
-                "tactic": "Reconnaissance",
-                "desc": "Failed domain authentication indicates unauthorized envelope origin.",
+                "id": "T1589.002", "name": "Gather Victim Identity: Email Spoofing",
+                "tactic": "Reconnaissance", "desc": "Failed domain authentication indicates unauthorized envelope origin."
             })
-
         if attachments and any("Suspicious" in att.get("sandbox_status", "") for att in attachments):
             ttps.append({
-                "id": "T1566.001",
-                "name": "Spearphishing Attachment",
-                "tactic": "Initial Access",
-                "desc": "Adversary embedded high-entropy artifact.",
+                "id": "T1566.001", "name": "Spearphishing Attachment",
+                "tactic": "Initial Access", "desc": "Adversary embedded high-entropy artifact."
             })
-
         if not ttps:
             ttps.append({
-                "id": "T1598",
-                "name": "Phishing for Information (Heuristic Clean)",
-                "tactic": "Informational",
-                "desc": "No high-confidence adversary behavioral patterns identified.",
+                "id": "T1598", "name": "Phishing for Information (Heuristic Clean)",
+                "tactic": "Informational", "desc": "No high-confidence adversary behavioral patterns identified."
             })
-
         return ttps
+
+    def _generate_stix_bundle(self):
+        """Feature 2: Enterprise OASIS STIX 2.1 Threat Intel Bundle Exporter"""
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        bundle_id = f"bundle--{uuid.uuid4()}"
+        indicator_id = f"indicator--{uuid.uuid4()}"
+        obs_id = f"observed-data--{uuid.uuid4()}"
+
+        sender_ip = self.forensic_data.get("metadata", {}).get("sender_ip", "185.220.101.5")
+        subject = self.forensic_data.get("metadata", {}).get("subject", "Suspicious Activity")
+
+        stix_objects = [
+            {
+                "type": "indicator",
+                "spec_version": "2.1",
+                "id": indicator_id,
+                "created": now,
+                "modified": now,
+                "name": f"SYNOVA Phishing Vector: {subject[:40]}",
+                "indicator_types": ["malicious-activity"],
+                "pattern": f"[ipv4-addr:value = '{sender_ip}']",
+                "pattern_type": "stix",
+                "valid_from": now
+            },
+            {
+                "type": "observed-data",
+                "spec_version": "2.1",
+                "id": obs_id,
+                "created": now,
+                "modified": now,
+                "first_observed": now,
+                "last_observed": now,
+                "number_observed": 1,
+                "objects": {
+                    "0": {"type": "ipv4-addr", "value": sender_ip},
+                    "1": {"type": "email-message", "subject": subject}
+                }
+            }
+        ]
+
+        return json.dumps({"type": "bundle", "id": bundle_id, "objects": stix_objects}, indent=2)
+
+    def _generate_yara_rule(self):
+        """Feature 2: Dynamic Auto-YARA Detection Rule Compiler"""
+        sub = re.sub(r"[^a-zA-Z0-9_]", "_", self.forensic_data.get("metadata", {}).get("subject", "Malicious_Email"))[:24]
+        rule_name = f"SYNOVA_AutoDetect_{sub}_{int(datetime.now().timestamp())}"
+        sender = self.forensic_data.get("metadata", {}).get("from", "unknown")
+        urls = self.forensic_data.get("body_artifacts", {}).get("extracted_urls", [])
+
+        yara_code = f"""/*
+  Rule: {rule_name}
+  Generated by: SYNOVA Autonomous SOC Platform
+  Target: Phishing, Credential Harvesters & Malicious Streams
+*/
+
+rule {rule_name}
+{{
+    meta:
+        author = "SYNOVA Autonomous AI Engine"
+        date = "{datetime.now().strftime('%Y-%m-%d')}"
+        threat_level = "High"
+        classification = "T1566 Spearphishing"
+
+    strings:
+        $sender_origin = "{sender[:35]}" ascii wide nocase
+"""
+        for i, u in enumerate(urls[:3]):
+            clean_u = u.replace('"', '\\"').replace('\\', '\\\\')[:50]
+            yara_code += f'        $ioc_url_{i+1} = "{clean_u}" ascii wide nocase\n'
+
+        yara_code += """
+    condition:
+        $sender_origin or any of ($ioc_url_*)
+}
+"""
+        return yara_code
 
     def _analyze_threat_with_ai(self, text):
         text_lower = text.lower()
@@ -318,13 +430,14 @@ class EmailIngestionEngine:
         else:
             heuristic_score = 12
 
+        # Typo-squatting penalty
+        if self.forensic_data.get("typosquatting"):
+            heuristic_score = min(98, heuristic_score + 30)
+
         if not text or len(text.strip()) == 0:
             return {
-                "score": "0/100",
-                "ai_score_num": 0,
-                "heuristic_score_num": 0,
-                "analysis": "No body text found to analyze.",
-                "mitigations": "- Log event in SIEM.\n- No triage required.",
+                "score": "0/100", "ai_score_num": 0, "heuristic_score_num": 0,
+                "analysis": "No body text found to analyze.", "mitigations": "- Log event in SIEM.\n- No triage required.",
             }
 
         if self.api_key:
@@ -365,18 +478,15 @@ Email Body:
                         analysis = parts[1].strip()
 
                 return {
-                    "score": f"{score_val}/100",
-                    "ai_score_num": score_val,
-                    "heuristic_score_num": heuristic_score,
-                    "analysis": analysis,
+                    "score": f"{score_val}/100", "ai_score_num": score_val,
+                    "heuristic_score_num": heuristic_score, "analysis": analysis,
                     "mitigations": mitigations,
                 }
             except Exception:
                 pass
 
         return {
-            "score": f"{heuristic_score}/100",
-            "ai_score_num": heuristic_score,
+            "score": f"{heuristic_score}/100", "ai_score_num": heuristic_score,
             "heuristic_score_num": heuristic_score,
             "analysis": f"Static Heuristic engine identified {len(matches)} suspicious threat cues ({', '.join(matches[:4]) if matches else 'None'}).",
             "mitigations": (
