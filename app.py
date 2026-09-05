@@ -148,7 +148,7 @@ with ingestion_container:
 
     raw_payload_bytes = None
 
-   if "1-Tap" in in_mode:
+        if "1-Tap" in in_mode:
         st.caption("📲 **Mobile-Friendly Testing:** No .eml download required on mobile. Tap any sample vector below for instant in-memory triage:")
         s_col1, s_col2, s_col3 = st.columns(3)
         if s_col1.button("🚨 Test 1: Quishing & APT36 Lure", use_container_width=True):
