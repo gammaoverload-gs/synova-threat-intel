@@ -450,11 +450,6 @@ st.markdown(
         border-radius: 8px; padding: 10px 14px; margin: 6px; min-width: 220px;
     }}
 
-    .citadel-card {{
-        background: rgba(20, 8, 12, 0.9); border: 1px solid #ff1133;
-        border-left: 4px solid #ff1133; border-radius: 8px; padding: 14px; margin-bottom: 12px;
-    }}
-
     @media only screen and (max-width: 768px) {{
         .stApp {{ background-size: 100% 100%, 100% 100%, 25px 25px, 25px 25px !important; }}
         h1 {{ font-size: 20px !important; }}
@@ -475,7 +470,7 @@ with header_container:
     col1, col2 = st.columns([3.2, 1.8])
     with col1:
         st.markdown(f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Omnichannel XDR</span></h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Blockchain Merkle Custody, Autonomous Citadel Lockdown, Deep OSINT & Threat Graph Engine</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Blockchain Merkle Custody, Satellite Street Radar, Citadel EDR & Threat Graph Engine</p>", unsafe_allow_html=True)
     with col2:
         st.markdown(
             f"""
@@ -584,11 +579,14 @@ def build_pdf_buffer(results_data):
     meta = results_data.get("metadata", {})
     chain = results_data.get("blockchain_custody", {})
     apt = results_data.get("apt_attribution", {})
+    street = results_data.get("street_telemetry", {})
+
     m_data = [
         [Paragraph("<b>Channel Vector:</b>", body_style), Paragraph(f"<b>{results_data.get('channel', 'EMAIL')}</b>", body_style)],
         [Paragraph("<b>Subject / Headline:</b>", body_style), Paragraph(html.escape(str(meta.get("subject", "N/A"))), body_style)],
         [Paragraph("<b>Sender / Origin ID:</b>", body_style), Paragraph(html.escape(str(meta.get("from", "N/A"))), body_style)],
         [Paragraph("<b>Origin Relay Node:</b>", body_style), Paragraph(html.escape(str(meta.get("sender_ip", "N/A"))), body_style)],
+        [Paragraph("<b>Tactical Coordinates:</b>", body_style), Paragraph(f"{street.get('tactical_latitude', 'N/A')}, {street.get('tactical_longitude', 'N/A')} (Radius: ±{street.get('accuracy_radius_meters', 12)}m)", body_style)],
         [Paragraph("<b>Threat Score:</b>", body_style), Paragraph(html.escape(str(results_data.get("ai_analysis", {}).get("score", "N/A"))), body_style)],
         [Paragraph("<b>Attributed Threat Actor:</b>", body_style), Paragraph(f"<b>{apt.get('actor_name')}</b> ({apt.get('confidence_score')}%)", body_style)],
         [Paragraph("<b>Blockchain Merkle Root:</b>", body_style), Paragraph(f"<code>{chain.get('merkle_root', 'N/A')}</code>", body_style)],
@@ -649,7 +647,7 @@ with content_container:
                 </p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. OMNICHANNEL INGESTION</span>
-                    <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. APT THREAT ACTOR ATTRIBUTION</span>
+                    <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. SATELLITE STREET RADAR</span>
                     <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">3. BLOCKCHAIN MERKLE PROOF ANCHOR</span>
                     <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. AUTONOMOUS CITADEL LOCKDOWN</span>
                 </div>
@@ -659,7 +657,7 @@ with content_container:
 
         c1, c2, c3, c4 = st.columns(4)
         with c1: st.metric(label="VECTOR SCOPE", value="OMNICHANNEL", delta="Email • WhatsApp • SMS")
-        with c2: st.metric(label="FINANCIAL DEFENSE", value="UPI DEFANGER", delta="Intent Trap Killer")
+        with c2: st.metric(label="TACTICAL RADAR", value="STREET LEVEL", delta="Wi-Fi BSSID ±11m")
         with c3: st.metric(label="THEME MATCH", value="BLOCKCHAIN", delta="BSA Sec 63/65B Proof")
         with c4: st.metric(label="ENDPOINT DEFENSE", value="CITADEL LOCK", delta="Self-Healing Quarantine")
 
@@ -769,9 +767,10 @@ with content_container:
 
         st.divider()
 
-        # --- 12 ENTERPRISE FORENSIC TABS ---
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.tabs([
-            "🛡️ Citadel: Self-Preservation & EDR",
+        # --- 13 ENTERPRISE FORENSIC TABS ---
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13 = st.tabs([
+            "🛡️ Citadel: Autonomous EDR",
+            "🛰️ Satellite Street Radar & LEA",
             "🕸️ Threat Knowledge Graph",
             "📱 Omnichannel Exploit Radar",
             "🎯 Nation-State APT Attribution",
@@ -785,13 +784,12 @@ with content_container:
             "⚡ Kill-Chain Simulator",
         ])
 
-        # TAB 1: CITADEL AUTONOMOUS SELF-DEFENSE (HOT ADVANCEMENT)
+        # TAB 1: CITADEL AUTONOMOUS SELF-DEFENSE
         with tab1:
             st.subheader("🛡️ Citadel Autonomous Self-Preservation & Host Lockdown Engine")
-            st.caption("Zero-retaliation, ethical endpoint defense: air-gaps host network, revokes identity tokens, and freezes filesystem in immutable read-only state.")
+            st.caption("Zero-retaliation endpoint defense: air-gaps host network, revokes identity tokens, and freezes filesystem in immutable read-only state.")
 
             citadel_data = results.get("citadel_lockdown", {})
-            
             c_btn_col1, c_btn_col2 = st.columns([2, 1])
             with c_btn_col1:
                 if not st.session_state.citadel_active:
@@ -839,8 +837,67 @@ with content_container:
                 st.caption("Real-time payload transmitted to central CERT-In / SOC gateway.")
                 st.code(json.dumps(citadel_data.get("sos_webhook_payload", {}), indent=2), language="json")
 
-        # TAB 2: VIS.JS THREAT GRAPH
+        # TAB 2: TACTICAL SATELLITE STREET RADAR & LEA HANDOVER
         with tab2:
+            st.subheader("🛰️ Active Tactical Street-Level Radar & Law Enforcement Handover")
+            st.caption("Pinpoints tactical street-corridor via Active Deception Honeytoken beacons and compiles Section 91 CrPC telecom requisition dockets.")
+
+            street_info = results.get("street_telemetry", {})
+            sc1, sc2, sc3, sc4 = st.columns(4)
+            sc1.metric("TACTICAL ACCURACY", f"±{street_info.get('accuracy_radius_meters', 11.4)}m", "Street Footprint")
+            sc2.metric("EPHEMERAL PORT", str(street_info.get("ephemeral_source_port")), "CGNAT Resolvable")
+            sc3.metric("CARRIER GATEWAY", str(street_info.get("carrier_gateway"))[:18])
+            sc4.metric("RADAR METHOD", "Wi-Fi BSSID / GPS")
+
+            st.divider()
+
+            map_col, doc_col = st.columns([1.3, 1.2])
+
+            with map_col:
+                st.markdown("#### 🎯 High-Zoom Satellite Street Grid")
+                t_lat = street_info.get("tactical_latitude", 28.6139)
+                t_lon = street_info.get("tactical_longitude", 77.2090)
+
+                street_map = folium.Map(
+                    location=[t_lat, t_lon],
+                    zoom_start=17,
+                    tiles="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+                    attr="Google Satellite Hybrid"
+                )
+
+                folium.Marker(
+                    location=[t_lat, t_lon],
+                    popup="<b>TACTICAL ATTACKER PINPOINT</b><br>Accuracy: ~11m corridor",
+                    icon=folium.Icon(color="red", icon="crosshairs", prefix="fa")
+                ).add_to(street_map)
+
+                folium.Circle(
+                    location=[t_lat, t_lon],
+                    radius=street_info.get("accuracy_radius_meters", 11.4),
+                    color="#ff1133",
+                    fill=True,
+                    fill_color="#ff1133",
+                    fill_opacity=0.35,
+                    tooltip="Tactical LEA Search Perimeter (11m)"
+                ).add_to(street_map)
+
+                st_folium(street_map, width=540, height=380)
+
+            with doc_col:
+                st.markdown("#### 📋 Section 91 CrPC Police Referral Docket")
+                st.caption("Ready-to-file statutory dossier for Cyber Crime Cell to demand subscriber identity from Airtel/Jio.")
+                police_doc = results.get("police_docket", "")
+                st.text_area("Official Police Referral Document", police_doc, height=290)
+                st.download_button(
+                    "📥 Download Section 91 CrPC Docket (.txt)",
+                    data=police_doc,
+                    file_name=f"Police_CyberCell_Referral_{results['metadata']['sender_ip']}.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
+
+        # TAB 3: VIS.JS THREAT GRAPH
+        with tab3:
             st.subheader("🕸️ Autonomous Threat Entity Relationship Graph")
             origin_ip = results['metadata']['sender_ip']
             sender = results['metadata']['from']
@@ -875,8 +932,8 @@ with content_container:
             """
             st.components.v1.html(graph_html, height=400)
 
-        # TAB 3: OMNICHANNEL EXPLOIT RADAR
-        with tab3:
+        # TAB 4: OMNICHANNEL EXPLOIT RADAR
+        with tab4:
             st.subheader("📱 Omnichannel Social Engineering & Exploit Radar")
             st.caption("Specialized inspection for WhatsApp Digital Arrests, Android APK droppers, and UPI Intent exploits.")
             if omni_threats:
@@ -885,8 +942,8 @@ with content_container:
             else:
                 st.success("✅ Zero active UPI deep-links, APK droppers, or Digital Arrest patterns detected.")
 
-        # TAB 4: NATION-STATE APT ATTRIBUTION
-        with tab4:
+        # TAB 5: NATION-STATE APT ATTRIBUTION
+        with tab5:
             st.subheader("🎯 Nation-State APT Adversary Attribution Radar")
             st.caption("Heuristic fingerprinting matches IOCs, operational lures, and infrastructure against known cyber warfare actors.")
             apt = results.get("apt_attribution", {})
@@ -904,8 +961,8 @@ with content_container:
             </div>
             """, unsafe_allow_html=True)
 
-        # TAB 5: BLOCKCHAIN CUSTODY & SMART CONTRACT
-        with tab5:
+        # TAB 6: BLOCKCHAIN CUSTODY & SMART CONTRACT
+        with tab6:
             st.subheader("⛓️ Cryptographic Chain-of-Custody & Solidity Smart Contract")
             st.caption("Immutable Merkle tree proofs compliant with Bharatiya Sakshya Adhiniyam Sec 63/65B.")
             chain = results.get("blockchain_custody", {})
@@ -931,8 +988,8 @@ with content_container:
             st.code(results.get("smart_contract_code", "// Solidity Code"), language="solidity")
             st.download_button("📥 Download Solidity Evidence Contract (.sol)", data=results.get("smart_contract_code", ""), file_name="SynovaRegistry.sol", mime="text/plain")
 
-        # TAB 6: AI SOC COPILOT
-        with tab6:
+        # TAB 7: AI SOC COPILOT
+        with tab7:
             st.subheader("🤖 SYNOVA Autonomous SOC Copilot (Tier-3 Assistant)")
             st.caption("Chat live with the L3 Forensic AI investigating this exact artifact.")
 
@@ -973,6 +1030,7 @@ with content_container:
                                 - Quishing: {results.get('quishing_telemetry')}
                                 - APT Actor: {results.get('apt_attribution')}
                                 - Omnichannel Threats: {results.get('omnichannel_threats', [])}
+                                - Tactical Street Vicinity: {results.get('street_telemetry')}
                                 - Executive Analysis: {results['ai_analysis']['analysis']}
 
                                 User Query: {user_query}
@@ -986,8 +1044,8 @@ with content_container:
                         st.markdown(reply_text)
                         st.session_state.copilot_history.append({"role": "assistant", "content": reply_text})
 
-        # TAB 7: ACTIVE DEFENSE - CANARY TRAP
-        with tab7:
+        # TAB 8: ACTIVE DEFENSE - CANARY TRAP
+        with tab8:
             st.subheader("💣 Active Defense: Autonomous Honeytoken Canary Counter-Strike")
             st.caption("Deploys synthetic poisoned credentials into the adversary's harvesting portal to track their real origin IP upon exfiltration.")
             canary = results.get("canary_trap", {})
@@ -1008,8 +1066,8 @@ Beacon Callback: {canary.get('synthetic_beacon')}
                 if st.button("🚀 Trigger Honeytoken Counter-Strike Lure", use_container_width=True):
                     st.success(f"✅ Honeytoken `{canary.get('canary_token')}` successfully staged. Tracking beacon active on CERT-In / SOC gateway.")
 
-        # TAB 8: IN-MEMORY SCRIPT & SHELLCODE DE-OBFUSCATOR
-        with tab8:
+        # TAB 9: IN-MEMORY SCRIPT & SHELLCODE DE-OBFUSCATOR
+        with tab9:
             st.subheader("🧬 In-Memory Recursive Base64 & PowerShell De-Obfuscator")
             st.caption("Unpacks obfuscated Unicode UTF-16LE scripts, base64 payloads, and hidden command-line execution stubs without running code.")
             deob_list = results.get("deobfuscated_payloads", [])
@@ -1019,8 +1077,8 @@ Beacon Callback: {canary.get('synthetic_beacon')}
                     st.caption(f"Raw Obfuscated Fragment: `{item['raw_obfuscated']}`")
                 st.code(item['deobfuscated_code'], language="powershell" if "PowerShell" in item['type'] else "text")
 
-        # TAB 9: IDENTITY & PERIMETER SOAR
-        with tab9:
+        # TAB 10: IDENTITY & PERIMETER SOAR
+        with tab10:
             st.subheader("🛡️ Enterprise SOAR: Zero-Trust Identity & Perimeter Isolation")
             victim_recipient = results['metadata'].get('to', 'victim@enterprise.com')
             sender_ip = results['metadata']['sender_ip']
@@ -1057,8 +1115,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
             with exp2:
                 st.download_button("📥 Export Compiled YARA Signature", data=results.get("yara_rule", "// No YARA"), file_name="synova_detect.yar", mime="text/plain", use_container_width=True)
 
-        # TAB 10: QUISHING & WORMGPT STEALTH RADAR
-        with tab10:
+        # TAB 11: QUISHING & WORMGPT STEALTH RADAR
+        with tab11:
             st.subheader("📱 Quishing (QR Phishing) & Adversarial LLM Stealth Radar")
             q_col, w_col = st.columns(2)
             with q_col:
@@ -1082,8 +1140,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
                 else:
                     st.success("✅ Human linguistic variation detected. Low synthetic lure likelihood.")
 
-        # TAB 11: ATTACKER OSINT INFRASTRUCTURE
-        with tab11:
+        # TAB 12: ATTACKER OSINT INFRASTRUCTURE
+        with tab12:
             st.subheader("🌐 Deep Infrastructure Profiling (Shodan & AbuseIPDB)")
             osint_data = results["metadata"].get("geo_data", {})
             oc1, oc2, oc3 = st.columns(3)
@@ -1104,8 +1162,8 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
             else:
                 st.info("ℹ️ No publicly cataloged CVE vulnerabilities tagged to this host IP.")
 
-        # TAB 12: KILL-CHAIN SIMULATOR
-        with tab12:
+        # TAB 13: KILL-CHAIN SIMULATOR
+        with tab13:
             st.subheader("⚡ Adversary Kill-Chain Simulation (Impact Comparison)")
             sim_mode = st.radio(
                 "Select Incident Scenario:",
