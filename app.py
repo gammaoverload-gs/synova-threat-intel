@@ -131,7 +131,7 @@ if not st.session_state.intro_done:
     st.markdown(
         """
         <style>
-        .stApp { background-color: #04070d !important; }
+        .stApp { background-color: #030712 !important; }
         .intro-container {
             display: flex;
             flex-direction: column;
@@ -145,12 +145,12 @@ if not st.session_state.intro_done:
             width: 120px;
             height: 140px;
             fill: none;
-            stroke: #00a8ff;
+            stroke: #00f0ff;
             stroke-width: 1.6;
             stroke-dasharray: 450;
             stroke-dashoffset: 450;
             animation: drawIntroShield 2.2s cubic-bezier(0.65, 0, 0.35, 1) forwards;
-            filter: drop-shadow(0 0 20px rgba(0, 168, 255, 0.6));
+            filter: drop-shadow(0 0 24px rgba(0, 240, 255, 0.65));
         }
         @keyframes drawIntroShield {
             0% { stroke-dashoffset: 450; transform: scale(0.9); opacity: 0.3; }
@@ -158,13 +158,13 @@ if not st.session_state.intro_done:
             100% { stroke-dashoffset: 0; transform: scale(1); opacity: 1; }
         }
         .intro-title {
-            color: #00a8ff;
+            color: #00f0ff;
             font-family: 'JetBrains Mono', monospace;
             font-size: 20px;
             font-weight: bold;
             letter-spacing: 3.5px;
             margin-top: 22px;
-            text-shadow: 0 0 12px rgba(0, 168, 255, 0.6);
+            text-shadow: 0 0 14px rgba(0, 240, 255, 0.7);
         }
         .intro-sub {
             color: #94a3b8;
@@ -179,7 +179,7 @@ if not st.session_state.intro_done:
                 <path d="M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z" />
                 <path d="M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z" stroke-dasharray="2 2" stroke-width="0.8"/>
             </svg>
-            <div class="intro-title">INITIALIZING DEFENSE MATRIX...</div>
+            <div class="intro-title">INITIALIZING SYNOVA DEFENSE MATRIX...</div>
             <div class="intro-sub">CALIBRATING POST-QUANTUM LATTICE PROOF & OMNICHANNEL HEURISTICS</div>
         </div>
         """,
@@ -202,12 +202,13 @@ if not st.session_state.intro_done:
 
 # --- STEP 2: SETUP CONTAINERS & BASE VARIABLES ---
 header_container = st.container()
+ticker_container = st.container()
 ingestion_container = st.container()
 content_container = st.container()
 
-primary_color = "#00a8ff"
-glow_rgba = "rgba(0, 168, 255, 0.16)"
-bg_glow = "rgba(0, 168, 255, 0.20)"
+primary_color = "#00f0ff"
+glow_rgba = "rgba(0, 240, 255, 0.18)"
+bg_glow = "rgba(0, 240, 255, 0.22)"
 badge_text = "OMNICHANNEL RADAR ACTIVE"
 score_num = 0
 results = None
@@ -232,7 +233,7 @@ with ingestion_container:
     selected_vector = "EMAIL"
 
     if "1-Tap" in in_mode:
-        st.caption("📲 **Mobile-Friendly Testing:** No file download required on mobile. Tap any sample vector below for instant in-memory triage:")
+        st.caption("📲 **Mobile-Friendly Testing:** Zero file download required. Tap any simulated attack vector below to execute instant in-memory triage:")
         s_c1, s_c2, s_c3, s_c4, s_c5 = st.columns(5)
         if s_c1.button("🚨 Quishing & APT36 Lure", use_container_width=True):
             raw_payload_bytes = SAMPLE_QUISHING_APT
@@ -325,59 +326,70 @@ if results is not None:
     channel_name = results.get("channel", "EMAIL")
 
     if st.session_state.citadel_active:
-        primary_color = "#ff1133"
-        glow_rgba = "rgba(255, 17, 51, 0.45)"
-        bg_glow = "rgba(255, 17, 51, 0.35)"
+        primary_color = "#ff1744"
+        glow_rgba = "rgba(255, 23, 68, 0.45)"
+        bg_glow = "rgba(255, 23, 68, 0.35)"
         badge_text = "🚨 CITADEL HOST LOCKDOWN ENGAGED"
         pulse_duration = "0.45s"
         voice_briefing = "Citadel Protocol active. Host network air-gapped. Identity tokens revoked. Directory system frozen in immutable read-only mode."
     elif score_num >= 70:
-        primary_color = "#ff3355"
-        glow_rgba = "rgba(255, 51, 85, 0.35)"
-        bg_glow = "rgba(255, 51, 85, 0.30)"
+        primary_color = "#ff2a55"
+        glow_rgba = "rgba(255, 42, 85, 0.38)"
+        bg_glow = "rgba(255, 42, 85, 0.30)"
         badge_text = f"CRITICAL {channel_name} THREAT"
         pulse_duration = "0.65s"
         voice_briefing = f"Alert. High-risk attack vector isolated on {channel_name} channel. Origin anchored at {origin_city}, {origin_country}. Automated self-preservation playbooks are staged."
     elif score_num >= 40:
-        primary_color = "#ffaa00"
-        glow_rgba = "rgba(255, 170, 0, 0.25)"
-        bg_glow = "rgba(255, 170, 0, 0.22)"
+        primary_color = "#ffb020"
+        glow_rgba = "rgba(255, 176, 32, 0.28)"
+        bg_glow = "rgba(255, 176, 32, 0.22)"
         badge_text = f"SUSPICIOUS {channel_name} VECTOR"
         pulse_duration = "1.6s"
         voice_briefing = f"Caution. Suspicious behavioral heuristics logged on {channel_name} stream. Sender origin anchored at {origin_city}."
     else:
-        primary_color = "#00ffcc"
-        glow_rgba = "rgba(0, 255, 204, 0.18)"
-        bg_glow = "rgba(0, 255, 204, 0.20)"
+        primary_color = "#00f0ff"
+        glow_rgba = "rgba(0, 240, 255, 0.20)"
+        bg_glow = "rgba(0, 240, 255, 0.22)"
         badge_text = f"CLEAN {channel_name} STREAM"
         pulse_duration = "4.0s"
         voice_briefing = f"Forensic inspection complete. {channel_name} stream verified clean. Zero threat signatures found."
 
-# --- STEP 5: DYNAMIC CYBER UI & MOBILE RESPONSIVE ENGINE ---
+# --- STEP 5: ELEVATED CYBERPUNK HUD CSS ENGINE ---
 shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.45' fill='{primary_color}' fill-opacity='0.05'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.35' fill='none'/></svg>""".replace("#", "%23")
 
 st.markdown(
     f"""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@400;500;700&display=swap');
+
+    html, body, [class*="css"] {{
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }}
+
+    code, pre, .mono-font {{
+        font-family: 'JetBrains Mono', monospace !important;
+    }}
+
     .stApp {{
-        background-color: #04070d !important;
+        background-color: #030712 !important;
         background-image: 
             url("data:image/svg+xml,{shield_emoji_svg}"),
-            radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 65%),
+            radial-gradient(circle at 50% 0%, {bg_glow} 0%, transparent 60%),
             radial-gradient(circle at 90% 90%, {glow_rgba} 0%, transparent 50%),
             linear-gradient({glow_rgba} 1px, transparent 1px),
             linear-gradient(90deg, {glow_rgba} 1px, transparent 1px) !important;
         background-position: center 48%, center top, right bottom, 0 0, 0 0 !important;
         background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat !important;
-        background-size: 400px 460px, 100% 100%, 100% 100%, 40px 40px, 40px 40px !important;
+        background-size: 420px 480px, 100% 100%, 100% 100%, 35px 35px, 35px 35px !important;
         animation: threatShieldGlowPulse {pulse_duration} ease-in-out infinite alternate;
     }}
 
     @keyframes threatShieldGlowPulse {{
-        0% {{ filter: drop-shadow(0 0 4px {primary_color}22); opacity: 0.88; }}
-        100% {{ filter: drop-shadow(0 0 25px {primary_color}) drop-shadow(0 0 45px {primary_color}66); opacity: 1; }}
+        0% {{ filter: drop-shadow(0 0 4px {primary_color}22); opacity: 0.92; }}
+        100% {{ filter: drop-shadow(0 0 28px {primary_color}) drop-shadow(0 0 50px {primary_color}66); opacity: 1; }}
     }}
 
+    /* Ultra-Smooth Laser Scanner */
     .stApp::before {{
         content: ""; position: fixed; top: 0; left: 0; right: 0; height: 2px;
         background: linear-gradient(90deg, transparent 0%, {primary_color}66 25%, {primary_color} 50%, {primary_color}66 75%, transparent 100%);
@@ -393,84 +405,149 @@ st.markdown(
         100% {{ transform: translateY(102vh); opacity: 0.1; }}
     }}
 
-    [data-testid="stAppViewBlockContainer"] {{
+    /* Futuristic Cyber-Pill Tabs Styling */
+    div[data-testid="stTabs"] {{
+        background: rgba(6, 11, 25, 0.7);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(0, 240, 255, 0.15);
+        border-radius: 14px;
+        padding: 6px;
+        margin-top: 14px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }}
+
+    div[data-testid="stTabs"] button[role="tab"] {{
+        color: #94a3b8 !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
+        transition: all 0.25s ease-in-out !important;
+        border: 1px solid transparent !important;
+        background: transparent !important;
+    }}
+
+    div[data-testid="stTabs"] button[role="tab"]:hover {{
+        color: #ffffff !important;
+        background: rgba(0, 240, 255, 0.08) !important;
+        border-color: rgba(0, 240, 255, 0.25) !important;
+    }}
+
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{
+        color: {primary_color} !important;
+        background: {glow_rgba} !important;
+        border: 1px solid {primary_color} !important;
+        box-shadow: 0 0 16px {glow_rgba} !important;
+    }}
+
+    div[data-testid="stTabs"] [data-baseweb="tab-highlight"] {{
+        background-color: transparent !important;
+    }}
+
+    /* Tactical HUD Ribbon */
+    .hud-ticker {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(6, 12, 28, 0.9);
+        border: 1px solid rgba(0, 240, 255, 0.25);
+        border-left: 3px solid {primary_color};
+        border-radius: 8px;
+        padding: 8px 14px;
+        margin-bottom: 16px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: #94a3b8;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }}
+
+    .hud-ticker-val {{
+        color: {primary_color};
+        font-weight: bold;
+    }}
+
+    /* Glassmorphic Cyber Panels */
+    .cyber-card {{
+        background: rgba(8, 14, 30, 0.75) !important;
+        backdrop-filter: blur(14px) !important;
+        border: 1px solid rgba(0, 240, 255, 0.2) !important;
+        border-radius: 10px !important;
+        padding: 16px !important;
+        margin-bottom: 14px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
         position: relative;
-        z-index: 2;
     }}
 
-    .live-badge, .replay-badge {{
-        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-        background: {glow_rgba} !important; border: 1px solid {primary_color} !important;
-        color: {primary_color} !important; font-size: 11px; padding: 6px 14px;
-        border-radius: 20px; font-family: 'Courier New', monospace; font-weight: bold;
-        letter-spacing: 1.5px; box-shadow: 0 0 15px {glow_rgba}; text-decoration: none !important;
-        cursor: pointer; transition: all 0.25s ease-in-out; white-space: nowrap;
-    }}
-
-    .replay-badge:hover {{
-        background: {primary_color} !important; color: #04070d !important;
-        box-shadow: 0 0 25px {primary_color} !important; transform: translateY(-1px);
-    }}
-
-    .pulse-dot {{
-        width: 8px; height: 8px; background-color: {primary_color}; border-radius: 50%;
-        box-shadow: 0 0 10px {primary_color}; display: inline-block;
-        animation: socPulse {pulse_duration} infinite ease-in-out !important;
-    }}
-
-    @keyframes socPulse {{
-        0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
-        50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 16px {primary_color}; }}
-    }}
-
-    [data-testid="stFileUploadDropzone"], .stFileUploader section {{
-        background: rgba(8, 14, 26, 0.75) !important; backdrop-filter: blur(16px) !important;
-        border: 1.5px dashed {primary_color} !important; border-radius: 16px !important;
-        box-shadow: 0 0 20px {glow_rgba} !important;
+    .cyber-card::after {{
+        content: "+";
+        position: absolute;
+        bottom: 4px;
+        right: 8px;
+        color: {primary_color};
+        font-family: monospace;
+        font-size: 12px;
+        opacity: 0.6;
     }}
 
     [data-testid="stMetric"] {{
-        background: rgba(10, 18, 32, 0.75) !important; backdrop-filter: blur(14px) !important;
-        border: 1px solid {primary_color} !important; border-radius: 12px !important;
-        padding: 10px 14px !important; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+        background: rgba(8, 15, 32, 0.8) !important;
+        backdrop-filter: blur(14px) !important;
+        border: 1px solid rgba(0, 240, 255, 0.25) !important;
+        border-radius: 12px !important;
+        padding: 12px 16px !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6) !important;
     }}
+
     [data-testid="stMetricValue"] {{
-        color: {primary_color} !important; font-family: 'JetBrains Mono', monospace !important;
-        font-size: 20px !important; text-shadow: 0 0 12px {primary_color};
+        color: {primary_color} !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 22px !important;
+        text-shadow: 0 0 12px {primary_color};
     }}
 
     .soc-terminal {{
-        background: rgba(5, 8, 15, 0.95); border: 1px solid {primary_color}; border-left: 4px solid {primary_color};
-        border-radius: 8px; padding: 16px; font-family: 'JetBrains Mono', 'Courier New', monospace;
-        color: #d1d5db; font-size: 13px; line-height: 1.6; box-shadow: 0 0 25px {glow_rgba}; margin-bottom: 20px;
+        background: rgba(4, 8, 18, 0.95);
+        border: 1px solid {primary_color};
+        border-left: 4px solid {primary_color};
+        border-radius: 8px;
+        padding: 16px;
+        font-family: 'JetBrains Mono', monospace;
+        color: #d1d5db;
+        font-size: 13px;
+        line-height: 1.6;
+        box-shadow: 0 0 25px {glow_rgba};
+        margin-bottom: 20px;
     }}
 
     .ttp-card {{
-        display: inline-block; background: rgba(15, 23, 42, 0.9); border: 1px solid {primary_color};
-        border-radius: 8px; padding: 10px 14px; margin: 6px; min-width: 220px;
+        display: inline-block;
+        background: rgba(10, 18, 36, 0.9);
+        border: 1px solid {primary_color};
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin: 6px;
+        min-width: 220px;
     }}
 
+    /* Touch & Mobile Responsive Rules */
     @media only screen and (max-width: 768px) {{
-        .stApp {{ background-size: 100% 100%, 100% 100%, 25px 25px, 25px 25px !important; }}
+        .hud-ticker {{ flex-direction: column; gap: 4px; align-items: flex-start; font-size: 10px; }}
+        div[data-testid="stTabs"] button[role="tab"] {{ font-size: 10px !important; padding: 6px 10px !important; }}
         h1 {{ font-size: 20px !important; }}
-        p {{ font-size: 12px !important; }}
-        .live-badge, .replay-badge {{ font-size: 9px !important; padding: 4px 8px !important; }}
-        [data-testid="stMetricValue"] {{ font-size: 16px !important; }}
-        .ttp-card {{ width: 100% !important; min-width: 100% !important; margin: 4px 0 !important; }}
-        .soc-terminal {{ font-size: 11px !important; padding: 10px !important; }}
-        .stButton>button {{ min-height: 44px !important; font-size: 13px !important; }}
     }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# --- STEP 6: RENDER TOP HEADER ---
+# --- STEP 6: RENDER TOP HEADER & LIVE HUD TELEMETRY STRIP ---
 with header_container:
     col1, col2 = st.columns([3.2, 1.8])
     with col1:
         st.markdown(f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Omnichannel XDR</span></h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>NIST Post-Quantum Lattice Proof, 3D Tactical Globe, Acoustic Deepfake Radar & Citadel Defense</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Autonomous AI Cyber Defense: NIST Post-Quantum Lattice Proof, 3D WebGL Globe & Citadel EDR</p>", unsafe_allow_html=True)
     with col2:
         st.markdown(
             f"""
@@ -481,7 +558,21 @@ with header_container:
             """,
             unsafe_allow_html=True,
         )
-    st.divider()
+
+with ticker_container:
+    curr_time = time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())
+    st.markdown(
+        f"""
+        <div class="hud-ticker">
+            <div>GRID: <span class="hud-ticker-val">IND-NORTH-DEFENSE-01</span></div>
+            <div>STATUS: <span class="hud-ticker-val">COMBAT READY</span></div>
+            <div>PQC ENGINE: <span class="hud-ticker-val">NIST ML-DSA-87</span></div>
+            <div>TIMESTAMP: <span class="hud-ticker-val">{curr_time}</span></div>
+            <div>BUFFER: <span class="hud-ticker-val">RAM ZERO-DISK</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # --- STEP 7: DEDICATED SINGLE-DISPATCH AUDIO ENGINE & PANIC SIREN ---
 current_audio_hash = hashlib.md5((voice_briefing + str(st.session_state.citadel_active)).encode('utf-8')).hexdigest()
@@ -633,12 +724,12 @@ with content_container:
     if results is None:
         st.markdown(
             f"""
-            <div style="background: linear-gradient(135deg, rgba(8, 14, 26, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%); border: 1px solid rgba(0, 168, 255, 0.3); border-left: 5px solid {primary_color}; border-radius: 12px; padding: 24px; margin-top: 10px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0, 168, 255, 0.1);">
+            <div style="background: linear-gradient(135deg, rgba(6, 12, 28, 0.95) 0%, rgba(10, 18, 38, 0.85) 100%); border: 1px solid rgba(0, 240, 255, 0.25); border-left: 5px solid {primary_color}; border-radius: 12px; padding: 24px; margin-top: 10px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0, 240, 255, 0.1);">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                     <h3 style="color: #ffffff; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 20px;">
                         ⚡ WELCOME TO THE SYNOVA OMNICHANNEL DEFENSE MATRIX
                     </h3>
-                    <span style="background: rgba(0, 168, 255, 0.15); color: {primary_color}; border: 1px solid {primary_color}; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-family: monospace;">
+                    <span style="background: rgba(0, 240, 255, 0.15); color: {primary_color}; border: 1px solid {primary_color}; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-family: monospace;">
                         POST-QUANTUM & BLOCKCHAIN
                     </span>
                 </div>
@@ -646,7 +737,7 @@ with content_container:
                     SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize attack vectors across <b>Email, WhatsApp, SMS Smishing, Telegram, and Social Media DMs</b>. Features 3D holographic WebGL globe trajectory, acoustic deepfake voice note detection, NIST ML-DSA post-quantum lattice certificates, and conversational scammer tarpitting.
                 </p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. 3D WEBGL GLOBE RADAR</span>
+                    <span style="background: rgba(0, 240, 255, 0.1); border: 1px solid rgba(0, 240, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. 3D WEBGL GLOBE RADAR</span>
                     <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. ACOUSTIC DEEPFAKE RADAR</span>
                     <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">3. NIST ML-DSA LATTICE SEAL</span>
                     <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. SCAMMER TARPIT HONEYPOT</span>
@@ -676,13 +767,13 @@ with content_container:
             stroke_dashoffset = circumference - (score_num / 100.0) * circumference
             st.markdown(
                 f"""
-                <div style="text-align: center; background: rgba(10, 18, 32, 0.75); border: 1px solid {primary_color}; border-radius: 12px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.6);">
+                <div style="text-align: center; background: rgba(8, 15, 32, 0.85); border: 1px solid {primary_color}; border-radius: 12px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.6);">
                     <svg width="150" height="150" viewBox="0 0 120 120">
                         <circle cx="60" cy="60" r="45" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10"/>
                         <circle cx="60" cy="60" r="45" fill="none" stroke="{primary_color}" stroke-width="10"
                                 stroke-dasharray="{circumference}" stroke-dashoffset="{stroke_dashoffset}"
                                 stroke-linecap="round" transform="rotate(-90 60 60)"
-                                style="transition: stroke-dashoffset 1s ease-in-out; filter: drop-shadow(0 0 6px {primary_color});"/>
+                                style="transition: stroke-dashoffset 1s ease-in-out; filter: drop-shadow(0 0 8px {primary_color});"/>
                         <text x="60" y="58" font-size="22" font-family="'JetBrains Mono', monospace" font-weight="bold" fill="{primary_color}" text-anchor="middle">{score_num}</text>
                         <text x="60" y="74" font-size="10" font-family="sans-serif" fill="#94a3b8" text-anchor="middle">THREAT INDEX</text>
                     </svg>
@@ -768,7 +859,7 @@ with content_container:
 
         st.divider()
 
-        # --- 14 ENTERPRISE FORENSIC TABS ---
+        # --- 14 ENTERPRISE FORENSIC TABS (PILL-STYLED) ---
         tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12, tab13, tab14 = st.tabs([
             "🌐 3D Tactical Globe HUD",
             "🎙️ Deepfake Voice Spectrogram",
@@ -807,11 +898,11 @@ with content_container:
                     startLng: {o_lon},
                     endLat: {t_lat},
                     endLng: {t_lon},
-                    color: ['#ff1133', '{primary_color}']
+                    color: ['#ff1744', '{primary_color}']
                 }}];
 
                 const gData = [
-                    {{ lat: {o_lat}, lng: {o_lon}, size: 0.8, color: '#ff1133', label: 'ATTACKER HOST' }},
+                    {{ lat: {o_lat}, lng: {o_lon}, size: 0.8, color: '#ff1744', label: 'ATTACKER HOST' }},
                     {{ lat: {t_lat}, lng: {t_lon}, size: 0.8, color: '{primary_color}', label: 'PERIMETER CORE' }}
                 ];
 
@@ -854,7 +945,7 @@ with content_container:
             <div style="background: rgba(8, 14, 26, 0.95); border: 1px solid {primary_color}; border-radius: 8px; padding: 15px;">
                 <canvas id="specCanvas" width="700" height="150" style="width: 100%; height: 150px;"></canvas>
                 <div style="display: flex; justify-content: space-between; font-family: monospace; font-size: 11px; color: #94a3b8; margin-top: 4px;">
-                    <span>0 Hz (Sub-bass)</span><span>4 kHz</span><span>8 kHz</span><span>12 kHz</span><span style="color: #ff1133; font-weight: bold;">16 kHz (AI Cutoff Wall)</span><span>24 kHz (Human Air)</span>
+                    <span>0 Hz (Sub-bass)</span><span>4 kHz</span><span>8 kHz</span><span>12 kHz</span><span style="color: #ff1744; font-weight: bold;">16 kHz (AI Cutoff Wall)</span><span>24 kHz (Human Air)</span>
                 </div>
             </div>
             <script>
@@ -871,18 +962,18 @@ with content_container:
                     if (x < cutoff) {{
                         amp = Math.sin(x * 0.05) * 40 + Math.random() * 80 + 20;
                     }} else {{
-                        amp = Math.random() * 8; // Sharp drop-off typical of neural TTS vocoders
+                        amp = Math.random() * 8;
                     }}
                     const grad = ctx.createLinearGradient(0, canvas.height, 0, 0);
                     grad.addColorStop(0, '{primary_color}');
                     grad.addColorStop(0.7, '#a855f7');
-                    grad.addColorStop(1, '#ff1133');
+                    grad.addColorStop(1, '#ff1744');
                     ctx.fillStyle = grad;
                     ctx.fillRect(x, canvas.height - amp, 3, amp);
                 }}
 
                 if (isDeepfake) {{
-                    ctx.strokeStyle = '#ff1133';
+                    ctx.strokeStyle = '#ff1744';
                     ctx.lineWidth = 2;
                     ctx.setLineDash([4, 4]);
                     ctx.beginPath();
@@ -952,7 +1043,7 @@ with content_container:
                         st.session_state.citadel_active = False
                         st.rerun()
             with c_btn_col2:
-                status_color = "#ff1133" if st.session_state.citadel_active else "#00ffcc"
+                status_color = "#ff1744" if st.session_state.citadel_active else "#00f0ff"
                 status_label = "QUARANTINED & FROZEN" if st.session_state.citadel_active else "MONITORING / ARMED"
                 st.markdown(f"<div style='border: 1px solid {status_color}; padding: 8px 12px; border-radius: 8px; text-align: center; color: {status_color}; font-family: monospace; font-weight: bold;'>STATE: {status_label}</div>", unsafe_allow_html=True)
 
@@ -1025,9 +1116,9 @@ with content_container:
                 folium.Circle(
                     location=[t_lat, t_lon],
                     radius=street_info.get("accuracy_radius_meters", 11.4),
-                    color="#ff1133",
+                    color="#ff1744",
                     fill=True,
-                    fill_color="#ff1133",
+                    fill_color="#ff1744",
                     fill_opacity=0.35,
                     tooltip="Tactical LEA Search Perimeter (11m)"
                 ).add_to(street_map)
@@ -1061,17 +1152,17 @@ with content_container:
             <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
             <script type="text/javascript">
                 const nodes = new vis.DataSet([
-                    {{ id: 1, label: '{channel} Origin\\n{origin_ip}', color: '#ff3355', shape: 'box', font: {{ color: '#fff', face: 'monospace' }} }},
-                    {{ id: 2, label: 'Origin Envelope\\n{sender[:18]}...', color: '#ffaa00', shape: 'ellipse', font: {{ color: '#fff' }} }},
-                    {{ id: 3, label: 'Perimeter Inspection', color: '#00a8ff', shape: 'diamond', font: {{ color: '#fff' }} }},
-                    {{ id: 4, label: 'Payload Target\\n{first_url[:22]}...', color: '#ff0055', shape: 'triangle', font: {{ color: '#fff' }} }},
+                    {{ id: 1, label: '{channel} Origin\\n{origin_ip}', color: '#ff1744', shape: 'box', font: {{ color: '#fff', face: 'monospace' }} }},
+                    {{ id: 2, label: 'Origin Envelope\\n{sender[:18]}...', color: '#ffb020', shape: 'ellipse', font: {{ color: '#fff' }} }},
+                    {{ id: 3, label: 'Perimeter Inspection', color: '#00f0ff', shape: 'diamond', font: {{ color: '#fff' }} }},
+                    {{ id: 4, label: 'Payload Target\\n{first_url[:22]}...', color: '#ff1744', shape: 'triangle', font: {{ color: '#fff' }} }},
                     {{ id: 5, label: 'Active Services\\nPorts {shodan_ports}', color: '#c084fc', shape: 'box', font: {{ color: '#fff' }} }}
                 ]);
 
                 const edges = new vis.DataSet([
-                    {{ from: 1, to: 2, label: 'Transmission', color: '#ffaa00', arrows: 'to' }},
-                    {{ from: 2, to: 3, label: 'Ingress Stream', color: '#00a8ff', arrows: 'to' }},
-                    {{ from: 3, to: 4, label: 'Lures Victim', color: '#ff0055', arrows: 'to', dashes: true }},
+                    {{ from: 1, to: 2, label: 'Transmission', color: '#ffb020', arrows: 'to' }},
+                    {{ from: 2, to: 3, label: 'Ingress Stream', color: '#00f0ff', arrows: 'to' }},
+                    {{ from: 3, to: 4, label: 'Lures Victim', color: '#ff1744', arrows: 'to', dashes: true }},
                     {{ from: 1, to: 5, label: 'Exposed Attack Surface', color: '#c084fc', arrows: 'to' }}
                 ]);
 
