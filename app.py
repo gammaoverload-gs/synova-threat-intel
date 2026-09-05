@@ -131,7 +131,7 @@ Regards,
 IT Infrastructure Operations
 """
 
-# --- STEP 1: INITIAL PROTECTION CALIBRATION SCREEN ---
+# --- STEP 1: INITIAL CALIBRATION SCREEN ---
 if not st.session_state.intro_done:
     st.markdown(
         """
@@ -278,7 +278,6 @@ with ingestion_container:
                         raw_payload_bytes = SAMPLE_QUISHING_APT
                         selected_vector = "EMAIL"
                 else:
-                    # Ingest direct zero-download threat stream seamlessly
                     raw_payload_bytes = SAMPLE_QUISHING_APT
                     selected_vector = "EMAIL"
 
@@ -519,6 +518,7 @@ st.markdown(
         min-width: 220px;
     }}
 
+    /* Touch & Mobile Responsive Rules */
     @media only screen and (max-width: 768px) {{
         .hud-ticker {{ flex-direction: column; gap: 4px; align-items: flex-start; font-size: 10px; }}
         div[data-testid="stTabs"] button[role="tab"] {{ font-size: 10px !important; padding: 6px 10px !important; }}
@@ -639,6 +639,110 @@ if st.session_state.last_played_audio_hash != current_audio_hash:
     """
     st.components.v1.html(audio_bridge_js, height=0)
 
+# --- CRASH-PROOF PDF FORENSIC REPORT GENERATOR ---
+def build_pdf_buffer(results_data):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=30,
+        leftMargin=30,
+        topMargin=30,
+        bottomMargin=30,
+    )
+    story = []
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle("TStyle", parent=styles["Heading1"], fontSize=18, textColor=colors.HexColor("#003366"))
+    heading_style = ParagraphStyle("HStyle", parent=styles["Heading2"], fontSize=12, textColor=colors.HexColor("#0055a5"), spaceBefore=10, spaceAfter=6)
+    body_style = ParagraphStyle("BStyle", parent=styles["Normal"], fontSize=9, textColor=colors.HexColor("#222222"), leading=12)
+
+    story.append(Paragraph("SYNOVA CYBERSECURITY INCIDENT REPORT", title_style))
+    story.append(Paragraph("<b>Post-Quantum Validated Omnichannel Forensic Playbook</b>", body_style))
+    story.append(Spacer(1, 10))
+
+    meta = (results_data.get("metadata") or {}) if isinstance(results_data, dict) else {}
+    chain = (results_data.get("blockchain_custody") or {}) if isinstance(results_data, dict) else {}
+    apt = (results_data.get("apt_attribution") or {}) if isinstance(results_data, dict) else {}
+    street = (results_data.get("street_telemetry") or {}) if isinstance(results_data, dict) else {}
+    pqc = (results_data.get("pqc_lattice_seal") or {}) if isinstance(results_data, dict) else {}
+    ai_info = (results_data.get("ai_analysis") or {}) if isinstance(results_data, dict) else {}
+
+    channel_val = html.escape(str(results_data.get("channel", "EMAIL") if isinstance(results_data, dict) else "EMAIL"))
+    subject_val = html.escape(str(meta.get("subject", "N/A")))
+    from_val = html.escape(str(meta.get("from", "N/A")))
+    ip_val = html.escape(str(meta.get("sender_ip", "N/A")))
+    score_val = html.escape(str(ai_info.get("score", "N/A")))
+    actor_name = html.escape(str(apt.get("actor_name", "Unknown Syndicate")))
+    actor_conf = html.escape(str(apt.get("confidence_score", "0")))
+    merkle_root = html.escape(str(chain.get("merkle_root", "N/A")))
+    pqc_seal = html.escape(str(pqc.get("lattice_signature_seal", "N/A")))
+    compliance = html.escape(str(chain.get("legal_compliance", "BSA Sec 63/65B Compliant")))
+    
+    coords = f"{street.get('tactical_latitude', 'N/A')}, {street.get('tactical_longitude', 'N/A')} (Radius: +/-{street.get('accuracy_radius_meters', 12)}m)"
+
+    m_data = [
+        [Paragraph("<b>Channel Vector:</b>", body_style), Paragraph(f"<b>{channel_val}</b>", body_style)],
+        [Paragraph("<b>Subject / Headline:</b>", body_style), Paragraph(subject_val, body_style)],
+        [Paragraph("<b>Sender / Origin ID:</b>", body_style), Paragraph(from_val, body_style)],
+        [Paragraph("<b>Origin Relay Node:</b>", body_style), Paragraph(ip_val, body_style)],
+        [Paragraph("<b>Tactical Coordinates:</b>", body_style), Paragraph(html.escape(coords), body_style)],
+        [Paragraph("<b>Threat Score:</b>", body_style), Paragraph(score_val, body_style)],
+        [Paragraph("<b>Attributed Threat Actor:</b>", body_style), Paragraph(f"<b>{actor_name}</b> ({actor_conf}%)", body_style)],
+        [Paragraph("<b>PQC Lattice Seal:</b>", body_style), Paragraph(f"<font name='Courier'>{pqc_seal}</font>", body_style)],
+        [Paragraph("<b>Blockchain Merkle Root:</b>", body_style), Paragraph(f"<font name='Courier'>{merkle_root}</font>", body_style)],
+        [Paragraph("<b>Legal Admissibility:</b>", body_style), Paragraph(compliance, body_style)]
+    ]
+    t = Table(m_data, colWidths=[140, 380])
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f2f4f8")),
+        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#d0d7de")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("PADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 10))
+
+    story.append(Paragraph("AI Forensic Breakdown", heading_style))
+    analysis_text = html.escape(str(ai_info.get("analysis", "No forensic log generated.")))
+    story.append(Paragraph(analysis_text, body_style))
+    story.append(Spacer(1, 10))
+
+    story.append(Paragraph("Recommended Containment & Mitigation Playbook", heading_style))
+    mitigations_raw = str(ai_info.get("mitigations", "No immediate mitigation required."))
+    clean_mitigations = html.escape(mitigations_raw).replace("\n", "<br/>")
+    story.append(Paragraph(clean_mitigations, body_style))
+    story.append(Spacer(1, 10))
+
+    story.append(Paragraph("Extracted Indicators of Compromise (IOC URLs & Endpoints)", heading_style))
+    urls = (results_data.get("body_artifacts") or {}).get("extracted_urls", []) if isinstance(results_data, dict) else []
+    if urls:
+        url_data = [[Paragraph(f"• {html.escape(str(u))}", body_style)] for u in urls[:15]]
+        ut = Table(url_data, colWidths=[520])
+        ut.setStyle(TableStyle([
+            ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#d0d7de")),
+            ("PADDING", (0, 0), (-1, -1), 4),
+        ]))
+        story.append(ut)
+    else:
+        story.append(Paragraph("No URLs or deep-link vectors detected.", body_style))
+
+    try:
+        doc.build(story)
+    except Exception:
+        fb_doc = SimpleDocTemplate(buffer, pagesize=letter)
+        fb_story = [
+            Paragraph("SYNOVA FORENSIC INCIDENT REPORT (TEXT FALLBACK)", title_style),
+            Spacer(1, 10),
+            Paragraph(f"Origin IP: {ip_val}", body_style),
+            Paragraph(f"Threat Score: {score_val}", body_style),
+            Paragraph(f"Actor Attribution: {actor_name}", body_style),
+            Paragraph(f"Blockchain Root: {merkle_root}", body_style),
+        ]
+        fb_doc.build(fb_story)
+
+    buffer.seek(0)
+    return buffer
+
 # --- STEP 8: RENDER MAIN INVESTIGATION DASHBOARD ---
 with content_container:
     if results is None:
@@ -703,9 +807,10 @@ with content_container:
 
         with dash_col2:
             m1, m2, m3 = st.columns(3)
+            safe_meta = results.get("metadata") or {}
             m1.metric("CHANNEL VECTOR", str(results.get("channel", "EMAIL")))
-            m2.metric("ORIGIN ID / SENDER", str(results["metadata"]["from"][:18]))
-            m3.metric("BLOCK HEIGHT", f"#{results.get('blockchain_custody', {}).get('block_height', 849201)}")
+            m2.metric("ORIGIN ID / SENDER", str(safe_meta.get("from", "Unknown"))[:18])
+            m3.metric("BLOCK HEIGHT", f"#{(results.get('blockchain_custody') or {}).get('block_height', 849201)}")
 
             pdf_buffer = build_pdf_buffer(results)
             st.download_button(
